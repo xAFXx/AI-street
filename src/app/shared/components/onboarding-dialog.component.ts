@@ -3,13 +3,9 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { DialogModule } from 'primeng/dialog';
 import { ButtonModule } from 'primeng/button';
-import { InputTextModule } from 'primeng/inputtext';
-import { SelectButtonModule } from 'primeng/selectbutton';
-import { StepsModule } from 'primeng/steps';
 import { PasswordModule } from 'primeng/password';
 import { DividerModule } from 'primeng/divider';
-import { MenuItem } from 'primeng/api';
-import { UserService, UserRole } from '../../core/services/user.service';
+import { UserManagementService } from '../../core/services/user-management.service';
 import { setApiKey, hasApiKey } from '../../features/template-editor/ai-providers/ai-config';
 
 @Component({
@@ -20,9 +16,6 @@ import { setApiKey, hasApiKey } from '../../features/template-editor/ai-provider
         FormsModule,
         DialogModule,
         ButtonModule,
-        InputTextModule,
-        SelectButtonModule,
-        StepsModule,
         PasswordModule,
         DividerModule
     ],
@@ -30,59 +23,24 @@ import { setApiKey, hasApiKey } from '../../features/template-editor/ai-provider
         <p-dialog 
             [(visible)]="visible" 
             [modal]="true" 
-            [closable]="false"
+            [closable]="true"
             [draggable]="false"
             [resizable]="false"
-            [style]="{ width: '500px' }"
+            [style]="{ width: '450px' }"
             styleClass="onboarding-dialog">
             
-            <!-- Header with gradient -->
+            <!-- Header -->
             <ng-template pTemplate="header">
                 <div class="w-full text-center">
-                    <div class="text-4xl mb-2">🚀</div>
-                    <h2 class="m-0 text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-primary to-purple-500">
-                        Welcome to AI Street
+                    <div class="text-4xl mb-2">🤖</div>
+                    <h2 class="m-0 text-xl font-bold text-primary">
+                        AI Configuration
                     </h2>
-                    <p class="text-500 mt-2 mb-0">Let's get you set up in just a moment</p>
+                    <p class="text-500 mt-2 mb-0 text-sm">Connect your AI provider for smart features</p>
                 </div>
             </ng-template>
 
-            <!-- Step Indicators -->
-            <div class="flex justify-content-center gap-2 mb-4">
-                <span *ngFor="let s of [1,2,3]" 
-                    class="w-3rem h-1 border-round transition-all transition-duration-300"
-                    [class.bg-primary]="step >= s"
-                    [class.surface-300]="step < s">
-                </span>
-            </div>
-
-            <!-- Step 1: User Info -->
-            <div *ngIf="step === 1" class="fadein animation-duration-300">
-                <h3 class="mt-0 mb-3 text-center">👤 What should we call you?</h3>
-                
-                <div class="field mb-4">
-                    <label class="block text-500 font-medium mb-2">Your Name</label>
-                    <input pInputText 
-                        [(ngModel)]="userName" 
-                        class="w-full p-3 text-lg"
-                        placeholder="Enter your name"
-                        autofocus>
-                </div>
-
-                <div class="surface-100 border-round-lg p-3 flex align-items-center gap-3">
-                    <i class="pi pi-info-circle text-2xl text-blue-500"></i>
-                    <div class="text-sm">
-                        <strong>Your account will be set up as an End User.</strong><br>
-                        <span class="text-500">Contact an administrator if you need additional access.</span>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Step 2: AI Configuration (Optional) -->
-            <div *ngIf="step === 2" class="fadein animation-duration-300">
-                <h3 class="mt-0 mb-3 text-center">🤖 AI Configuration</h3>
-                <p class="text-500 text-center mb-4">Optional: Connect your AI provider for smart features</p>
-
+            <div class="fadein animation-duration-300">
                 <div class="field mb-4">
                     <label class="block text-500 font-medium mb-2">
                         <i class="pi pi-key mr-2"></i>OpenAI API Key
@@ -96,81 +54,37 @@ import { setApiKey, hasApiKey } from '../../features/template-editor/ai-provider
                         placeholder="sk-...">
                     </p-password>
                     <small class="text-500 block mt-2">
-                        <i class="pi pi-info-circle mr-1"></i>
+                        <i class="pi pi-lock mr-1"></i>
                         Your key is stored locally and never sent to our servers
                     </small>
                 </div>
+
+                <p-divider></p-divider>
 
                 <div class="surface-100 border-round-lg p-3 flex align-items-center gap-3">
                     <i class="pi pi-lightbulb text-2xl text-yellow-500"></i>
                     <div class="text-sm">
                         <strong>Don't have an API key?</strong><br>
-                        <span class="text-500">You can add it later in settings. Skip this step for now.</span>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Step 3: All Set -->
-            <div *ngIf="step === 3" class="fadein animation-duration-300 text-center">
-                <div class="text-6xl mb-3">🎉</div>
-                <h3 class="mt-0 mb-2">You're all set, {{ userName || 'friend' }}!</h3>
-                <p class="text-500 mb-4">
-                    You can access True North and Results.
-                </p>
-                
-                <div class="surface-100 border-round-lg p-4 text-left">
-                    <div class="flex align-items-center gap-3 mb-3">
-                        <i class="pi pi-user text-xl text-primary"></i>
-                        <div>
-                            <div class="text-500 text-sm">Name</div>
-                            <div class="font-bold">{{ userName || 'Guest User' }}</div>
-                        </div>
-                    </div>
-                    <div class="flex align-items-center gap-3 mb-3">
-                        <i class="pi pi-shield text-xl text-primary"></i>
-                        <div>
-                            <div class="text-500 text-sm">Role</div>
-                            <div class="font-bold">End User</div>
-                        </div>
-                    </div>
-                    <div class="flex align-items-center gap-3">
-                        <i class="pi pi-microchip text-xl" [class.text-green-500]="hasApiKeyConfigured" [class.text-500]="!hasApiKeyConfigured"></i>
-                        <div>
-                            <div class="text-500 text-sm">AI Provider</div>
-                            <div class="font-bold">{{ hasApiKeyConfigured ? 'Connected' : 'Not configured' }}</div>
-                        </div>
+                        <span class="text-500">Get one at <a href="https://platform.openai.com/api-keys" target="_blank" class="text-primary">platform.openai.com</a></span>
                     </div>
                 </div>
             </div>
 
             <!-- Footer -->
             <ng-template pTemplate="footer">
-                <div class="flex justify-content-between w-full">
+                <div class="flex justify-content-between w-full gap-2">
                     <p-button 
-                        *ngIf="step > 1"
-                        label="Back" 
-                        icon="pi pi-arrow-left"
+                        label="Skip for now" 
                         styleClass="p-button-text"
-                        (onClick)="previousStep()">
-                    </p-button>
-                    <div *ngIf="step === 1"></div>
-                    
-                    <p-button 
-                        *ngIf="step < 3"
-                        [label]="step === 2 ? (openaiKey ? 'Continue' : 'Skip') : 'Continue'"
-                        icon="pi pi-arrow-right"
-                        iconPos="right"
-                        [disabled]="step === 1 && !userName"
-                        (onClick)="nextStep()">
+                        (onClick)="skip()">
                     </p-button>
                     
                     <p-button 
-                        *ngIf="step === 3"
-                        label="Get Started"
+                        label="Save & Continue"
                         icon="pi pi-check"
                         iconPos="right"
-                        styleClass="p-button-success"
-                        (onClick)="complete()">
+                        [disabled]="!openaiKey"
+                        (onClick)="save()">
                     </p-button>
                 </div>
             </ng-template>
@@ -189,95 +103,40 @@ import { setApiKey, hasApiKey } from '../../features/template-editor/ai-provider
                 padding-top: 1.5rem;
             }
         }
-        
-        .bg-gradient-to-r {
-            background: linear-gradient(90deg, var(--primary-color), #9333ea);
-            -webkit-background-clip: text;
-            background-clip: text;
-        }
     `]
 })
 export class OnboardingDialogComponent implements OnInit {
-    private userService = inject(UserService);
+    private userService = inject(UserManagementService);
 
     visible = false;
-    step = 1;
-
-    userName = '';
-    userRole: UserRole = 'enduser';
     openaiKey = '';
 
-    roleOptions = [
-        {
-            value: 'enduser' as UserRole,
-            label: 'End User',
-            icon: 'pi pi-user',
-            description: 'View reports & results'
-        },
-        {
-            value: 'admin' as UserRole,
-            label: 'Admin',
-            icon: 'pi pi-shield',
-            description: 'Full system access'
-        }
-    ];
-
-    get hasApiKeyConfigured(): boolean {
-        return !!this.openaiKey || hasApiKey('openai');
-    }
-
     ngOnInit() {
-        this.checkFirstTimeUser();
+        this.checkApiKeyNeeded();
     }
 
-    private checkFirstTimeUser(): void {
-        const hasCompletedOnboarding = localStorage.getItem('onboarding_completed');
-        const currentUser = this.userService.getCurrentUser();
-
-        // Show if never completed onboarding
-        if (!hasCompletedOnboarding) {
-            this.visible = true;
-            // Pre-fill with existing data if any
-            this.userName = currentUser.name !== 'Guest User' ? currentUser.name : '';
-            this.userRole = currentUser.role;
-        }
-    }
-
-    nextStep(): void {
-        if (this.step < 3) {
-            // Save data as we go
-            if (this.step === 1) {
-                this.userService.setUser({
-                    name: this.userName || 'Guest User',
-                    role: this.userRole
-                });
-            } else if (this.step === 2 && this.openaiKey) {
-                setApiKey('openai', this.openaiKey);
+    private checkApiKeyNeeded(): void {
+        // Only show if user is logged in and API key not configured
+        if (this.userService.isLoggedIn() && !hasApiKey('openai')) {
+            // Check if user has already dismissed this dialog
+            const dismissed = localStorage.getItem('api_key_dialog_dismissed');
+            if (!dismissed) {
+                this.visible = true;
             }
-            this.step++;
         }
     }
 
-    previousStep(): void {
-        if (this.step > 1) {
-            this.step--;
-        }
-    }
-
-    complete(): void {
-        // Save final state
-        this.userService.setUser({
-            name: this.userName || 'Guest User',
-            role: this.userRole
-        });
-
+    save(): void {
         if (this.openaiKey) {
             setApiKey('openai', this.openaiKey);
         }
+        this.visible = false;
+    }
 
-        // Mark onboarding as complete
-        localStorage.setItem('onboarding_completed', 'true');
-
+    skip(): void {
+        // Remember that user skipped, don't show again this session
+        localStorage.setItem('api_key_dialog_dismissed', 'true');
         this.visible = false;
     }
 }
+
