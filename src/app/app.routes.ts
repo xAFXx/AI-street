@@ -1,13 +1,14 @@
 import { Routes } from '@angular/router';
 import { MainLayoutComponent } from './layout/main-layout/main-layout.component';
 import { Dashboard } from './features/dashboard/dashboard';
+import { HomeRedirectComponent } from './shared/components/home-redirect.component';
 
 export const routes: Routes = [
     {
         path: '',
         component: MainLayoutComponent,
         children: [
-            { path: '', redirectTo: 'dashboard', pathMatch: 'full' },
+            { path: '', component: HomeRedirectComponent },
             { path: 'dashboard', component: Dashboard },
             { path: 'input', loadComponent: () => import('./features/input-manager/input-manager').then(m => m.InputManager) },
             { path: 'arena', loadComponent: () => import('./features/model-arena/model-arena').then(m => m.ModelArena) },
@@ -23,3 +24,4 @@ export const routes: Routes = [
         ]
     }
 ];
+
