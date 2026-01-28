@@ -69,26 +69,11 @@ import { setApiKey, hasApiKey } from '../../features/template-editor/ai-provider
                         autofocus>
                 </div>
 
-                <div class="field">
-                    <label class="block text-500 font-medium mb-2">Your Role</label>
-                    <div class="flex gap-3">
-                        <div *ngFor="let role of roleOptions" 
-                            class="flex-1 p-3 border-round-lg cursor-pointer transition-all transition-duration-200"
-                            [class.surface-100]="userRole !== role.value"
-                            [class.surface-card]="userRole !== role.value"
-                            [class.border-primary]="userRole === role.value"
-                            [class.border-2]="userRole === role.value"
-                            [class.surface-primary]="userRole === role.value"
-                            [class.bg-primary-50]="userRole === role.value"
-                            style="border: 2px solid transparent"
-                            (click)="userRole = role.value">
-                            <div class="text-center">
-                                <i [class]="role.icon + ' text-3xl mb-2'" 
-                                   [class.text-primary]="userRole === role.value"></i>
-                                <div class="font-bold" [class.text-primary]="userRole === role.value">{{ role.label }}</div>
-                                <div class="text-xs text-500 mt-1">{{ role.description }}</div>
-                            </div>
-                        </div>
+                <div class="surface-100 border-round-lg p-3 flex align-items-center gap-3">
+                    <i class="pi pi-info-circle text-2xl text-blue-500"></i>
+                    <div class="text-sm">
+                        <strong>Your account will be set up as an End User.</strong><br>
+                        <span class="text-500">Contact an administrator if you need additional access.</span>
                     </div>
                 </div>
             </div>
@@ -130,7 +115,7 @@ import { setApiKey, hasApiKey } from '../../features/template-editor/ai-provider
                 <div class="text-6xl mb-3">🎉</div>
                 <h3 class="mt-0 mb-2">You're all set, {{ userName || 'friend' }}!</h3>
                 <p class="text-500 mb-4">
-                    {{ userRole === 'admin' ? 'You have full access to all features.' : 'You can access True North and Results.' }}
+                    You can access True North and Results.
                 </p>
                 
                 <div class="surface-100 border-round-lg p-4 text-left">
@@ -145,7 +130,7 @@ import { setApiKey, hasApiKey } from '../../features/template-editor/ai-provider
                         <i class="pi pi-shield text-xl text-primary"></i>
                         <div>
                             <div class="text-500 text-sm">Role</div>
-                            <div class="font-bold">{{ userRole === 'admin' ? 'Administrator' : 'End User' }}</div>
+                            <div class="font-bold">End User</div>
                         </div>
                     </div>
                     <div class="flex align-items-center gap-3">

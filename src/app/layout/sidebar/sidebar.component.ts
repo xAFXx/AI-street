@@ -1,23 +1,25 @@
 import { Component, OnInit, OnDestroy, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { RouterModule } from '@angular/router';
+import { Router, RouterModule } from '@angular/router';
 import { MenuItem } from 'primeng/api';
 import { MenuModule } from 'primeng/menu';
 import { ButtonModule } from 'primeng/button';
 import { AvatarModule } from 'primeng/avatar';
 import { TooltipModule } from 'primeng/tooltip';
+import { TagModule } from 'primeng/tag';
 import { Subject, takeUntil } from 'rxjs';
-import { UserService, User } from '../../core/services/user.service';
+import { UserManagementService, User } from '../../core/services/user-management.service';
 
 @Component({
     selector: 'app-sidebar',
     standalone: true,
-    imports: [CommonModule, RouterModule, MenuModule, ButtonModule, AvatarModule, TooltipModule],
+    imports: [CommonModule, RouterModule, MenuModule, ButtonModule, AvatarModule, TooltipModule, TagModule],
     templateUrl: './sidebar.component.html',
     styleUrl: './sidebar.component.less'
 })
 export class SidebarComponent implements OnInit, OnDestroy {
-    private userService = inject(UserService);
+    private userService = inject(UserManagementService);
+    private router = inject(Router);
     private destroy$ = new Subject<void>();
 
     items: MenuItem[] = [];
@@ -78,6 +80,17 @@ export class SidebarComponent implements OnInit, OnDestroy {
             ]
         },
         {
+            label: 'Admin',
+            roles: ['admin'],
+            items: [
+                {
+                    label: 'User Management',
+                    icon: 'pi pi-users',
+                    routerLink: '/user-management'
+                }
+            ]
+        },
+        {
             label: 'Reports',
             roles: ['enduser'], // Only enduser sees this simplified group
             items: [
@@ -96,11 +109,13 @@ export class SidebarComponent implements OnInit, OnDestroy {
     ];
 
     ngOnInit() {
-        this.userService.getUser()
+        this.userService.getCurrentUser()
             .pipe(takeUntil(this.destroy$))
             .subscribe(user => {
                 this.currentUser = user;
-                this.buildMenuForRole(user.role);
+                if (user) {
+                    this.buildMenuForRole(user.role);
+                }
             });
     }
 
@@ -128,13 +143,6 @@ export class SidebarComponent implements OnInit, OnDestroy {
     }
 
     /**
-     * Toggle user role (for demo purposes)
-     */
-    toggleRole(): void {
-        this.userService.toggleRole();
-    }
-
-    /**
      * Get role display name
      */
     getRoleLabel(): string {
@@ -142,14 +150,23 @@ export class SidebarComponent implements OnInit, OnDestroy {
     }
 
     /**
+     * Logout and redirect to login
+     */
+    logout(): void {
+        this.userService.logout();
+        this.router.navigate(['/login']);
+    }
+
+    /**
      * Clear all localStorage data and reload (admin only, for testing)
      */
     clearAllData(): void {
         if (confirm('This will clear all saved data including credentials and reload the page. Continue?')) {
-            localStorage.clear();
-            window.location.reload();
+            this.userService.clearAllData();
+            window.location.href = '/login';
         }
     }
 }
+
 
 

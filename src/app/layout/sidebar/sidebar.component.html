@@ -6,16 +6,7 @@
         <p-menu [model]="items" styleClass="w-full border-none opacity-90"></p-menu>
     </div>
     <div class="p-3 mt-auto border-top-1 surface-border">
-        <!-- Role Toggle Button -->
-        <div class="mb-2">
-            <button pButton [label]="getRoleLabel()"
-                [icon]="currentUser?.role === 'admin' ? 'pi pi-shield' : 'pi pi-user'"
-                class="w-full p-button-outlined p-button-sm" [class.p-button-success]="currentUser?.role === 'admin'"
-                [class.p-button-secondary]="currentUser?.role === 'enduser'" (click)="toggleRole()"
-                pTooltip="Click to switch role">
-            </button>
-        </div>
-        <!-- Clear Data Button (Admin only) -->
+        <!-- Clear Data Button (Admin only, for testing) -->
         <div class="mb-2" *ngIf="currentUser?.role === 'admin'">
             <button pButton label="Clear Data" icon="pi pi-trash"
                 class="w-full p-button-outlined p-button-danger p-button-sm" (click)="clearAllData()"
@@ -23,15 +14,21 @@
             </button>
         </div>
         <!-- User Info -->
-        <div
-            class="flex align-items-center gap-2 p-2 border-round hover:surface-hover cursor-pointer transition-duration-150 transition-colors">
-            <p-avatar [label]="currentUser?.role === 'admin' ? 'A' : 'U'" shape="circle"
+        <div class="flex align-items-center gap-2 p-2 border-round surface-100 mb-2">
+            <p-avatar [label]="currentUser?.name?.charAt(0)?.toUpperCase() || 'U'" shape="circle"
                 [styleClass]="currentUser?.role === 'admin' ? 'bg-green-500 text-white' : 'bg-primary text-white'">
             </p-avatar>
-            <div class="flex flex-column">
+            <div class="flex flex-column flex-grow-1">
                 <span class="font-bold">{{ currentUser?.name || 'User' }}</span>
-                <span class="text-sm text-500">{{ getRoleLabel() }}</span>
+                <span class="text-xs text-500">{{ currentUser?.email }}</span>
             </div>
+            <p-tag [value]="getRoleLabel()" [severity]="currentUser?.role === 'admin' ? 'success' : 'info'"
+                styleClass="text-xs">
+            </p-tag>
         </div>
+        <!-- Logout Button -->
+        <button pButton label="Logout" icon="pi pi-sign-out"
+            class="w-full p-button-outlined p-button-secondary p-button-sm" (click)="logout()">
+        </button>
     </div>
 </div>

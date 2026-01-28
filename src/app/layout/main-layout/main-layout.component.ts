@@ -3,12 +3,11 @@ import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
 import { SidebarComponent } from '../sidebar/sidebar.component';
 import { TopbarComponent } from '../topbar/topbar.component';
-import { OnboardingDialogComponent } from '../../shared/components/onboarding-dialog.component';
 
 @Component({
     selector: 'app-main-layout',
     standalone: true,
-    imports: [CommonModule, RouterModule, SidebarComponent, TopbarComponent, OnboardingDialogComponent],
+    imports: [CommonModule, RouterModule, SidebarComponent, TopbarComponent],
     template: `
     <div class="flex h-screen overflow-hidden">
         <!-- Sidebar -->
@@ -25,11 +24,9 @@ import { OnboardingDialogComponent } from '../../shared/components/onboarding-di
             </div>
         </div>
     </div>
-    
-    <!-- First-time user onboarding -->
-    <app-onboarding-dialog></app-onboarding-dialog>
   `,
     styles: ``
 })
 export class MainLayoutComponent { }
+
 
