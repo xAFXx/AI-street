@@ -1,0 +1,250 @@
+<div class="grid m-0 h-full overflow-hidden">
+    <div class="col-12 h-full overflow-hidden p-0">
+        <div class="card h-full p-0 surface-card border-none shadow-none flex flex-column overflow-hidden">
+
+            <div class="block-templates-page h-full flex flex-column">
+                <!-- Toolbar -->
+                <p-toolbar class="border-none surface-0 mb-3">
+                    <div class="p-toolbar-group-left">
+                        <div class="flex flex-column">
+                            <h1 class="m-0 text-3xl font-bold text-primary">Audit Standards</h1>
+                            <p class="m-0 mt-1 text-sm text-secondary">Define reusable content block structures with
+                                custom field types. Use these standards to ensure consistency across audit reports.</p>
+                        </div>
+                    </div>
+
+                    <div class="p-toolbar-group-right">
+                        <button pButton label="Create Template" icon="pi pi-plus" class="p-button-primary"
+                            (click)="openCreateModal()"></button>
+                    </div>
+                </p-toolbar>
+
+                <!-- Table -->
+                <div class="card flex-grow-1 overflow-hidden">
+                    <p-table #dt [value]="templates" [rows]="10" [paginator]="true"
+                        [globalFilterFields]="['name', 'description']" [rowHover]="true" dataKey="id"
+                        styleClass="p-datatable-gridlines" [tableStyle]="{'min-width': '50rem'}">
+
+                        <ng-template pTemplate="caption">
+                            <div class="flex align-items-center justify-content-between">
+                                <span class="p-input-icon-left w-full md:w-20rem">
+                                    <input pInputText type="text" (input)="onGlobalFilter(dt, $event)"
+                                        placeholder="Search templates..." class="w-full" />
+                                </span>
+                            </div>
+                        </ng-template>
+
+                        <ng-template pTemplate="header">
+                            <tr>
+                                <th style="width: 25%">Template Name</th>
+                                <th style="width: 30%">Description</th>
+                                <th style="width: 15%">Fields</th>
+                                <th style="width: 15%">Last Updated</th>
+                                <th style="width: 15%">Actions</th>
+                            </tr>
+                        </ng-template>
+
+                        <ng-template pTemplate="body" let-template>
+                            <tr class="cursor-pointer" (click)="openEditModal(template)">
+                                <td>
+                                    <div class="flex flex-column gap-1">
+                                        <span class="font-bold text-color">{{ template.name }}</span>
+                                        <span class="text-xs text-secondary">ID: {{ template.id }}</span>
+                                    </div>
+                                </td>
+                                <td>
+                                    <span class="text-sm text-secondary">{{ template.description || 'No description'
+                                        }}</span>
+                                </td>
+                                <td>
+                                    <div class="flex flex-wrap gap-1">
+                                        @for (field of template.fields.slice(0, 3); track field.id) {
+                                        <p-tag [value]="field.title" severity="info" [rounded]="true"
+                                            [pTooltip]="getFieldTypeLabel(field.type)" tooltipPosition="top"></p-tag>
+                                        }
+                                        @if (template.fields.length > 3) {
+                                        <p-tag [value]="'+' + (template.fields.length - 3)" severity="secondary"
+                                            [rounded]="true"></p-tag>
+                                        }
+                                    </div>
+                                </td>
+                                <td>
+                                    <span class="text-sm">{{ template.updatedAt | date:'MMM d, y' }}</span>
+                                </td>
+                                <td>
+                                    <div class="flex gap-2">
+                                        <button pButton icon="pi pi-pencil"
+                                            class="p-button-rounded p-button-text p-button-sm"
+                                            (click)="openEditModal(template); $event.stopPropagation()"
+                                            pTooltip="Edit Template" tooltipPosition="top"></button>
+                                        <button pButton icon="pi pi-trash"
+                                            class="p-button-rounded p-button-text p-button-danger p-button-sm"
+                                            (click)="confirmDelete(template); $event.stopPropagation()"
+                                            pTooltip="Delete Template" tooltipPosition="top"></button>
+                                    </div>
+                                </td>
+                            </tr>
+                        </ng-template>
+
+                        <ng-template pTemplate="emptymessage">
+                            <tr>
+                                <td colspan="5" class="text-center py-5">
+                                    <div class="flex flex-column align-items-center gap-3">
+                                        <i class="pi pi-th-large text-6xl text-secondary"></i>
+                                        <div>
+                                            <p class="text-xl font-bold m-0">No templates found</p>
+                                            <p class="text-secondary m-0 mt-2">Create your first block template to get
+                                                started</p>
+                                        </div>
+                                        <button pButton label="Create Template" icon="pi pi-plus"
+                                            class="p-button-primary mt-2" (click)="openCreateModal()"></button>
+                                    </div>
+                                </td>
+                            </tr>
+                        </ng-template>
+                    </p-table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Template Editor Modal -->
+<p-dialog [header]="editingTemplateId ? 'Edit Template' : 'Create Template'" [(visible)]="showTemplateModal"
+    [modal]="true" [style]="{width: '800px', maxWidth: '95vw'}" [contentStyle]="{overflow: 'auto', maxHeight: '70vh'}"
+    [draggable]="false" [resizable]="false">
+
+    <form [formGroup]="templateForm" class="flex flex-column gap-4">
+        <!-- Template Info -->
+        <div class="flex flex-column gap-3">
+            <div class="flex flex-column gap-2">
+                <label for="name" class="font-semibold">Template Name <span class="text-red-500">*</span></label>
+                <input pInputText id="name" formControlName="name" placeholder="Enter template name" class="w-full" />
+                @if (templateForm.get('name')?.invalid && templateForm.get('name')?.touched) {
+                <small class="text-red-500">Template name is required</small>
+                }
+            </div>
+
+            <div class="flex flex-column gap-2">
+                <label for="description" class="font-semibold">Description</label>
+                <textarea pTextarea id="description" formControlName="description" placeholder="Optional description..."
+                    rows="2" class="w-full"></textarea>
+            </div>
+        </div>
+
+        <p-divider></p-divider>
+
+        <!-- Fields Section -->
+        <div class="flex flex-column gap-3">
+            <div class="flex justify-content-between align-items-center">
+                <h3 class="m-0 text-lg font-semibold">Fields</h3>
+                <button pButton type="button" label="Add Field" icon="pi pi-plus" class="p-button-outlined p-button-sm"
+                    (click)="addField()"></button>
+            </div>
+
+            <div cdkDropList (cdkDropListDropped)="onFieldDrop($event)" class="fields-list flex flex-column gap-3">
+                @for (field of fieldsArray.controls; track field.get('id')?.value; let i = $index) {
+                <div cdkDrag class="field-item p-3 border-1 border-round surface-border surface-50">
+                    <div class="flex gap-3 align-items-start">
+                        <!-- Drag Handle -->
+                        <div cdkDragHandle class="drag-handle cursor-move pt-2">
+                            <i class="pi pi-bars text-secondary"></i>
+                        </div>
+
+                        <div class="flex-grow-1 flex flex-column gap-3">
+                            <!-- Field Title and Type -->
+                            <div class="grid m-0">
+                                <div class="col-12 md:col-6 p-1">
+                                    <div class="flex flex-column gap-1">
+                                        <label class="text-sm font-medium">Field Title <span
+                                                class="text-red-500">*</span></label>
+                                        <input pInputText [formControl]="$any(field.get('title'))"
+                                            placeholder="Enter field title" class="w-full" />
+                                    </div>
+                                </div>
+                                <div class="col-12 md:col-6 p-1">
+                                    <div class="flex flex-column gap-1">
+                                        <label class="text-sm font-medium">Field Type</label>
+                                        <p-select [options]="fieldTypeOptions" [formControl]="$any(field.get('type'))"
+                                            optionLabel="label" optionValue="value" placeholder="Select type"
+                                            class="w-full">
+                                            <ng-template pTemplate="selectedItem" let-selectedOption>
+                                                <div class="flex align-items-center gap-2">
+                                                    <i [class]="selectedOption.icon"></i>
+                                                    <span>{{ selectedOption.label }}</span>
+                                                </div>
+                                            </ng-template>
+                                            <ng-template pTemplate="item" let-option>
+                                                <div class="flex align-items-center gap-2">
+                                                    <i [class]="option.icon"></i>
+                                                    <span>{{ option.label }}</span>
+                                                </div>
+                                            </ng-template>
+                                        </p-select>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Additional Options -->
+                            <div class="grid m-0">
+                                <div class="col-12 md:col-6 p-1">
+                                    <div class="flex flex-column gap-1">
+                                        <label class="text-sm font-medium">Placeholder</label>
+                                        <input pInputText [formControl]="$any(field.get('placeholder'))"
+                                            placeholder="Placeholder text" class="w-full" />
+                                    </div>
+                                </div>
+                                <div class="col-12 md:col-6 p-1">
+                                    <div class="flex flex-column gap-1">
+                                        <label class="text-sm font-medium">Default Value</label>
+                                        <input pInputText [formControl]="$any(field.get('defaultValue'))"
+                                            placeholder="Default value" class="w-full" />
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Dropdown Options (shown only for dropdown type) -->
+                            @if (field.get('type')?.value === 'dropdown') {
+                            <div class="flex flex-column gap-1">
+                                <label class="text-sm font-medium">Options (comma-separated)</label>
+                                <input pInputText [formControl]="$any(field.get('options'))"
+                                    placeholder="Option 1, Option 2, Option 3" class="w-full" />
+                            </div>
+                            }
+
+                            <!-- Required Checkbox -->
+                            <div class="flex align-items-center gap-2">
+                                <p-checkbox [formControl]="$any(field.get('required'))" [binary]="true"
+                                    inputId="required-{{i}}"></p-checkbox>
+                                <label for="required-{{i}}" class="text-sm">Required field</label>
+                            </div>
+                        </div>
+
+                        <!-- Remove Button -->
+                        <button pButton type="button" icon="pi pi-times"
+                            class="p-button-rounded p-button-text p-button-danger p-button-sm" (click)="removeField(i)"
+                            pTooltip="Remove field" [disabled]="fieldsArray.length === 1"></button>
+                    </div>
+                </div>
+                }
+            </div>
+
+            @if (fieldsArray.length === 0) {
+            <div class="text-center py-4 surface-100 border-round">
+                <p class="text-secondary m-0">No fields added yet. Click "Add Field" to start.</p>
+            </div>
+            }
+        </div>
+    </form>
+
+    <ng-template pTemplate="footer">
+        <div class="flex justify-content-end gap-2">
+            <button pButton label="Cancel" class="p-button-text" (click)="showTemplateModal = false"></button>
+            <button pButton label="Save Template" icon="pi pi-check" class="p-button-primary" (click)="saveTemplate()"
+                [disabled]="templateForm.invalid"></button>
+        </div>
+    </ng-template>
+</p-dialog>
+
+<!-- Confirm Delete Dialog -->
+<p-confirmDialog></p-confirmDialog>

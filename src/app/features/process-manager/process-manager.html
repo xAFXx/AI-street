@@ -1,0 +1,71 @@
+<div class="grid">
+    <div class="col-12">
+        <div class="card p-4 surface-card border-round shadow-2 min-h-screen">
+            <div class="flex flex-column md:flex-row justify-content-between align-items-center mb-4 gap-3">
+                <div>
+                    <h2 class="m-0 text-primary">Test Evaluation Center</h2>
+                    <p class="text-secondary mt-1">View and control all running AI analysis tasks. Edit process
+                        settings, monitor status, and manage refresh rates for ongoing analyses.</p>
+                </div>
+            </div>
+
+            <p-table [value]="analysisService.analyses()" [responsiveLayout]="'scroll'" [rowHover]="true">
+                <ng-template pTemplate="header">
+                    <tr>
+                        <th>Process Name</th>
+                        <th>Models</th>
+                        <th>Status</th>
+                        <th>Refresh Rate</th>
+                        <th>Started At</th>
+                        <th class="text-right">Actions</th>
+                    </tr>
+                </ng-template>
+                <ng-template pTemplate="body" let-analysis>
+                    <tr>
+                        <td><span class="font-bold">{{analysis.datasetName}}</span></td>
+                        <td>
+                            <div class="flex gap-1 flex-wrap">
+                                <p-tag *ngFor="let model of analysis.models" [value]="model" severity="secondary"
+                                    [rounded]="true"></p-tag>
+                            </div>
+                        </td>
+                        <td>
+                            <p-tag [value]="analysis.status" [severity]="getStatusSeverity(analysis.status)"></p-tag>
+                        </td>
+                        <td>
+                            <span class="text-secondary">{{analysis.refreshRate}}</span>
+                        </td>
+                        <td class="text-secondary text-sm">
+                            {{analysis.startTime | date:'medium'}}
+                        </td>
+                        <td class="text-right">
+                            <div class="flex justify-content-end gap-1">
+                                <p-button icon="pi pi-pencil" [rounded]="true" [text]="true" severity="info"
+                                    (onClick)="editProcess(analysis)" pTooltip="Edit Process"></p-button>
+                                <p-button icon="pi pi-trash" [rounded]="true" [text]="true" severity="danger"
+                                    (onClick)="deleteProcess(analysis)" pTooltip="Delete Process"></p-button>
+                            </div>
+                        </td>
+                    </tr>
+                </ng-template>
+            </p-table>
+
+            <p-dialog header="Edit Process" [(visible)]="visible" [modal]="true" [style]="{ width: '25rem' }">
+                <div class="flex flex-column gap-4 py-3">
+                    <div class="flex flex-column gap-2">
+                        <label for="name" class="font-semibold">Process Name</label>
+                        <input pInputText id="name" class="w-full" [(ngModel)]="editName" autocomplete="off" />
+                    </div>
+                    <div class="flex flex-column gap-2">
+                        <label for="refresh" class="font-semibold">Refresh Rate</label>
+                        <input pInputText id="refresh" class="w-full" [(ngModel)]="editRefresh" autocomplete="off" />
+                    </div>
+                </div>
+                <div class="flex justify-content-end gap-2">
+                    <p-button label="Cancel" severity="secondary" (onClick)="visible.set(false)" />
+                    <p-button label="Save" (onClick)="saveProcess()" />
+                </div>
+            </p-dialog>
+        </div>
+    </div>
+</div>

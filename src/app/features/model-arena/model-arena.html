@@ -1,0 +1,106 @@
+<div class="grid">
+    <div class="col-12">
+        <div class="card p-4 surface-card border-round shadow-2 min-h-screen">
+            <!-- Header Section -->
+            <div class="flex flex-column md:flex-row justify-content-between align-items-center mb-4 gap-3">
+                <div>
+                    <h2 class="m-0 text-primary">Model Arena</h2>
+                    <p class="text-secondary mt-1">Select a dataset and choose AI models to run analysis. Compare model
+                        performance and get recommendations based on your data type.</p>
+                </div>
+                <div *ngIf="!isRunning">
+                    <!-- GUARD: Only enable if dataset AND models are selected -->
+                    <p-button label="Run Analysis" icon="pi pi-play"
+                        [disabled]="!selectedDataset() || !hasSelectedModels" (onClick)="runAnalysis()"></p-button>
+                </div>
+            </div>
+
+            <!-- Configuration Section -->
+            <div class="flex flex-column gap-2 py-4 border-top-1 border-bottom-1 border-gray-800 mb-4">
+                <label class="text-xs font-bold text-secondary uppercase tracking-wider">Select Dataset for
+                    Analysis</label>
+                <p-select [options]="datasetService.datasets()" [(ngModel)]="selectedDataset" optionLabel="name"
+                    placeholder="Select a Dataset" class="w-full md:w-30rem" [showClear]="true">
+                    <ng-template pTemplate="selectedItem" let-selectedOption>
+                        <div class="flex align-items-center gap-2" *ngIf="selectedOption">
+                            <span class="font-bold">{{selectedOption.name}}</span>
+                            <p-tag [value]="selectedOption.type" severity="secondary" [rounded]="true"></p-tag>
+                        </div>
+                    </ng-template>
+                    <ng-template let-dataset pTemplate="item">
+                        <div class="flex align-items-center justify-content-between w-full">
+                            <span class="font-bold">{{dataset.name}}</span>
+                            <p-tag [value]="dataset.type" severity="secondary" [rounded]="true"></p-tag>
+                        </div>
+                    </ng-template>
+                </p-select>
+            </div>
+
+            <!-- AI Models Grid -->
+            <div class="grid mt-2">
+                <div class="col-12 md:col-6 lg:col-3 mb-3" *ngFor="let model of filteredModels()">
+                    <p-card [styleClass]="'h-full transition-all transition-duration-300 hover:shadow-4 cursor-pointer relative overflow-hidden' + 
+                           (isModelSelected(model.id) ? ' border-primary border-2' : '') + 
+                           (!isModelCompatible(model) ? ' opacity-50 grayscale pointer-events-none' : '')"
+                        [style]="isModelSelected(model.id) ? {'background-color': 'rgba(var(--primary-rgb), 0.05)'} : {}"
+                        (click)="toggleSelection(model)">
+                        <ng-template pTemplate="header">
+                            <div class="h-8rem overflow-hidden relative border-round-top">
+                                <!-- Model Context Image/Icon -->
+                                <div class="absolute top-0 left-0 w-full h-full flex align-items-center justify-content-center"
+                                    [ngClass]="isModelCompatible(model) ? (isModelSuggested(model) ? 'bg-primary-900' : 'bg-bluegray-900') : 'bg-gray-800'">
+                                    <i class="pi pi-bolt text-6xl opacity-50"
+                                        [ngClass]="isModelCompatible(model) ? 'text-primary' : 'text-color-secondary'"></i>
+                                </div>
+                                <div class="absolute top-0 right-0 p-2 flex gap-1">
+                                    <p-tag *ngIf="isModelSuggested(model)" value="RECOMMENDED" severity="warn"></p-tag>
+                                    <i *ngIf="!isModelCompatible(model)" class="pi pi-lock text-color-secondary"></i>
+                                </div>
+                            </div>
+                        </ng-template>
+
+                        <div class="flex justify-content-between align-items-start mb-2">
+                            <div>
+                                <h3 class="m-0 text-xl font-bold">{{model.name}}</h3>
+                                <span class="text-sm text-secondary">{{model.provider}}</span>
+                            </div>
+                            <p-tag [value]="model.speed + '% Speed'"
+                                [severity]="model.speed > 90 ? 'success' : 'info'"></p-tag>
+                        </div>
+
+                        <p class="m-0 text-color-secondary line-height-3 h-4rem overflow-hidden text-overflow-ellipsis">
+                            {{model.description}}
+                        </p>
+
+                        <div class="grid mt-3 border-top-1 border-gray-800 pt-3">
+                            <div class="col-6">
+                                <div class="text-xs text-secondary mb-1 uppercase font-bold">Processed</div>
+                                <div class="text-lg font-bold">{{model.processedCount | number}}</div>
+                            </div>
+                            <div class="col-6">
+                                <div class="text-xs text-secondary mb-1 uppercase font-bold">Tests</div>
+                                <div class="text-lg font-bold">{{model.testCount | number}}</div>
+                            </div>
+                        </div>
+
+                        <div class="flex gap-1 mt-3 flex-wrap">
+                            <p-tag *ngFor="let cap of model.capabilities" [value]="cap" severity="info"
+                                [rounded]="true"></p-tag>
+                        </div>
+
+                        <ng-template pTemplate="footer">
+                            <div class="flex justify-content-between align-items-center">
+                                <div class="flex flex-column">
+                                    <span class="text-xs text-secondary uppercase font-bold">Context Tokens</span>
+                                    <span class="font-bold text-xl">{{model.tokens}}</span>
+                                </div>
+                                <i class="pi"
+                                    [ngClass]="isModelSelected(model.id) ? 'pi-check-circle text-primary text-xl' : 'pi-circle text-500 text-xl'"></i>
+                            </div>
+                        </ng-template>
+                    </p-card>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

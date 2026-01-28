@@ -1,0 +1,87 @@
+<div class="grid">
+    <div class="col-12">
+        <div class="card p-4 surface-card border-round shadow-2">
+            <div class="flex flex-column md:flex-row justify-content-between align-items-center mb-4 gap-3">
+                <div>
+                    <h2 class="m-0 text-primary">Data Management</h2>
+                    <p class="text-secondary mt-1">Upload, organize, and manage your datasets. Enable or disable
+                        datasets to control which data is available for AI model training and analysis.</p>
+                </div>
+                <p-fileUpload mode="basic" chooseLabel="Upload New Data" accept=".json,.csv,.mp4,.pdf,image/*"
+                    maxFileSize="1000000" (onUpload)="onUpload($event)" styleClass="p-button-outlined"></p-fileUpload>
+            </div>
+
+            <p-table [value]="files()" [(selection)]="selectedFiles" dataKey="id" [tableStyle]="{'min-width': '50rem'}"
+                [rowHover]="true">
+                <ng-template pTemplate="header">
+                    <tr>
+                        <th style="width: 4rem"><p-tableHeaderCheckbox></p-tableHeaderCheckbox></th>
+                        <th>Name</th>
+                        <th>Type</th>
+                        <th>Content Type</th>
+                        <th>Tags</th>
+                        <th>Records</th>
+                        <th>Validation</th>
+                        <th>Advice</th>
+                        <th>Size</th>
+                        <th>Created</th>
+                        <th>Updated</th>
+                        <th>Status</th>
+                        <th>Active</th>
+                        <th class="sticky-col">Actions</th>
+                    </tr>
+                </ng-template>
+                <ng-template pTemplate="body" let-file>
+                    <tr>
+                        <td>
+                            <p-tableCheckbox [value]="file"></p-tableCheckbox>
+                        </td>
+                        <td>
+                            <span class="font-bold">{{file.name}}</span>
+                        </td>
+                        <td>{{file.type}}</td>
+                        <td>
+                            <p-tag [value]="file.contentType" severity="secondary"></p-tag>
+                        </td>
+                        <td>
+                            <div class="flex gap-1 flex-wrap">
+                                <p-tag *ngFor="let tag of file.tags" [value]="tag" severity="info"
+                                    [rounded]="true"></p-tag>
+                            </div>
+                        </td>
+                        <td>
+                            <div class="text-xs">
+                                <span class="font-bold">Total:</span> {{file.recordsTotal}}<br />
+                            </div>
+                        </td>
+                        <td>
+                            <div class="flex flex-column gap-1">
+                                <p-tag severity="success" [value]="file.recordsValidated + ' Val'"
+                                    [rounded]="true"></p-tag>
+                                <p-tag severity="danger" [value]="file.recordsUnvalidated + ' Unval'"
+                                    [rounded]="true"></p-tag>
+                            </div>
+                        </td>
+                        <td>
+                            <p-tag [value]="file.suggestedModel" severity="warn" [rounded]="true"></p-tag>
+                        </td>
+                        <td>{{file.size}}</td>
+                        <td>{{file.createdAt}}</td>
+                        <td>{{file.updatedAt}}</td>
+                        <td>
+                            <p-tag [value]="file.status" [severity]="getStatusSeverity(file.status)"></p-tag>
+                        </td>
+                        <td>
+                            <p-toggleswitch [(ngModel)]="file.active" (onChange)="toggleActive(file)"></p-toggleswitch>
+                        </td>
+                        <td class="sticky-col">
+                            <p-button icon="pi pi-eye" [rounded]="true" [text]="true" severity="info"></p-button>
+                            <p-button icon="pi pi-trash" [rounded]="true" [text]="true" severity="danger"
+                                (onClick)="deleteFile(file)"></p-button>
+                        </td>
+                    </tr>
+                </ng-template>
+            </p-table>
+        </div>
+    </div>
+</div>

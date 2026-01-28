@@ -1,0 +1,122 @@
+<div class="grid">
+    <div class="col-12">
+        <div class="card p-4 surface-card border-round shadow-2 min-h-screen">
+            <!-- Top Header with Navigation -->
+            <div class="flex flex-column md:flex-row justify-content-between align-items-center mb-6 gap-3">
+                <div>
+                    <h2 class="m-0 text-primary">AI Management Dashboard</h2>
+                    <p class="text-secondary mt-1">Overview of all your AI processes and performance metrics. Filter by
+                        model, track activity trends, and monitor system health at a glance.</p>
+                </div>
+                <div class="flex gap-4 border-bottom-1 border-transparent">
+                    <a class="nav-link active py-2 px-1 font-semibold cursor-pointer">Processes</a>
+                    <a
+                        class="nav-link py-2 px-1 font-semibold text-secondary cursor-pointer hover:text-color">Models</a>
+                    <a
+                        class="nav-link py-2 px-1 font-semibold text-secondary cursor-pointer hover:text-color">Settings</a>
+                </div>
+            </div>
+
+            <div class="grid">
+                <!-- Sidebar Filters & Stats -->
+                <div class="col-12 lg:col-3">
+                    <div class="flex flex-column gap-3">
+                        <div class="surface-card p-4 border-round-xl border-1 border-gray-800">
+                            <label class="text-xs font-bold text-secondary uppercase mb-3 block">Filters</label>
+                            <p-select [options]="aiModelService.models()" [(ngModel)]="selectedModel" optionLabel="name"
+                                placeholder="Select a Model" class="w-full" [showClear]="true"></p-select>
+                        </div>
+
+                        <div
+                            class="surface-card p-4 border-round-xl border-1 border-gray-800 flex justify-content-between align-items-center">
+                            <div>
+                                <span class="text-xs font-bold text-secondary uppercase block mb-1">Number of
+                                    Processes</span>
+                                <span class="text-4xl font-bold">{{stats().total}}</span>
+                            </div>
+                            <div
+                                class="border-circle w-2rem h-2rem flex align-items-center justify-content-center bg-bluegray-900 border-1 border-gray-800">
+                                <i class="pi pi-chevron-down text-xs text-primary"></i>
+                            </div>
+                        </div>
+
+                        <div
+                            class="surface-card p-4 border-round-xl border-1 border-gray-800 flex justify-content-between align-items-center">
+                            <div>
+                                <span class="text-xs font-bold text-secondary uppercase block mb-1">Active
+                                    Processes</span>
+                                <span class="text-4xl font-bold">{{stats().active}}</span>
+                            </div>
+                            <div
+                                class="border-circle w-2rem h-2rem flex align-items-center justify-content-center bg-bluegray-900 border-1 border-gray-800">
+                                <i class="pi pi-check text-xs text-green-400"></i>
+                            </div>
+                        </div>
+
+                        <div
+                            class="surface-card p-4 border-round-xl border-1 border-gray-800 flex justify-content-between align-items-center">
+                            <div>
+                                <span class="text-xs font-bold text-secondary uppercase block mb-1">Pending
+                                    Refreshes</span>
+                                <span class="text-4xl font-bold">{{stats().pending}}</span>
+                            </div>
+                            <div
+                                class="border-circle w-2rem h-2rem flex align-items-center justify-content-center bg-bluegray-900 border-1 border-gray-800">
+                                <i class="pi pi-arrow-up text-xs text-yellow-400"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Main Content Area -->
+                <div class="col-12 lg:col-9">
+                    <div class="flex flex-column gap-4">
+                        <!-- Activity Chart Card -->
+                        <div class="surface-card p-4 border-round-xl border-1 border-gray-800">
+                            <div class="flex justify-content-between align-items-center mb-4">
+                                <span class="font-semibold text-lg">Process Activity</span>
+                                <p-select placeholder="Last 30 days" class="p-select-sm"></p-select>
+                            </div>
+                            <div style="height: 300px">
+                                <p-chart type="line" [data]="activityData" [options]="activityOptions"
+                                    height="100%"></p-chart>
+                            </div>
+                        </div>
+
+                        <!-- Processes Table Card -->
+                        <div class="surface-card p-4 border-round-xl border-1 border-gray-800">
+                            <p-table [value]="analysisService.analyses()" [responsiveLayout]="'scroll'"
+                                [rowHover]="true">
+                                <ng-template pTemplate="header">
+                                    <tr class="border-bottom-1 border-gray-800">
+                                        <th class="text-secondary uppercase font-bold text-xs py-3">Process</th>
+                                        <th class="text-secondary uppercase font-bold text-xs py-3">Model</th>
+                                        <th class="text-secondary uppercase font-bold text-xs py-3">Status</th>
+                                        <th class="text-secondary uppercase font-bold text-xs py-3">Refresh Rate</th>
+                                    </tr>
+                                </ng-template>
+                                <ng-template pTemplate="body" let-analysis>
+                                    <tr class="border-bottom-1 border-gray-800">
+                                        <td class="py-4">
+                                            <span class="font-bold">{{analysis.datasetName}}</span>
+                                        </td>
+                                        <td class="py-4 text-secondary">
+                                            {{analysis.models.join(', ')}}
+                                        </td>
+                                        <td class="py-4">
+                                            <p-tag [severity]="getStatusSeverity(analysis.status)"
+                                                [value]="analysis.status" [rounded]="true"></p-tag>
+                                        </td>
+                                        <td class="py-4 text-secondary text-sm">
+                                            {{analysis.refreshRate}}
+                                        </td>
+                                    </tr>
+                                </ng-template>
+                            </p-table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
