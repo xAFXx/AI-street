@@ -605,7 +605,7 @@
                 <p-button *ngIf="state.currentStep !== 'review'" label="Continue" icon="pi pi-arrow-right"
                     iconPos="right" [disabled]="!canProceed()" (click)="onNext()"></p-button>
 
-                <p-button *ngIf="state.currentStep === 'review'" label="Generate Report" icon="pi pi-check"
+                <p-button *ngIf="state.currentStep === 'review'" label="Start Report" icon="pi pi-check"
                     severity="success" (click)="generateReport()"></p-button>
             </div>
         </div>

@@ -23,6 +23,7 @@ import { MenuItem } from 'primeng/api';
 import { ReportWizardService, WizardState, WizardStep } from './report-wizard.service';
 import { TemplateConfigService } from '../template-editor/services/template-config.service';
 import { ReportTemplateConfig } from '../template-editor/models/template-config.model';
+import { ReportDataService } from '../reports/services/report-data.service';
 
 @Component({
     selector: 'app-report-wizard',
@@ -50,6 +51,7 @@ import { ReportTemplateConfig } from '../template-editor/models/template-config.
 export class ReportWizardComponent implements OnInit, OnDestroy {
     private wizardService = inject(ReportWizardService);
     private templateService = inject(TemplateConfigService);
+    private reportDataService = inject(ReportDataService);
     private router = inject(Router);
     private cdr = inject(ChangeDetectorRef);
     private destroy$ = new Subject<void>();
@@ -221,9 +223,29 @@ export class ReportWizardComponent implements OnInit, OnDestroy {
     // ========================
 
     generateReport(): void {
-        // TODO: Generate the final report
-        console.log('Generating report with state:', this.state);
-        this.router.navigate(['/reports']);
+        try {
+            // Generate report from wizard state
+            const report = this.wizardService.generateReportFromState();
+
+            // Save the report
+            this.reportDataService.createReport(report).subscribe({
+                next: (savedReport) => {
+                    console.log('Report created:', savedReport);
+
+                    // Reset wizard state
+                    this.wizardService.reset();
+
+                    // Navigate to report details page
+                    this.router.navigate(['/reports', savedReport.id]);
+                },
+                error: (error) => {
+                    console.error('Failed to create report:', error);
+                    // You could add a toast notification here
+                }
+            });
+        } catch (error) {
+            console.error('Failed to generate report:', error);
+        }
     }
 
     getDocumentName(docId: string): string {

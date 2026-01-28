@@ -21,7 +21,7 @@
             <div class="flex gap-2">
                 <button pButton label="Save Draft" icon="pi pi-save" class="p-button-outlined" [loading]="isSaving"
                     [disabled]="!hasUnsavedChanges" (click)="saveTemplate()"></button>
-                <button pButton label="Publish" icon="pi pi-check-circle" class="p-button-success"
+                <button pButton label="Publish Final" icon="pi pi-check-circle" class="p-button-success"
                     [disabled]="!canPublish()" (click)="showPublishConfirm = true"></button>
             </div>
         </div>
@@ -450,7 +450,7 @@
     </div>
     <ng-template pTemplate="footer">
         <button pButton label="Cancel" class="p-button-text" (click)="showPublishConfirm = false"></button>
-        <button pButton label="Publish" icon="pi pi-check-circle" class="p-button-success"
+        <button pButton label="Publish Final" icon="pi pi-check-circle" class="p-button-success"
             (click)="publishTemplate()"></button>
     </ng-template>
 </p-dialog>

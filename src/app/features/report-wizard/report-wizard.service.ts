@@ -1,7 +1,8 @@
 import { Injectable, inject } from '@angular/core';
 import { BehaviorSubject, Observable } from 'rxjs';
-import { ReportTemplateConfig } from '../template-editor/models/template-config.model';
+import { ReportTemplateConfig, TemplateChapter } from '../template-editor/models/template-config.model';
 import { AiProviderService } from '../template-editor/ai-providers/ai-provider.service';
+import { Report, Chapter, ContentBlock, ReferenceDoc } from '../reports/models/report.model';
 
 /**
  * Wizard step definitions
@@ -787,6 +788,153 @@ Respond in JSON format with this structure:
         });
         this.updateState({ pendingChanges });
     }
+    // ========================
+    // Report Generation
+    // ========================
+
+    /**
+     * Generate a Report object from the current wizard state
+     * Transforms template structure, documents, and AI analysis into a Report
+     */
+    generateReportFromState(): Report {
+        const template = this.state.selectedTemplate;
+        if (!template) {
+            throw new Error('No template selected');
+        }
+
+        // Generate report ID and title
+        const reportId = this.generateId();
+        const dateStr = new Date().toLocaleDateString('en-US', {
+            month: 'short',
+            day: 'numeric',
+            year: 'numeric'
+        });
+        const title = `${template.name} - ${dateStr}`;
+
+        // Convert template chapters to report chapters with content blocks
+        const chapters = this.convertTemplateChaptersToReportChapters(template.chapters);
+
+        // Convert uploaded documents to reference docs
+        const referenceDocs = this.convertDocumentsToReferenceDocs();
+
+        // Create the report object
+        const report: Report = {
+            id: reportId,
+            title,
+            template: template.name,
+            status: 'Draft',
+            lastModified: new Date(),
+            progress: this.state.progress.percentage,
+            chapters,
+            referenceDocs
+        };
+
+        return report;
+    }
+
+    /**
+     * Convert template chapters to report chapters, populating content from AI analysis
+     */
+    private convertTemplateChaptersToReportChapters(templateChapters: TemplateChapter[]): Chapter[] {
+        return templateChapters.map(tc => {
+            const chapter: Chapter = {
+                key: tc.key,
+                label: tc.label,
+                expanded: tc.expanded,
+                children: tc.children ? this.convertTemplateChaptersToReportChapters(tc.children) : undefined,
+                blocks: this.generateBlocksForChapter(tc)
+            };
+            return chapter;
+        });
+    }
+
+    /**
+     * Generate content blocks for a chapter based on template and analyzed documents
+     */
+    private generateBlocksForChapter(chapter: TemplateChapter): ContentBlock[] {
+        const blocks: ContentBlock[] = [];
+
+        // Get analyzed documents that might be relevant to this chapter
+        const relevantDocs = this.state.documents.filter(doc => {
+            if (!doc.analyzed || !doc.analysisResult) return false;
+
+            // Check if any matched requirements relate to this chapter
+            const chapterLabelLower = chapter.label.toLowerCase();
+            const matchedReqs = doc.analysisResult.matchedRequirements || [];
+
+            return matchedReqs.some(reqId => {
+                const req = this.state.requirements.find(r => r.id === reqId);
+                return req && req.label.toLowerCase().includes(chapterLabelLower.split(':')[0].trim());
+            });
+        });
+
+        // Add AI-extracted text as content blocks
+        relevantDocs.forEach(doc => {
+            if (doc.analysisResult?.extractedText) {
+                blocks.push({
+                    id: this.generateId(),
+                    text: doc.analysisResult.extractedText
+                });
+            }
+
+            // Add images if document is an image
+            if (doc.type === 'image' && doc.previewUrl) {
+                blocks.push({
+                    id: this.generateId(),
+                    images: [{
+                        id: this.generateId(),
+                        url: doc.previewUrl,
+                        caption: doc.name
+                    }]
+                });
+            }
+        });
+
+        // If no blocks generated, add placeholder from template blocks
+        if (blocks.length === 0 && chapter.blocks?.length > 0) {
+            chapter.blocks.forEach(templateBlock => {
+                if (templateBlock.content) {
+                    blocks.push({
+                        id: this.generateId(),
+                        text: templateBlock.content
+                    });
+                }
+            });
+        }
+
+        return blocks;
+    }
+
+    /**
+     * Convert uploaded documents to reference docs for the report
+     */
+    private convertDocumentsToReferenceDocs(): ReferenceDoc[] {
+        return this.state.documents.map(doc => {
+            // Map document type to reference doc type
+            let refType: ReferenceDoc['type'] = 'doc';
+            switch (doc.type) {
+                case 'pdf':
+                    refType = 'pdf';
+                    break;
+                case 'image':
+                    refType = 'image';
+                    break;
+                case 'document':
+                    refType = 'doc';
+                    break;
+                default:
+                    refType = 'doc';
+            }
+
+            return {
+                id: doc.id,
+                title: doc.name,
+                type: refType,
+                description: doc.analysisResult?.extractedText?.substring(0, 100) || `Uploaded on ${doc.uploadedAt.toLocaleDateString()}`
+            };
+        });
+    }
+
     // ========================
     // Wizard Reset
     // ========================
