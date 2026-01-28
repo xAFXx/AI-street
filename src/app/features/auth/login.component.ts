@@ -29,8 +29,8 @@ import { UserManagementService } from '../../core/services/user-management.servi
                     <div class="logo-icon mb-3">
                         <i class="pi pi-bolt text-5xl"></i>
                     </div>
-                    <h1 class="text-3xl font-bold m-0 mb-2 text-primary">AI Street</h1>
-                    <p class="text-500 m-0">Intelligent Report Management</p>
+                    <h1 class="text-3xl font-bold m-0 mb-2 text-primary">APPRX True North</h1>
+                    <p class="text-500 m-0">The intelligent co-worker for all experts</p>
                 </div>
 
                 <!-- Login Form -->
@@ -85,7 +85,7 @@ import { UserManagementService } from '../../core/services/user-management.servi
                             <span class="font-bold text-sm">Quick Access</span>
                         </div>
                         <div class="text-sm text-500">
-                            Admin users: <strong>oleg</strong> or <strong>sascha</strong>
+                            Admin users: <strong>oleg</strong>, <strong>sascha</strong>, or <strong>philipine</strong>
                         </div>
                     </div>
                 </div>
@@ -93,7 +93,7 @@ import { UserManagementService } from '../../core/services/user-management.servi
 
             <!-- Footer -->
             <div class="login-footer text-center mt-4">
-                <span class="text-500 text-sm">© 2026 AI Street Manager</span>
+                <span class="text-500 text-sm">© 2026 APPRX True North</span>
             </div>
         </div>
     `,

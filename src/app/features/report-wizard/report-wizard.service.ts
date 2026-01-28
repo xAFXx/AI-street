@@ -170,6 +170,39 @@ export class ReportWizardService {
         }
     }
 
+    /**
+     * Reset wizard to initial state for creating a new report
+     */
+    resetWizard(): void {
+        this.state = {
+            currentStep: 'template-selection',
+            selectedTemplate: null,
+            recentTemplates: this.state.recentTemplates, // Keep recent templates
+            requirements: [],
+            documents: [],
+            aiMessages: [],
+            chatMessages: [],
+            pendingChanges: [],
+            isAiTyping: false,
+            progress: { total: 0, fulfilled: 0, percentage: 0 }
+        };
+        this.state$.next(this.state);
+    }
+
+    /**
+     * Navigate to a specific step (only if going backward or to current)
+     */
+    goToStep(step: WizardStep): void {
+        const steps: WizardStep[] = ['template-selection', 'requirements', 'review'];
+        const targetIndex = steps.indexOf(step);
+        const currentIndex = steps.indexOf(this.state.currentStep);
+
+        // Only allow going backward or staying on current step
+        if (targetIndex <= currentIndex) {
+            this.setStep(step);
+        }
+    }
+
     // ========================
     // Template Selection
     // ========================

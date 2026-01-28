@@ -6,7 +6,8 @@
             <p-button icon="pi pi-times" [text]="true" severity="secondary" pTooltip="Cancel"
                 (click)="onCancel()"></p-button>
         </div>
-        <p-steps [model]="steps" [activeIndex]="activeStepIndex" [readonly]="true"></p-steps>
+        <p-steps [model]="steps" [activeIndex]="activeStepIndex" [readonly]="false"
+            (activeIndexChange)="onStepClick({index: $event})"></p-steps>
     </div>
 
     <!-- Step Content -->
@@ -489,82 +490,27 @@
                         </div>
                     </div>
 
-                    <!-- AI Chat -->
-                    <div class="surface-card border-round-lg shadow-1 overflow-hidden mb-4">
+                    <!-- AI Chat Card -->
+                    <div class="surface-card border-round-lg shadow-1 overflow-hidden">
                         <div
-                            class="flex align-items-center justify-content-between p-3 border-bottom-1 surface-border bg-primary-50">
-                            <h4 class="m-0 text-primary">
-                                <i class="pi pi-comments mr-2"></i>AI Assistant
-                            </h4>
-                            <p-button icon="pi pi-trash" [text]="true" severity="secondary" size="small"
-                                pTooltip="Clear chat" (click)="clearChat()"></p-button>
+                            class="flex align-items-center justify-content-between px-4 py-3 border-bottom-1 surface-border">
+                            <div class="flex align-items-center gap-2">
+                                <i class="pi pi-sparkles text-primary"></i>
+                                <span class="font-semibold">AI Assistant</span>
+                            </div>
+                            <p-button icon="pi pi-expand" [text]="true" severity="secondary" size="small"
+                                pTooltip="Expand chat"></p-button>
                         </div>
-
-                        <!-- Chat Messages -->
-                        <div class="chat-messages p-3" style="height: 300px; overflow-y: auto;">
-                            <!-- System messages from AI analysis -->
-                            <div *ngFor="let msg of state.aiMessages"
-                                class="chat-message ai-message mb-2 p-2 border-round text-sm"
-                                [class.bg-blue-50]="msg.type === 'info'" [class.bg-green-50]="msg.type === 'success'"
-                                [class.bg-orange-50]="msg.type === 'warning'"
-                                [class.bg-purple-50]="msg.type === 'request'">
-                                <div class="flex align-items-center gap-2 mb-1">
-                                    <i [class]="getAiMessageIcon(msg.type)"></i>
-                                    <span class="text-xs text-secondary">{{ msg.timestamp | date:'shortTime' }}</span>
-                                </div>
-                                <p class="m-0">{{ msg.text }}</p>
-                            </div>
-
-                            <!-- Chat conversation -->
-                            <div *ngFor="let msg of state.chatMessages" class="chat-message mb-2"
-                                [class.user-message]="msg.role === 'user'"
-                                [class.ai-message]="msg.role === 'assistant'">
-                                <div class="flex align-items-center gap-2 mb-1">
-                                    <i *ngIf="msg.role === 'user'" class="pi pi-user text-xs"></i>
-                                    <i *ngIf="msg.role === 'assistant'" class="pi pi-android text-primary text-xs"></i>
-                                    <span class="text-xs text-secondary">{{ msg.timestamp | date:'shortTime' }}</span>
-                                </div>
-                                <p class="m-0 white-space-pre-line">{{ msg.content }}</p>
-                            </div>
-
-                            <!-- Typing indicator -->
-                            <div *ngIf="state.isAiTyping" class="chat-message ai-message typing">
-                                <div class="typing-indicator flex gap-1 p-2">
-                                    <span class="processing-pulse"></span>
-                                    <span class="processing-pulse"></span>
-                                    <span class="processing-pulse"></span>
-                                </div>
-                            </div>
-
-                            <!-- Empty state -->
-                            <div *ngIf="state.aiMessages.length === 0 && state.chatMessages.length === 0 && !state.isAiTyping"
-                                class="text-center text-secondary py-4">
-                                <i class="pi pi-comments text-4xl mb-2 text-secondary"></i>
-                                <p class="m-0">Ask me anything about your documents or report!</p>
-                            </div>
-                        </div>
-
-                        <!-- Chat Input -->
-                        <div class="p-3 border-top-1 surface-border">
-                            <div class="flex gap-2">
-                                <input type="text" pInputText class="flex-1"
-                                    placeholder="Ask about documents, edit content..." [(ngModel)]="chatInput"
-                                    (keyup.enter)="sendChatMessage()" [disabled]="state.isAiTyping">
-                                <p-button icon="pi pi-send" [disabled]="!chatInput?.trim() || state.isAiTyping"
-                                    (click)="sendChatMessage()"></p-button>
-                            </div>
-                            <div class="flex gap-2 mt-2">
-                                <p-button label="Summarize docs" [text]="true" size="small"
-                                    (click)="askAi('Summarize what information is available from the uploaded documents')"></p-button>
-                                <p-button label="Check requirements" [text]="true" size="small"
-                                    (click)="askAi('Which requirements are still missing and what documents would help?')"></p-button>
-                            </div>
-                        </div>
+                        <app-ai-chat context="report-wizard"
+                            [systemPrompt]="'You are an AI assistant helping create a report. The user has uploaded documents and is filling out requirements. Help them understand what information is available, what is missing, and suggest how to improve their report. Be concise and helpful.'"
+                            placeholder="Ask or search anything..."
+                            emptyStateMessage="Ask me anything about your documents or report!">
+                        </app-ai-chat>
                     </div>
 
                     <!-- Warnings -->
                     <div *ngIf="state.progress.percentage < 100"
-                        class="surface-card border-round-lg shadow-1 p-4 border-left-3 border-orange-500">
+                        class="surface-card border-round-lg shadow-1 mt-4 p-4 border-left-3 border-orange-500">
                         <h4 class="mt-0 mb-2 text-orange-600">
                             <i class="pi pi-exclamation-triangle mr-2"></i>Incomplete Report
                         </h4>

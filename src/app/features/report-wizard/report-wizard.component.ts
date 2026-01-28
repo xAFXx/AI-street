@@ -25,6 +25,9 @@ import { TemplateConfigService } from '../template-editor/services/template-conf
 import { ReportTemplateConfig } from '../template-editor/models/template-config.model';
 import { ReportDataService } from '../reports/services/report-data.service';
 
+// Components
+import { AiChatComponent } from '../../shared/components/ai-chat/ai-chat.component';
+
 @Component({
     selector: 'app-report-wizard',
     standalone: true,
@@ -42,7 +45,8 @@ import { ReportDataService } from '../reports/services/report-data.service';
         DividerModule,
         ScrollPanelModule,
         AvatarModule,
-        BadgeModule
+        BadgeModule,
+        AiChatComponent
     ],
     templateUrl: './report-wizard.component.html',
     styleUrls: ['./report-wizard.component.less'],
@@ -74,6 +78,9 @@ export class ReportWizardComponent implements OnInit, OnDestroy {
     activeStepIndex = 0;
 
     ngOnInit(): void {
+        // Reset wizard to start fresh when creating a new report
+        this.wizardService.resetWizard();
+
         // Subscribe to wizard state
         this.wizardService.getState()
             .pipe(takeUntil(this.destroy$))
@@ -137,8 +144,22 @@ export class ReportWizardComponent implements OnInit, OnDestroy {
     }
 
     onCancel(): void {
-        this.wizardService.reset();
+        this.wizardService.resetWizard();
         this.router.navigate(['/reports']);
+    }
+
+    /**
+     * Handle step click - only allow going backward
+     */
+    onStepClick(event: any): void {
+        const steps: WizardStep[] = ['template-selection', 'requirements', 'review'];
+        const clickedIndex = event.index;
+        const currentIndex = this.getStepIndex(this.state.currentStep);
+
+        // Only allow going backward
+        if (clickedIndex < currentIndex) {
+            this.wizardService.goToStep(steps[clickedIndex]);
+        }
     }
 
     // ========================

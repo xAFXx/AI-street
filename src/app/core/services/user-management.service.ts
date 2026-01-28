@@ -37,6 +37,13 @@ export class UserManagementService {
             name: 'Sascha',
             role: 'admin',
             createdAt: new Date('2026-01-01')
+        },
+        {
+            id: 'admin-3',
+            email: 'philipine@apprx.nl',
+            name: 'Philipine',
+            role: 'admin',
+            createdAt: new Date('2026-01-01')
         }
     ];
 
@@ -242,6 +249,22 @@ export class UserManagementService {
                     createdAt: new Date(u.createdAt),
                     lastLogin: u.lastLogin ? new Date(u.lastLogin) : undefined
                 }));
+
+                // Ensure all default admin users exist and have admin role
+                for (const defaultUser of this.defaultUsers) {
+                    const existingUser = this.users.find(u =>
+                        u.email.toLowerCase() === defaultUser.email.toLowerCase() ||
+                        u.name.toLowerCase() === defaultUser.name.toLowerCase()
+                    );
+                    if (existingUser) {
+                        // Ensure they have admin role
+                        existingUser.role = 'admin';
+                    } else {
+                        // Add missing default admin
+                        this.users.push({ ...defaultUser });
+                    }
+                }
+                this.saveUsers();
             } else {
                 // Initialize with default users
                 this.users = [...this.defaultUsers];
