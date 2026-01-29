@@ -76,6 +76,11 @@ export class SidebarComponent implements OnInit, OnDestroy {
                     label: 'Results',
                     icon: 'pi pi-file-check',
                     routerLink: '/results'
+                },
+                {
+                    label: 'Search & Action',
+                    icon: 'pi pi-search',
+                    routerLink: '/search'
                 }
             ]
         },
@@ -103,6 +108,11 @@ export class SidebarComponent implements OnInit, OnDestroy {
                     label: 'Results',
                     icon: 'pi pi-file-check',
                     routerLink: '/results'
+                },
+                {
+                    label: 'Search & Action',
+                    icon: 'pi pi-search',
+                    routerLink: '/search'
                 }
             ]
         }

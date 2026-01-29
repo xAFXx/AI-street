@@ -71,7 +71,8 @@ import { AiChatService, ChatMessage, ChatContext } from '../../../core/services/
                 </div>
             </div>
 
-            <!-- Input Area -->
+            <!-- Input Area (Optional) -->
+            <ng-container *ngIf="showInputArea">
             <div class="chat-input-area p-3 border-top-1 surface-border">
                 <div class="input-wrapper flex align-items-center gap-2 p-2 surface-ground border-round-lg">
                     <i class="pi pi-plus text-500 cursor-pointer hover:text-primary"></i>
@@ -83,20 +84,14 @@ import { AiChatService, ChatMessage, ChatContext } from '../../../core/services/
                         [disabled]="isLoading || !isReady"
                         (keydown.enter)="onEnterKey($any($event))" />
                     <i class="pi pi-microphone text-500 cursor-pointer hover:text-primary"></i>
-                    <span class="divider"></span>
                     <p-button 
-                        label="Search"
-                        [text]="true"
-                        size="small"
-                        severity="secondary"
-                        class="mr-1">
-                    </p-button>
-                    <p-button 
-                        label="Ask AI"
+                        icon="pi pi-send"
+                        [rounded]="true"
                         size="small"
                         [loading]="isLoading"
                         [disabled]="!inputMessage.trim() || !isReady"
-                        (onClick)="sendMessage()">
+                        (onClick)="sendMessage()"
+                        pTooltip="Send message">
                     </p-button>
                 </div>
                 <small *ngIf="!isReady" class="text-orange-500 block mt-2 text-center">
@@ -104,6 +99,7 @@ import { AiChatService, ChatMessage, ChatContext } from '../../../core/services/
                     Configure your OpenAI API key to enable AI chat
                 </small>
             </div>
+        </ng-container>
         </div>
     `,
     styles: [`
@@ -259,10 +255,13 @@ export class AiChatComponent implements OnInit, OnDestroy {
     @Input() systemPrompt: string = '';
 
     /** Placeholder text for input */
-    @Input() placeholder: string = 'Ask AI anything...';
+    @Input() placeholder: string = 'Type your message...';
 
     /** Empty state message */
     @Input() emptyStateMessage: string = 'Start a conversation with AI';
+
+    /** Whether to show the input area (set to false when using external input) */
+    @Input() showInputArea: boolean = true;
 
     messages: ChatMessage[] = [];
     inputMessage: string = '';
@@ -316,6 +315,14 @@ export class AiChatComponent implements OnInit, OnDestroy {
             event.preventDefault();
             this.sendMessage();
         }
+    }
+
+    /** Send a message from an external source (e.g., global search bar) */
+    async sendExternalMessage(message: string): Promise<void> {
+        if (!message.trim() || this.isLoading || !this.isReady) return;
+
+        this.inputMessage = message;
+        await this.sendMessage();
     }
 
     clearChat(): void {

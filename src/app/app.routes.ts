@@ -31,7 +31,8 @@ export const routes: Routes = [
             { path: 'template-editor/new', loadComponent: () => import('./features/template-editor/template-editor.component').then(m => m.TemplateEditorComponent), canActivate: [adminGuard] },
             { path: 'template-editor/:id', loadComponent: () => import('./features/template-editor/template-editor.component').then(m => m.TemplateEditorComponent), canActivate: [adminGuard] },
             { path: 'report-wizard', loadComponent: () => import('./features/report-wizard/report-wizard.component').then(m => m.ReportWizardComponent) },
-            { path: 'user-management', loadComponent: () => import('./features/admin/user-management.component').then(m => m.UserManagementComponent), canActivate: [adminGuard] }
+            { path: 'user-management', loadComponent: () => import('./features/admin/user-management.component').then(m => m.UserManagementComponent), canActivate: [adminGuard] },
+            { path: 'search', loadComponent: () => import('./features/search-action/search-action.component').then(m => m.SearchActionComponent) }
         ]
     },
 
