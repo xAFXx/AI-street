@@ -30,19 +30,21 @@ import { UserManagementService, User, UserRole } from '../../core/services/user-
     ],
     providers: [ConfirmationService],
     template: `
-        <div class="user-management">
-            <!-- Header -->
-            <div class="flex justify-content-between align-items-center mb-4">
-                <div>
-                    <h1 class="text-2xl font-bold m-0">User Management</h1>
-                    <p class="text-500 mt-1 mb-0">Manage user accounts and permissions</p>
+        <div class="user-management p-4">
+            <!-- Main Card Container -->
+            <div class="surface-card border-round-lg shadow-1 p-4">
+                <!-- Header -->
+                <div class="flex justify-content-between align-items-center mb-4">
+                    <div>
+                        <h1 class="text-2xl font-bold m-0 text-primary">User Management</h1>
+                        <p class="text-500 mt-1 mb-0">Manage user accounts and permissions</p>
+                    </div>
+                    <button pButton 
+                        label="Add User" 
+                        icon="pi pi-plus"
+                        (click)="openAddDialog()">
+                    </button>
                 </div>
-                <button pButton 
-                    label="Add User" 
-                    icon="pi pi-plus"
-                    (click)="openAddDialog()">
-                </button>
-            </div>
 
             <!-- Stats Cards -->
             <div class="grid mb-4">
@@ -87,8 +89,8 @@ import { UserManagementService, User, UserRole } from '../../core/services/user-
                 </div>
             </div>
 
-            <!-- Users Table -->
-            <div class="surface-card border-round-lg">
+                <!-- Users Table -->
+                <div class="surface-ground border-round-lg">
                 <p-table 
                     [value]="users" 
                     [paginator]="true" 
@@ -172,6 +174,8 @@ import { UserManagementService, User, UserRole } from '../../core/services/user-
                 </p-table>
             </div>
 
+            </div>
+
             <!-- Add/Edit Dialog -->
             <p-dialog 
                 [(visible)]="dialogVisible" 
@@ -218,8 +222,14 @@ import { UserManagementService, User, UserRole } from '../../core/services/user-
         </div>
     `,
     styles: [`
+        :host {
+            display: block;
+            width: 100%;
+            height: 100%;
+        }
+
         .user-management {
-            max-width: 1200px;
+            height: 100%;
         }
     `]
 })
