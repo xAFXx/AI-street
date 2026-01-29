@@ -17,11 +17,11 @@
         <div class="search-section">
             <!-- Simple Search -->
             <div class="flex gap-2 align-items-center" *ngIf="!showAdvancedSearch">
-                <span class="p-input-icon-left flex-grow-1">
-                    <i class="pi pi-search"></i>
+                <p-iconfield class="flex-grow-1">
+                    <p-inputicon styleClass="pi pi-search"></p-inputicon>
                     <input pInputText type="text" [(ngModel)]="searchText" (input)="onSearchChange()"
                         placeholder="Search documents by name, report, content..." class="w-full" />
-                </span>
+                </p-iconfield>
                 <button pButton icon="pi pi-filter" label="Advanced" class="p-button-outlined p-button-secondary"
                     (click)="toggleAdvancedSearch()"></button>
                 <button pButton icon="pi pi-times" class="p-button-text p-button-secondary" (click)="clearSearch()"

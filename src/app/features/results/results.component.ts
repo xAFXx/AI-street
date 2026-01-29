@@ -12,6 +12,8 @@ import { SelectModule } from 'primeng/select';
 import { TooltipModule } from 'primeng/tooltip';
 import { ProgressBarModule } from 'primeng/progressbar';
 import { DatePickerModule } from 'primeng/datepicker';
+import { IconFieldModule } from 'primeng/iconfield';
+import { InputIconModule } from 'primeng/inputicon';
 
 export interface ResultDocument {
     id: string;
@@ -49,7 +51,9 @@ export interface DocumentStats {
         SelectModule,
         TooltipModule,
         ProgressBarModule,
-        DatePickerModule
+        DatePickerModule,
+        IconFieldModule,
+        InputIconModule
     ],
     templateUrl: './results.component.html',
     styleUrls: ['./results.component.less'],

@@ -16,6 +16,8 @@ import { CardModule } from 'primeng/card';
 import { TagModule } from 'primeng/tag';
 import { DialogModule } from 'primeng/dialog';
 import { MenuItem } from 'primeng/api';
+import { IconFieldModule } from 'primeng/iconfield';
+import { InputIconModule } from 'primeng/inputicon';
 
 // Services
 import { AiChatService, ChatMessage } from '../../core/services/ai-chat.service';
@@ -70,7 +72,9 @@ export interface PanelState {
         CardModule,
         TagModule,
         DialogModule,
-        AiChatComponent
+        AiChatComponent,
+        IconFieldModule,
+        InputIconModule
     ],
     changeDetection: ChangeDetectionStrategy.OnPush,
     templateUrl: './search-action.component.html',

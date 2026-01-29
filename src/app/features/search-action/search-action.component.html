@@ -17,11 +17,11 @@
                 <button pButton icon="pi pi-plus" [text]="true" severity="primary" size="small" pTooltip="New Session"
                     (click)="createNewSession()"></button>
             </div>
-            <div class="p-inputgroup">
-                <span class="p-inputgroup-addon"><i class="pi pi-search"></i></span>
+            <p-iconfield class="w-full">
+                <p-inputicon styleClass="pi pi-search"></p-inputicon>
                 <input type="text" pInputText [(ngModel)]="sessionSearch" placeholder="Search sessions..."
                     class="w-full">
-            </div>
+            </p-iconfield>
         </div>
         <div class="sessions-list overflow-y-auto">
             <div *ngFor="let session of filteredSessions"
