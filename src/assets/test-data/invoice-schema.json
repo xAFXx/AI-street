@@ -1,0 +1,438 @@
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "title": "Invoice Document",
+    "description": "Schema for invoice document extraction - converted from legacy field definitions",
+    "type": "object",
+    "properties": {
+        "ID": {
+            "type": "string",
+            "description": "Invoice Number"
+        },
+        "Country": {
+            "type": "string",
+            "description": "Country"
+        },
+        "IssueDate": {
+            "type": "string",
+            "format": "date",
+            "description": "Issue Date"
+        },
+        "DueDate": {
+            "type": "string",
+            "format": "date",
+            "description": "Due Date"
+        },
+        "Note": {
+            "type": "string",
+            "description": "Note"
+        },
+        "PaymentTerms": {
+            "type": "string",
+            "description": "Payment Terms"
+        },
+        "LegalMonetaryTotal": {
+            "type": "object",
+            "description": "Legal Monetary Total",
+            "properties": {
+                "TaxExclusiveAmount": {
+                    "type": "number",
+                    "description": "Tax Exclusive Amount"
+                },
+                "TaxInclusiveAmount": {
+                    "type": "number",
+                    "description": "Tax Inclusive Amount"
+                }
+            }
+        },
+        "TaxTotal": {
+            "type": "object",
+            "description": "Tax Total",
+            "properties": {
+                "TaxAmount": {
+                    "type": "object",
+                    "properties": {
+                        "Value": {
+                            "type": "number",
+                            "description": "Tax Amount Value"
+                        }
+                    }
+                }
+            }
+        },
+        "Payment": {
+            "type": "object",
+            "description": "Payment Information",
+            "properties": {
+                "IBAN": {
+                    "type": "string",
+                    "description": "IBAN"
+                }
+            }
+        },
+        "Period": {
+            "type": "object",
+            "properties": {
+                "Month": {
+                    "type": "string",
+                    "description": "Delivery Period"
+                }
+            }
+        },
+        "AccountingSupplierParty": {
+            "type": "object",
+            "description": "Creditor Information",
+            "properties": {
+                "Party": {
+                    "type": "object",
+                    "properties": {
+                        "PartyName": {
+                            "type": "object",
+                            "properties": {
+                                "Name": {
+                                    "type": "string",
+                                    "description": "Party Name"
+                                }
+                            }
+                        },
+                        "PostalAddress": {
+                            "type": "object",
+                            "properties": {
+                                "StreetName": {
+                                    "type": "string",
+                                    "description": "Street Name"
+                                },
+                                "BuildingNumber": {
+                                    "type": "string",
+                                    "description": "Building Number"
+                                },
+                                "Postbox": {
+                                    "type": "string",
+                                    "description": "Postbox"
+                                },
+                                "PostalZone": {
+                                    "type": "string",
+                                    "description": "Postal Zone"
+                                },
+                                "CityName": {
+                                    "type": "string",
+                                    "description": "City Name"
+                                },
+                                "Country": {
+                                    "type": "string",
+                                    "description": "Country"
+                                }
+                            }
+                        },
+                        "PartyIdentificationNL:KVK": {
+                            "type": "object",
+                            "properties": {
+                                "ID": {
+                                    "type": "string",
+                                    "description": "KVK ID"
+                                }
+                            }
+                        },
+                        "PartyLegalEntity": {
+                            "type": "object",
+                            "properties": {
+                                "RegistrationId": {
+                                    "type": "string",
+                                    "description": "Registration Id"
+                                },
+                                "RegistrationInstance": {
+                                    "type": "string",
+                                    "description": "Registration Instance"
+                                },
+                                "CompanyID": {
+                                    "type": "string",
+                                    "description": "Company ID"
+                                },
+                                "CompanyName": {
+                                    "type": "string",
+                                    "description": "Company Name"
+                                }
+                            }
+                        }
+                    }
+                },
+                "TaxIdentification": {
+                    "type": "object",
+                    "properties": {
+                        "ID": {
+                            "type": "string",
+                            "description": "Tax Identification ID"
+                        },
+                        "Name": {
+                            "type": "string",
+                            "description": "Tax Identification Name"
+                        }
+                    }
+                }
+            }
+        },
+        "AccountingCustomerParty": {
+            "type": "object",
+            "description": "Debtor Information",
+            "properties": {
+                "Party": {
+                    "type": "object",
+                    "properties": {
+                        "PartyName": {
+                            "type": "object",
+                            "properties": {
+                                "Name": {
+                                    "type": "string",
+                                    "description": "Party Name"
+                                }
+                            }
+                        },
+                        "CustomerAccountID": {
+                            "type": "string",
+                            "description": "Customer Account ID"
+                        },
+                        "PostalAddress": {
+                            "type": "object",
+                            "properties": {
+                                "StreetName": {
+                                    "type": "string",
+                                    "description": "Street Name"
+                                },
+                                "BuildingNumber": {
+                                    "type": "string",
+                                    "description": "Building Number"
+                                },
+                                "Postbox": {
+                                    "type": "string",
+                                    "description": "Postbox"
+                                },
+                                "PostalZone": {
+                                    "type": "string",
+                                    "description": "Postal Zone"
+                                },
+                                "CityName": {
+                                    "type": "string",
+                                    "description": "City Name"
+                                },
+                                "Country": {
+                                    "type": "string",
+                                    "description": "Country"
+                                }
+                            }
+                        },
+                        "PartyLegalEntity": {
+                            "type": "object",
+                            "properties": {
+                                "RegistrationId": {
+                                    "type": "string",
+                                    "description": "Registration Id"
+                                }
+                            }
+                        }
+                    }
+                },
+                "TaxIdentification": {
+                    "type": "object",
+                    "properties": {
+                        "ID": {
+                            "type": "string",
+                            "description": "Tax Identification ID"
+                        },
+                        "Name": {
+                            "type": "string",
+                            "description": "Tax Identification Name"
+                        }
+                    }
+                }
+            }
+        },
+        "Delivery": {
+            "type": "object",
+            "description": "Delivery Information",
+            "properties": {
+                "Party": {
+                    "type": "object",
+                    "properties": {
+                        "PartyName": {
+                            "type": "object",
+                            "properties": {
+                                "Name": {
+                                    "type": "string",
+                                    "description": "Party Name"
+                                }
+                            }
+                        },
+                        "PostalAddress": {
+                            "type": "object",
+                            "properties": {
+                                "StreetName": {
+                                    "type": "string",
+                                    "description": "Street Name"
+                                },
+                                "BuildingNumber": {
+                                    "type": "string",
+                                    "description": "Building Number"
+                                },
+                                "Postbox": {
+                                    "type": "string",
+                                    "description": "Postbox"
+                                },
+                                "PostalZone": {
+                                    "type": "string",
+                                    "description": "Postal Zone"
+                                },
+                                "CityName": {
+                                    "type": "string",
+                                    "description": "City Name"
+                                },
+                                "Country": {
+                                    "type": "string",
+                                    "description": "Country"
+                                }
+                            }
+                        },
+                        "PartyIdentification": {
+                            "type": "object",
+                            "properties": {
+                                "ID": {
+                                    "type": "string",
+                                    "description": "Party Identification ID"
+                                },
+                                "SchemeId": {
+                                    "type": "string",
+                                    "description": "Scheme ID"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "InvoiceLines": {
+            "type": "array",
+            "description": "Invoice Line Items",
+            "items": {
+                "type": "object",
+                "properties": {
+                    "Position": {
+                        "type": "integer",
+                        "description": "Position"
+                    },
+                    "Id": {
+                        "type": "string",
+                        "description": "Line ID"
+                    },
+                    "ArtikelId": {
+                        "type": "string",
+                        "description": "Artikel ID"
+                    },
+                    "Name": {
+                        "type": "string",
+                        "description": "Name"
+                    },
+                    "Description": {
+                        "type": "string",
+                        "description": "Description"
+                    },
+                    "Quantity": {
+                        "type": "integer",
+                        "description": "Quantity"
+                    },
+                    "BaseQuantity": {
+                        "type": "integer",
+                        "description": "Base Quantity"
+                    },
+                    "Amount": {
+                        "type": "number",
+                        "description": "Amount"
+                    },
+                    "AmountExcl": {
+                        "type": "number",
+                        "description": "Amount Excl. Tax"
+                    },
+                    "AmountIncl": {
+                        "type": "number",
+                        "description": "Amount Incl. Tax"
+                    },
+                    "TotalAmountExcl": {
+                        "type": "number",
+                        "description": "Total Amount Excl. Tax"
+                    },
+                    "TotalAmountIncl": {
+                        "type": "number",
+                        "description": "Total Amount Incl. Tax"
+                    },
+                    "TaxAmount": {
+                        "type": "number",
+                        "description": "Tax Amount"
+                    },
+                    "TaxPercentage": {
+                        "type": "integer",
+                        "description": "Tax Percentage"
+                    },
+                    "TaxPercentageUserFriendly": {
+                        "type": "integer",
+                        "description": "Tax Percentage User Friendly"
+                    },
+                    "ItemClassificationCode": {
+                        "type": "string",
+                        "description": "Item Classification Code"
+                    },
+                    "ItemClassificationCodeList": {
+                        "type": "string",
+                        "description": "Item Classification Code List"
+                    },
+                    "CommodityCode": {
+                        "type": "string",
+                        "description": "Commodity Code"
+                    },
+                    "CommodityCodeList": {
+                        "type": "string",
+                        "description": "Commodity Code List"
+                    }
+                }
+            }
+        },
+        "Attachment": {
+            "type": "array",
+            "description": "Attachments",
+            "items": {
+                "type": "object",
+                "properties": {
+                    "ID": {
+                        "type": "string",
+                        "description": "Attachment ID"
+                    },
+                    "Filename": {
+                        "type": "string",
+                        "description": "Filename"
+                    },
+                    "Document": {
+                        "type": "string",
+                        "description": "Document Content"
+                    }
+                }
+            }
+        },
+        "PaymentArray": {
+            "type": "array",
+            "description": "Payment Details",
+            "items": {
+                "type": "object",
+                "properties": {
+                    "ID": {
+                        "type": "string",
+                        "description": "Payment ID"
+                    },
+                    "Iban": {
+                        "type": "string",
+                        "description": "IBAN"
+                    }
+                }
+            }
+        }
+    },
+    "required": [
+        "ID",
+        "IssueDate"
+    ]
+}

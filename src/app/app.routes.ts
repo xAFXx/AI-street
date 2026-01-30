@@ -19,7 +19,7 @@ export const routes: Routes = [
         canActivate: [authGuard],
         children: [
             { path: '', component: HomeRedirectComponent },
-            { path: 'dashboard', component: Dashboard, canActivate: [adminGuard] },
+            { path: 'dashboard', component: Dashboard },
             { path: 'input', loadComponent: () => import('./features/input-manager/input-manager').then(m => m.InputManager), canActivate: [adminGuard] },
             { path: 'arena', loadComponent: () => import('./features/model-arena/model-arena').then(m => m.ModelArena), canActivate: [adminGuard] },
             { path: 'processes', loadComponent: () => import('./features/process-manager/process-manager').then(m => m.ProcessManager), canActivate: [adminGuard] },
@@ -31,8 +31,8 @@ export const routes: Routes = [
             { path: 'template-editor/new', loadComponent: () => import('./features/template-editor/template-editor.component').then(m => m.TemplateEditorComponent), canActivate: [adminGuard] },
             { path: 'template-editor/:id', loadComponent: () => import('./features/template-editor/template-editor.component').then(m => m.TemplateEditorComponent), canActivate: [adminGuard] },
             { path: 'report-wizard', loadComponent: () => import('./features/report-wizard/report-wizard.component').then(m => m.ReportWizardComponent) },
-            { path: 'user-management', loadComponent: () => import('./features/admin/user-management.component').then(m => m.UserManagementComponent), canActivate: [adminGuard] },
-            { path: 'search', loadComponent: () => import('./features/search-action/search-action.component').then(m => m.SearchActionComponent) }
+            { path: 'search', loadComponent: () => import('./features/search-action/search-action.component').then(m => m.SearchActionComponent) },
+            { path: 'document-management', loadComponent: () => import('./features/document-management/document-management.component').then(m => m.DocumentManagementComponent) }
         ]
     },
 

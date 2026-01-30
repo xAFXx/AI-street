@@ -1,11 +1,15 @@
 import { ApplicationConfig, provideZoneChangeDetection } from '@angular/core';
 import { provideRouter, withHashLocation } from '@angular/router';
 import { provideAnimationsAsync } from '@angular/platform-browser/animations/async';
+import { provideHttpClient, withInterceptors } from '@angular/common/http';
 import { providePrimeNG } from 'primeng/config';
 import { definePreset } from '@primeng/themes';
 import Aura from '@primeng/themes/aura';
+import { API_BASE_URL } from './core/services/auth-proxies.service';
+import { AppConsts } from './shared/AppConsts';
 
 import { routes } from './app.routes';
+import { authInterceptor } from './core/interceptors/auth.interceptor';
 
 // Custom theme with purple primary color
 const CustomTheme = definePreset(Aura, {
@@ -26,11 +30,25 @@ const CustomTheme = definePreset(Aura, {
   }
 });
 
+/**
+ * Factory function to provide dynamic API_BASE_URL
+ * At this point, AppPreBootstrap.run() has already completed and AppConsts is populated
+ */
+function getApiBaseUrl(): string {
+  return AppConsts.remoteServiceBaseUrl || 'https://demo-connectapi.apprx.eu';
+}
+
 export const appConfig: ApplicationConfig = {
   providers: [
     provideZoneChangeDetection({ eventCoalescing: true }),
     provideRouter(routes, withHashLocation()),
     provideAnimationsAsync(),
+    provideHttpClient(withInterceptors([authInterceptor])),
+    // API_BASE_URL is now provided from AppConsts which was populated by AppPreBootstrap
+    {
+      provide: API_BASE_URL,
+      useFactory: getApiBaseUrl
+    },
     providePrimeNG({
       theme: {
         preset: CustomTheme

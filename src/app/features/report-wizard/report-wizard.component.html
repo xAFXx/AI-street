@@ -394,7 +394,7 @@
                                                 styleClass="text-xs"></p-tag>
                                         </div>
                                         <p class="text-sm m-0">{{ doc.analysisResult.extractedText }}</p>
-                                        <div *ngIf="doc.analysisResult.matchedRequirements?.length" class="mt-2">
+                                        <div *ngIf="doc.analysisResult.matchedRequirements.length" class="mt-2">
                                             <span class="text-xs text-secondary">Matched requirements: </span>
                                             <span class="text-xs text-primary">{{
                                                 doc.analysisResult.matchedRequirements.length }}</span>

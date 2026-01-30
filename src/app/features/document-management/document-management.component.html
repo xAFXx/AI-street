@@ -1,0 +1,290 @@
+<div class="document-management-container">
+    <!-- Panel Toolbar -->
+    <div
+        class="panel-toolbar flex align-items-center justify-content-between px-3 py-2 border-bottom-1 surface-border surface-50">
+        <div class="flex align-items-center gap-2">
+            <i class="pi pi-file-edit text-primary"></i>
+            <span class="font-semibold">Document Management</span>
+        </div>
+        <button pButton icon="pi pi-refresh" label="Start Over" severity="secondary" [outlined]="true" size="small"
+            (click)="resetAll()" pTooltip="Clear all and start fresh"></button>
+    </div>
+
+    <!-- Panels Container -->
+    <div class="panels-wrapper">
+        <div class="panels-container">
+            <!-- Panel 1: Schema Editor -->
+            <div class="panel schema-panel flex flex-column surface-card border-right-1 surface-border">
+                <div
+                    class="panel-header flex align-items-center justify-content-between px-3 py-2 surface-100 border-bottom-1 surface-border">
+                    <div class="flex align-items-center gap-2">
+                        <i class="pi pi-code text-primary"></i>
+                        <span class="font-semibold">Schema Editor</span>
+                    </div>
+                    <button pButton icon="pi pi-plus" [text]="true" severity="primary" size="small"
+                        (click)="onNewSchema()" pTooltip="New Schema"></button>
+                </div>
+                <div class="panel-content flex-grow-1 overflow-y-auto p-3">
+                    <!-- Schema Selection -->
+                    <div class="mb-3">
+                        <label class="text-xs font-bold text-secondary uppercase mb-2 block">Select Schema</label>
+                        <p-select [options]="schemaOptions()" [ngModel]="selectedSchemaId()"
+                            (ngModelChange)="onSchemaSelect($event)" placeholder="Select a schema..."
+                            styleClass="w-full" [showClear]="true"></p-select>
+                    </div>
+                    <!-- New Schema Name -->
+                    <div *ngIf="isNewSchema()" class="mb-3">
+                        <label class="text-xs font-bold text-secondary uppercase mb-2 block">Schema Name</label>
+                        <input pInputText [ngModel]="newSchemaName()" (ngModelChange)="newSchemaName.set($event)"
+                            placeholder="Enter schema name..." class="w-full">
+                    </div>
+                    <!-- Code Editor -->
+                    <div class="schema-editor-area flex-grow-1 mb-3">
+                        <label class="text-xs font-bold text-secondary uppercase mb-2 block">JSON Schema</label>
+                        <textarea pTextarea [ngModel]="schemaEditorContent()"
+                            (ngModelChange)="schemaEditorContent.set($event)" class="w-full h-full font-mono text-xs"
+                            placeholder="Select a schema or create a new one..."></textarea>
+                    </div>
+                </div>
+                <div class="panel-footer flex gap-2 justify-content-end p-3 border-top-1 surface-border">
+                    <button pButton icon="pi pi-save" label="Save" severity="success" size="small"
+                        [disabled]="!schemaEditorContent()" (click)="saveSchema()"></button>
+                    <button pButton icon="pi pi-trash" label="Delete" severity="danger" [outlined]="true" size="small"
+                        [disabled]="isNewSchema() || !selectedSchemaId()" (click)="deleteSchema()"></button>
+                </div>
+            </div>
+
+            <!-- Panel 2: File Upload & Analysis -->
+            <div class="panel upload-panel flex flex-column surface-card border-right-1 surface-border">
+                <div
+                    class="panel-header flex align-items-center justify-content-between px-3 py-2 surface-100 border-bottom-1 surface-border">
+                    <div class="flex align-items-center gap-2">
+                        <i class="pi pi-upload text-primary"></i>
+                        <span class="font-semibold">Document Upload</span>
+                        <p-tag *ngIf="uploadedFiles().length > 0" [value]="uploadedFiles().length + ''"
+                            severity="secondary"></p-tag>
+                    </div>
+                    <button pButton icon="pi pi-trash" [text]="true" severity="danger" size="small"
+                        (click)="clearFiles()" [disabled]="uploadedFiles().length === 0" pTooltip="Clear all"></button>
+                </div>
+                <div class="panel-content flex-grow-1 overflow-y-auto p-3">
+                    <!-- Upload Zone -->
+                    <div class="mb-3">
+                        <p-fileUpload mode="advanced" [multiple]="true"
+                            accept=".txt,.doc,.docx,.pdf,.json,.csv,.png,.jpg,.jpeg" [maxFileSize]="10000000"
+                            (onSelect)="onFileUpload($event)" [showUploadButton]="false" [showCancelButton]="false"
+                            styleClass="upload-zone">
+                            <ng-template pTemplate="content">
+                                <div class="flex flex-column align-items-center py-3">
+                                    <i class="pi pi-cloud-upload text-3xl text-primary mb-2"></i>
+                                    <p class="m-0 font-semibold text-sm">Drag & drop files here</p>
+                                    <span class="text-secondary text-xs">txt, docx, pdf, json, csv, images</span>
+                                </div>
+                            </ng-template>
+                        </p-fileUpload>
+                    </div>
+                    <!-- Files List -->
+                    <div *ngIf="uploadedFiles().length > 0" class="files-list mb-3">
+                        <div *ngFor="let file of uploadedFiles(); let i = index"
+                            class="file-item flex justify-content-between align-items-center p-2 surface-ground border-round mb-2 cursor-pointer"
+                            (click)="showDocumentPreview(file)">
+                            <div class="flex align-items-center gap-2">
+                                <i class="pi"
+                                    [ngClass]="{'pi-file-pdf': file.name.endsWith('.pdf'), 'pi-image': file.type.includes('image'), 'pi-file': !file.name.endsWith('.pdf') && !file.type.includes('image')}"
+                                    class="text-primary"></i>
+                                <div>
+                                    <span class="font-medium text-xs block">{{file.name}}</span>
+                                    <span class="text-secondary text-xs">{{formatFileSize(file.size)}}</span>
+                                </div>
+                            </div>
+                            <div class="flex align-items-center gap-1">
+                                <p-tag [value]="file.status" [severity]="getStatusSeverity(file.status)"
+                                    styleClass="text-xs"></p-tag>
+                                <button pButton icon="pi pi-times" [text]="true" severity="danger" size="small"
+                                    (click)="$event.stopPropagation(); removeFile(i)"></button>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- AI Model Selector -->
+                    <div class="mb-3">
+                        <label class="text-xs font-bold text-secondary uppercase mb-2 block">AI Model</label>
+                        <p-select [options]="availableAiModels" optionLabel="name" optionValue="id"
+                            [ngModel]="selectedAiModel()" (ngModelChange)="selectedAiModel.set($event)"
+                            placeholder="Select AI Model" styleClass="w-full"></p-select>
+                    </div>
+                    <!-- Analysis Preview -->
+                    <div *ngIf="hasAnalyzedFiles()" class="analysis-preview">
+                        <label class="text-xs font-bold text-secondary uppercase mb-2 block">Analysis Preview</label>
+                        <div *ngFor="let file of uploadedFiles()" class="mb-2">
+                            <div *ngIf="file.analysisResult" class="p-2 surface-ground border-round text-xs">
+                                <strong class="text-primary">{{file.name}}:</strong>
+                                <p class="m-0 mt-1 text-secondary">{{file.analysisResult | slice:0:100}}...</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="panel-footer p-3 border-top-1 surface-border">
+                    <button pButton icon="pi pi-sparkles" label="Analyze with AI" class="w-full" size="small"
+                        [disabled]="!hasFilesForAnalysis() || isAnalyzing()" [loading]="isAnalyzing()"
+                        (click)="analyzeFiles()"></button>
+                </div>
+            </div>
+
+            <!-- Panel 3: Mapping Results -->
+            <div class="panel results-panel flex flex-column surface-card">
+                <div
+                    class="panel-header flex align-items-center justify-content-between px-3 py-2 surface-100 border-bottom-1 surface-border">
+                    <div class="flex align-items-center gap-2">
+                        <i class="pi pi-link text-primary"></i>
+                        <span class="font-semibold">Mapping Results</span>
+                    </div>
+                    <div *ngIf="hasMappedFiles()" class="flex gap-1">
+                        <button pButton icon="pi pi-eye" [text]="true" severity="secondary" size="small"
+                            (click)="showPreviewModal()" pTooltip="Preview JSON"></button>
+                        <button pButton icon="pi pi-download" [text]="true" severity="secondary" size="small"
+                            (click)="exportAllMappedData()" pTooltip="Download All"></button>
+                    </div>
+                </div>
+                <div class="panel-content flex-grow-1 overflow-y-auto p-3">
+                    <!-- Loading/Empty States -->
+                    <div *ngIf="!hasMappedFiles()"
+                        class="flex flex-column align-items-center justify-content-center h-full text-center">
+                        <div *ngIf="isMpping()" class="flex flex-column align-items-center">
+                            <p-progressSpinner strokeWidth="4" styleClass="mb-3"></p-progressSpinner>
+                            <span class="text-secondary text-sm">Mapping data to schema...</span>
+                        </div>
+                        <div *ngIf="isAnalyzing() && !isMpping()" class="flex flex-column align-items-center">
+                            <p-progressSpinner strokeWidth="4" styleClass="mb-3"></p-progressSpinner>
+                            <span class="text-secondary text-sm">Analyzing documents...</span>
+                        </div>
+                        <div *ngIf="!isAnalyzing() && !isMpping()" class="empty-state">
+                            <i class="pi pi-link text-4xl text-300 mb-3 block"></i>
+                            <p-message *ngIf="!selectedSchema()" severity="info" text="1. Select a schema"
+                                styleClass="mb-2 w-full text-xs"></p-message>
+                            <p-message *ngIf="selectedSchema() && uploadedFiles().length === 0" severity="info"
+                                text="2. Upload documents" styleClass="mb-2 w-full text-xs"></p-message>
+                            <p-message *ngIf="selectedSchema() && uploadedFiles().length > 0 && !hasAnalyzedFiles()"
+                                severity="info" text="3. Click 'Analyze with AI'"
+                                styleClass="mb-2 w-full text-xs"></p-message>
+                        </div>
+                    </div>
+                    <!-- Results List -->
+                    <div *ngIf="hasMappedFiles()" class="results-list">
+                        <div *ngFor="let file of mappedFiles(); let i = index"
+                            class="result-item mb-2 p-2 surface-ground border-round cursor-pointer"
+                            (click)="showPreviewModal(i)">
+                            <div class="flex justify-content-between align-items-center mb-1">
+                                <div class="flex align-items-center gap-2">
+                                    <i class="pi pi-file text-primary"></i>
+                                    <span class="font-semibold text-xs">{{file.name}}</span>
+                                </div>
+                                <p-tag [value]="file.mappedData?.confidence + '%'"
+                                    [severity]="getConfidenceSeverity(file.mappedData?.confidence || 0)"
+                                    styleClass="text-xs"></p-tag>
+                            </div>
+                            <div class="text-xs text-secondary">{{file.mappedData?.mappings?.length || 0}} fields mapped
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div *ngIf="hasMappedFiles()" class="panel-footer p-3 border-top-1 surface-border">
+                    <button pButton icon="pi pi-refresh" label="Re-map All" [outlined]="true" class="w-full"
+                        size="small" [loading]="isMpping()" (click)="performMapping()"></button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Preview Modal -->
+<p-dialog header="Mapped Data Preview" [visible]="previewModalVisible()"
+    (visibleChange)="previewModalVisible.set($event)" [modal]="true" [style]="{width: '800px', height: '600px'}"
+    [maximizable]="true">
+    <!-- File Tabs -->
+    <div *ngIf="mappedFiles().length > 1" class="flex gap-2 mb-3 flex-wrap">
+        <button *ngFor="let file of mappedFiles(); let i = index" pButton [label]="file.name" size="small"
+            [severity]="selectedPreviewFileIndex() === i ? 'primary' : 'secondary'"
+            [outlined]="selectedPreviewFileIndex() !== i" (click)="selectPreviewFile(i)"></button>
+    </div>
+    <!-- File Info -->
+    <div class="flex justify-content-between align-items-center mb-3 p-2 surface-ground border-round">
+        <span class="font-semibold">{{getCurrentPreviewFile()?.name}}</span>
+        <p-tag [value]="getCurrentPreviewFile()?.mappedData?.confidence + '% confidence'"
+            [severity]="getConfidenceSeverity(getCurrentPreviewFile()?.mappedData?.confidence || 0)"></p-tag>
+    </div>
+    <!-- Complete JSON Preview -->
+    <pre class="m-0 p-3 surface-ground border-round text-xs overflow-auto"
+        style="max-height: 400px; white-space: pre-wrap;">{{previewJson()}}</pre>
+    <ng-template pTemplate="footer">
+        <button pButton icon="pi pi-copy" label="Copy" [outlined]="true" (click)="copyToClipboard()"></button>
+        <button pButton icon="pi pi-download" label="Download" (click)="exportMappedData()"></button>
+    </ng-template>
+</p-dialog>
+
+<!-- Document Preview Modal -->
+<p-dialog [header]="documentPreviewFile()?.name || 'Document Preview'" [visible]="documentPreviewVisible()"
+    (visibleChange)="documentPreviewVisible.set($event)" [modal]="true" [style]="{width: '800px', maxHeight: '90vh'}"
+    [maximizable]="true">
+    <div *ngIf="documentPreviewFile()" class="flex flex-column gap-3">
+        <!-- File Info -->
+        <div class="flex justify-content-between align-items-center p-2 surface-ground border-round">
+            <div class="flex align-items-center gap-2">
+                <i class="pi pi-file text-primary"></i>
+                <div>
+                    <span class="font-semibold text-sm block">{{documentPreviewFile()!.name}}</span>
+                    <span class="text-secondary text-xs">{{formatFileSize(documentPreviewFile()!.size)}}</span>
+                </div>
+            </div>
+            <p-tag [value]="documentPreviewFile()!.status"
+                [severity]="getStatusSeverity(documentPreviewFile()!.status)"></p-tag>
+        </div>
+
+        <!-- Document Viewer for PDF/Office files -->
+        <div *ngIf="isOfficeFile(documentPreviewFile()!) && documentPreviewFile()!.objectUrl">
+            <ngx-doc-viewer [url]="documentPreviewFile()!.objectUrl!"
+                [viewer]="getDocViewerType(documentPreviewFile()!)"
+                style="width: 100%; height: 400px;"></ngx-doc-viewer>
+        </div>
+
+        <!-- Text Content Preview -->
+        <div
+            *ngIf="documentPreviewFile()!.content && !isOfficeFile(documentPreviewFile()!) && !isImageFile(documentPreviewFile()!)">
+            <label class="text-xs font-bold text-secondary uppercase mb-2 block">Document Content</label>
+            <pre class="m-0 p-3 surface-ground border-round text-xs overflow-auto"
+                style="max-height: 300px; white-space: pre-wrap;">{{documentPreviewFile()!.content}}</pre>
+        </div>
+
+        <!-- Image Preview -->
+        <div *ngIf="isImageFile(documentPreviewFile()!) && documentPreviewFile()!.objectUrl" class="text-center">
+            <img [src]="documentPreviewFile()!.objectUrl" alt="Document preview"
+                style="max-width: 100%; max-height: 400px;" class="border-round">
+        </div>
+
+        <!-- Analysis Result -->
+        <div *ngIf="documentPreviewFile()!.analysisResult">
+            <label class="text-xs font-bold text-secondary uppercase mb-2 block">AI Analysis</label>
+            <div class="p-2 surface-ground border-round text-xs overflow-auto" style="max-height: 200px;">
+                <p class="m-0" style="white-space: pre-wrap;">{{documentPreviewFile()!.analysisResult}}</p>
+            </div>
+        </div>
+
+        <!-- Mapping Result -->
+        <div *ngIf="documentPreviewFile()!.mappedData">
+            <label class="text-xs font-bold text-secondary uppercase mb-2 block flex align-items-center gap-2">
+                Mapped Data
+                <p-tag [value]="documentPreviewFile()!.mappedData!.confidence + '%'"
+                    [severity]="getConfidenceSeverity(documentPreviewFile()!.mappedData!.confidence)"></p-tag>
+            </label>
+            <div class="overflow-auto" style="max-height: 200px;">
+                <div *ngFor="let mapping of documentPreviewFile()!.mappedData!.mappings"
+                    class="flex justify-content-between align-items-center p-2 surface-ground border-round mb-1">
+                    <span class="font-medium text-xs">{{mapping.propertyName}}</span>
+                    <code class="text-xs text-primary">{{mapping.extractedValue | json}}</code>
+                </div>
+            </div>
+        </div>
+    </div>
+    <ng-template pTemplate="footer">
+        <button pButton icon="pi pi-times" label="Close" [outlined]="true" (click)="closeDocumentPreview()"></button>
+    </ng-template>
+</p-dialog>

@@ -9,6 +9,7 @@ import { TooltipModule } from 'primeng/tooltip';
 import { TagModule } from 'primeng/tag';
 import { Subject, takeUntil } from 'rxjs';
 import { UserManagementService, User } from '../../core/services/user-management.service';
+import { AuthService } from '../../core/services/auth.service';
 
 @Component({
     selector: 'app-sidebar',
@@ -19,6 +20,7 @@ import { UserManagementService, User } from '../../core/services/user-management
 })
 export class SidebarComponent implements OnInit, OnDestroy {
     private userService = inject(UserManagementService);
+    private authService = inject(AuthService);
     private router = inject(Router);
     private destroy$ = new Subject<void>();
 
@@ -81,17 +83,11 @@ export class SidebarComponent implements OnInit, OnDestroy {
                     label: 'Search & Action',
                     icon: 'pi pi-search',
                     routerLink: '/search'
-                }
-            ]
-        },
-        {
-            label: 'Admin',
-            roles: ['admin'],
-            items: [
+                },
                 {
-                    label: 'User Management',
-                    icon: 'pi pi-users',
-                    routerLink: '/user-management'
+                    label: 'Document Management',
+                    icon: 'pi pi-file-edit',
+                    routerLink: '/document-management'
                 }
             ]
         },
@@ -119,12 +115,37 @@ export class SidebarComponent implements OnInit, OnDestroy {
     ];
 
     ngOnInit() {
+        // Subscribe to UserManagementService for local user state (legacy)
         this.userService.getCurrentUser()
             .pipe(takeUntil(this.destroy$))
             .subscribe(user => {
                 this.currentUser = user;
                 if (user) {
                     this.buildMenuForRole(user.role);
+                }
+            });
+
+        // Also subscribe to AuthService for authenticated user state (real API)
+        this.authService.authState$
+            .pipe(takeUntil(this.destroy$))
+            .subscribe(authState => {
+                console.log('[Sidebar] Auth state changed:', authState);
+                if (authState.isAuthenticated) {
+                    // Treat all authenticated API users as admin
+                    const role = 'admin';
+                    console.log('[Sidebar] Building menu for role:', role);
+
+                    // Set a display user if not already set
+                    if (!this.currentUser) {
+                        this.currentUser = {
+                            id: authState.user?.id?.toString() || '0',
+                            name: authState.user?.name || authState.user?.userName || 'User',
+                            email: authState.user?.emailAddress || '',
+                            role: role
+                        } as User;
+                    }
+
+                    this.buildMenuForRole(role);
                 }
             });
     }
@@ -163,8 +184,23 @@ export class SidebarComponent implements OnInit, OnDestroy {
      * Logout and redirect to login
      */
     logout(): void {
-        this.userService.logout();
-        this.router.navigate(['/login']);
+        console.log('[Sidebar] Logging out...');
+        // Clear auth tokens and call API
+        this.authService.logout().subscribe({
+            next: () => {
+                console.log('[Sidebar] Logout successful');
+                // Also clear user management state
+                this.userService.logout();
+                // Redirect to login
+                this.router.navigate(['/login']);
+            },
+            error: (err) => {
+                console.error('[Sidebar] Logout error:', err);
+                // Still redirect even on error - session is cleared locally
+                this.userService.logout();
+                this.router.navigate(['/login']);
+            }
+        });
     }
 
     /**

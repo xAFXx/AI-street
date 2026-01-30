@@ -1,0 +1,195 @@
+// Document Management - Search-Action style layout
+.document-management-container {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    overflow: hidden;
+}
+
+// Panel Toolbar
+.panel-toolbar {
+    flex-shrink: 0;
+    background: var(--surface-card);
+}
+
+// Panels Wrapper & Container
+.panels-wrapper {
+    flex: 1;
+    display: flex;
+    justify-content: center;
+    overflow: hidden;
+    padding: 8px;
+    background: var(--surface-ground);
+}
+
+.panels-container {
+    display: flex;
+    width: 100%;
+    max-width: 1600px;
+    height: 100%;
+    gap: 8px;
+    overflow: hidden;
+
+    >.panel {
+        flex: 1;
+        min-width: 0;
+        transition: flex 0.3s ease-in-out;
+    }
+}
+
+// Panel Base Styles
+.panel {
+    background: var(--surface-card);
+    border-radius: 8px;
+    height: 100%;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+
+    .panel-header {
+        flex-shrink: 0;
+        font-size: 0.875rem;
+    }
+
+    .panel-content {
+        flex: 1;
+        min-height: 0;
+        overflow-y: auto;
+        overflow-x: hidden;
+    }
+
+    .panel-footer {
+        flex-shrink: 0;
+    }
+}
+
+// Schema Panel
+.schema-panel {
+    .schema-editor-area {
+        display: flex;
+        flex-direction: column;
+        flex: 1;
+        min-height: 200px;
+
+        textarea {
+            flex: 1;
+            min-height: 150px;
+            resize: none;
+        }
+    }
+}
+
+// Upload Panel
+.upload-panel {
+    .files-list {
+        max-height: 200px;
+        overflow-y: auto;
+    }
+
+    .file-item {
+        transition: background-color 0.2s;
+
+        &:hover {
+            background: var(--surface-100);
+        }
+    }
+
+    .analysis-preview {
+        max-height: 150px;
+        overflow-y: auto;
+    }
+}
+
+// Results Panel
+.results-panel {
+    .result-item {
+        transition: background-color 0.2s;
+
+        &:hover {
+            background: var(--surface-100);
+        }
+    }
+
+    .results-list {
+        flex: 1;
+    }
+}
+
+// Upload Zone Styling
+:host ::ng-deep {
+    .upload-zone {
+        .p-fileupload-content {
+            border: 2px dashed var(--surface-border);
+            border-radius: 8px;
+            background: var(--surface-ground);
+            transition: all 0.3s ease;
+            padding: 0;
+
+            &:hover {
+                border-color: var(--primary-color);
+                background: rgba(var(--primary-color-rgb), 0.05);
+            }
+        }
+
+        .p-fileupload-buttonbar {
+            display: none;
+        }
+    }
+
+    // Compact form elements
+    .p-select,
+    .p-inputtext {
+        font-size: 0.8rem;
+    }
+
+    textarea.p-inputtextarea {
+        font-size: 0.75rem;
+        line-height: 1.4;
+    }
+
+    // Compact buttons
+    .p-button-sm {
+        font-size: 0.8rem;
+        padding: 0.4rem 0.75rem;
+    }
+
+    // Compact tags
+    .text-xs .p-tag {
+        font-size: 0.65rem;
+        padding: 0.15rem 0.35rem;
+    }
+
+    // Compact messages
+    .p-message {
+        font-size: 0.75rem;
+        padding: 0.5rem;
+    }
+
+    // Progress spinner
+    .p-progress-spinner {
+        width: 40px;
+        height: 40px;
+    }
+}
+
+// Empty State
+.empty-state {
+    opacity: 0.7;
+}
+
+// Font Mono
+.font-mono {
+    font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', 'Consolas', monospace;
+}
+
+// Responsive adjustments
+@media (max-width: 992px) {
+    .panels-container {
+        flex-direction: column;
+        gap: 8px;
+
+        >.panel {
+            min-height: 300px;
+        }
+    }
+}

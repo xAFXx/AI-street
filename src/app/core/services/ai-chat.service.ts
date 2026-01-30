@@ -31,13 +31,28 @@ export interface ChatContext {
 })
 export class AiChatService {
     private apiEndpoint = 'https://api.openai.com/v1/chat/completions';
-    private model = 'gpt-4o-mini';
+    private model = 'gpt-4o';
 
     // Active contexts for different chat instances
     private contexts = new Map<string, BehaviorSubject<ChatContext>>();
 
     // Global loading state
     private isLoading$ = new BehaviorSubject<boolean>(false);
+
+    /**
+     * Set the AI model to use
+     */
+    setModel(model: string): void {
+        this.model = model;
+        console.log('[AiChatService] Model set to:', model);
+    }
+
+    /**
+     * Get current model
+     */
+    getModel(): string {
+        return this.model;
+    }
 
     /**
      * Get or create a chat context
@@ -319,6 +334,113 @@ export class AiChatService {
                 }
             }
         }
+    }
+
+    /**
+     * Upload a file to OpenAI Files API
+     * Returns the file ID for use in subsequent requests
+     */
+    async uploadFile(file: File): Promise<string> {
+        const apiKey = AI_CONFIG.openai.apiKey;
+        if (!apiKey) {
+            throw new Error('OpenAI API key not configured');
+        }
+
+        const formData = new FormData();
+        formData.append('file', file);
+        formData.append('purpose', 'assistants');
+
+        console.log('[AiChatService] Uploading file to OpenAI:', file.name, file.type, file.size);
+
+        const response = await fetch('https://api.openai.com/v1/files', {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${apiKey}`
+            },
+            body: formData
+        });
+
+        if (!response.ok) {
+            const error = await response.text();
+            console.error('[AiChatService] File upload failed:', error);
+            throw new Error(`File upload failed: ${response.status} - ${error}`);
+        }
+
+        const data = await response.json();
+        console.log('[AiChatService] File uploaded successfully:', data.id);
+        return data.id;
+    }
+
+    /**
+     * Analyze a file using GPT-4 Vision (for images and PDFs)
+     * Uses base64 encoding for direct image analysis
+     */
+    async analyzeFileWithVision(file: File, prompt: string): Promise<string> {
+        const apiKey = AI_CONFIG.openai.apiKey;
+        if (!apiKey) {
+            throw new Error('OpenAI API key not configured');
+        }
+
+        // Convert file to base64
+        const base64 = await this.fileToBase64(file);
+        const mimeType = file.type || 'application/octet-stream';
+
+        console.log('[AiChatService] Analyzing file with Vision:', file.name, mimeType);
+
+        const response = await fetch(this.apiEndpoint, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${apiKey}`
+            },
+            body: JSON.stringify({
+                model: 'gpt-4o', // Vision-capable model
+                messages: [
+                    {
+                        role: 'user',
+                        content: [
+                            { type: 'text', text: prompt },
+                            {
+                                type: 'image_url',
+                                image_url: {
+                                    url: `data:${mimeType};base64,${base64}`,
+                                    detail: 'high'
+                                }
+                            }
+                        ]
+                    }
+                ],
+                max_tokens: 4096
+            })
+        });
+
+        if (!response.ok) {
+            const error = await response.text();
+            console.error('[AiChatService] Vision analysis failed:', error);
+            throw new Error(`Vision analysis failed: ${response.status}`);
+        }
+
+        const data = await response.json();
+        const result = data.choices[0]?.message?.content || '';
+        console.log('[AiChatService] Vision analysis complete, response length:', result.length);
+        return result;
+    }
+
+    /**
+     * Convert File to base64 string
+     */
+    private fileToBase64(file: File): Promise<string> {
+        return new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.onload = () => {
+                const result = reader.result as string;
+                // Remove the data:mime/type;base64, prefix
+                const base64 = result.split(',')[1];
+                resolve(base64);
+            };
+            reader.onerror = reject;
+            reader.readAsDataURL(file);
+        });
     }
 
     private getDefaultSystemPrompt(): string {

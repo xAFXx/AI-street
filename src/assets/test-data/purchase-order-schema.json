@@ -1,0 +1,78 @@
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "title": "Purchase Order",
+    "description": "Schema for extracting purchase order data from documents",
+    "type": "object",
+    "properties": {
+        "poNumber": {
+            "type": "string",
+            "description": "Purchase order number or reference ID"
+        },
+        "orderDate": {
+            "type": "string",
+            "format": "date",
+            "description": "Date the order was placed"
+        },
+        "vendorName": {
+            "type": "string",
+            "description": "Name of the vendor or supplier"
+        },
+        "vendorAddress": {
+            "type": "string",
+            "description": "Address of the vendor"
+        },
+        "buyerName": {
+            "type": "string",
+            "description": "Name of the purchasing company or person"
+        },
+        "deliveryAddress": {
+            "type": "string",
+            "description": "Delivery/shipping address"
+        },
+        "items": {
+            "type": "array",
+            "description": "List of items being ordered",
+            "items": {
+                "type": "object",
+                "properties": {
+                    "description": {
+                        "type": "string"
+                    },
+                    "quantity": {
+                        "type": "number"
+                    },
+                    "unitPrice": {
+                        "type": "number"
+                    }
+                }
+            }
+        },
+        "subtotal": {
+            "type": "number",
+            "description": "Subtotal before tax"
+        },
+        "tax": {
+            "type": "number",
+            "description": "Tax amount"
+        },
+        "total": {
+            "type": "number",
+            "description": "Total order amount including tax"
+        },
+        "paymentTerms": {
+            "type": "string",
+            "description": "Payment terms (e.g., Net 30, Due on Receipt)"
+        },
+        "deliveryDate": {
+            "type": "string",
+            "format": "date",
+            "description": "Expected delivery date"
+        }
+    },
+    "required": [
+        "poNumber",
+        "orderDate",
+        "vendorName",
+        "total"
+    ]
+}

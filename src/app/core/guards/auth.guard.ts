@@ -1,15 +1,15 @@
 import { inject } from '@angular/core';
 import { CanActivateFn, Router } from '@angular/router';
-import { UserManagementService } from '../services/user-management.service';
+import { AuthService } from '../services/auth.service';
 
 /**
  * Guard to check if user is logged in
  */
 export const authGuard: CanActivateFn = (route, state) => {
-    const userService = inject(UserManagementService);
+    const authService = inject(AuthService);
     const router = inject(Router);
 
-    if (userService.isLoggedIn()) {
+    if (authService.isAuthenticated) {
         return true;
     }
 
@@ -22,15 +22,15 @@ export const authGuard: CanActivateFn = (route, state) => {
  * Guard to check if user is admin
  */
 export const adminGuard: CanActivateFn = (route, state) => {
-    const userService = inject(UserManagementService);
+    const authService = inject(AuthService);
     const router = inject(Router);
 
-    if (userService.isLoggedIn() && userService.isAdmin()) {
+    if (authService.isAuthenticated && authService.hasAnyRole(['Admin', 'admin'])) {
         return true;
     }
 
     // Redirect to home if not admin
-    if (userService.isLoggedIn()) {
+    if (authService.isAuthenticated) {
         router.navigate(['/results']);
     } else {
         router.navigate(['/login']);
@@ -42,19 +42,15 @@ export const adminGuard: CanActivateFn = (route, state) => {
  * Guard for login page - redirect if already logged in
  */
 export const loginGuard: CanActivateFn = (route, state) => {
-    const userService = inject(UserManagementService);
+    const authService = inject(AuthService);
     const router = inject(Router);
 
-    if (userService.isLoggedIn()) {
-        // Already logged in, redirect to appropriate page
-        const user = userService.getCurrentUserSync();
-        if (user?.role === 'admin') {
-            router.navigate(['/dashboard']);
-        } else {
-            router.navigate(['/results']);
-        }
+    if (authService.isAuthenticated) {
+        // Already logged in, redirect to dashboard
+        router.navigate(['/dashboard']);
         return false;
     }
 
     return true;
 };
+

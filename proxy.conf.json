@@ -1,0 +1,8 @@
+{
+    "/api": {
+        "target": "https://dev_ihsc-connectapi.apprx.eu",
+        "secure": true,
+        "changeOrigin": true,
+        "logLevel": "debug"
+    }
+}
