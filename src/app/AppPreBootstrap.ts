@@ -87,7 +87,14 @@ export class AppPreBootstrap {
 
                     // Try to get from localStorage (for development)
                     const storedTenant = localStorage.getItem('tenancy_name');
-                    if (storedTenant) {
+                    const customApiUrl = localStorage.getItem('custom_api_url');
+
+                    if (customApiUrl && storedTenant) {
+                        // Custom URL was previously set - use it directly
+                        console.log('[AppPreBootstrap] Using stored custom API URL:', customApiUrl);
+                        AppConsts.setDirectUrl(customApiUrl, storedTenant);
+                    } else if (storedTenant) {
+                        // Simple tenant name - use default apprx.eu format
                         console.log('[AppPreBootstrap] Using stored tenancy:', storedTenant);
                         AppConsts.setTenancy(storedTenant);
                     }
@@ -122,11 +129,21 @@ export class AppPreBootstrap {
             return;
         }
 
-        const url = AppConsts.remoteServiceBaseUrl + '/AbpUserConfiguration/GetAll';
-        console.log('[AppPreBootstrap] Loading ABP user configuration from:', url);
+        // Use relative URL to go through the dev proxy (avoids CORS)
+        const url = '/AbpUserConfiguration/GetAll';
+        console.log('[AppPreBootstrap] Loading ABP user configuration via proxy');
+        console.log('[AppPreBootstrap] Target API:', AppConsts.remoteServiceBaseUrl);
 
         // Build request headers as array (format expected by XmlHttpRequestHelper)
         const requestHeaders: { name: string; value: string }[] = [];
+
+        // Add target URL header for proxy routing
+        if (AppConsts.remoteServiceBaseUrl) {
+            requestHeaders.push({
+                name: 'X-Target-Url',
+                value: AppConsts.remoteServiceBaseUrl
+            });
+        }
 
         const cookieLangValue = abp.utils?.getCookieValue?.('Abp.Localization.CultureName') || '';
         const token = abp.auth?.getToken?.() || localStorage.getItem('auth_token');

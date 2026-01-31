@@ -84,20 +84,34 @@ export class TokenAuthServiceProxy {
     private http = inject(HttpClient);
 
     /**
-     * Get the base URL from AppConsts.
-     * AppPreBootstrap has already resolved the tenant-specific URL.
+     * Get the base URL.
+     * In development, return empty to use relative URLs through the proxy.
+     * The actual target is passed via X-Target-Url header.
      */
     private get baseUrl(): string {
-        return AppConsts.remoteServiceBaseUrl;
+        // Always use relative URLs so requests go through the Angular dev proxy
+        return '';
     }
 
     /**
      * Get standard headers for API requests
      */
     private getHeaders(): HttpHeaders {
-        return new HttpHeaders({
+        const headers: Record<string, string> = {
             'Content-Type': 'application/json'
-        });
+        };
+
+        // Pass the target URL to the proxy so it knows where to forward
+        if (AppConsts.remoteServiceBaseUrl) {
+            headers['X-Target-Url'] = AppConsts.remoteServiceBaseUrl;
+        }
+
+        // Add tenant header for logging/debugging
+        if (AppConsts.tenancyName) {
+            headers['X-Tenant-Name'] = AppConsts.tenancyName;
+        }
+
+        return new HttpHeaders(headers);
     }
 
     /**
@@ -158,19 +172,31 @@ export class SessionServiceProxy {
     private http = inject(HttpClient);
 
     /**
-     * Get the base URL from AppConsts
+     * Get the base URL.
+     * Uses relative URLs through the proxy.
      */
     private get baseUrl(): string {
-        return AppConsts.remoteServiceBaseUrl;
+        return '';
     }
 
     /**
      * Get standard headers
      */
     private getHeaders(): HttpHeaders {
-        return new HttpHeaders({
+        const headers: Record<string, string> = {
             'Content-Type': 'application/json'
-        });
+        };
+
+        // Pass the target URL to the proxy
+        if (AppConsts.remoteServiceBaseUrl) {
+            headers['X-Target-Url'] = AppConsts.remoteServiceBaseUrl;
+        }
+
+        if (AppConsts.tenancyName) {
+            headers['X-Tenant-Name'] = AppConsts.tenancyName;
+        }
+
+        return new HttpHeaders(headers);
     }
 
     /**

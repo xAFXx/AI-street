@@ -1,4 +1,4 @@
-import { Component, Input, OnInit, OnDestroy, inject, ViewChild, ElementRef, ChangeDetectionStrategy, ChangeDetectorRef } from '@angular/core';
+import { Component, Input, OnInit, OnDestroy, inject, ViewChild, ElementRef, ChangeDetectionStrategy, ChangeDetectorRef, Output, EventEmitter } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Subject, takeUntil } from 'rxjs';
@@ -6,6 +6,7 @@ import { ButtonModule } from 'primeng/button';
 import { InputTextModule } from 'primeng/inputtext';
 import { TooltipModule } from 'primeng/tooltip';
 import { AiChatService, ChatMessage, ChatContext } from '../../../core/services/ai-chat.service';
+import { AiConnectionTestService } from '../../../core/services/ai-connection-test.service';
 
 @Component({
     selector: 'app-ai-chat',
@@ -94,12 +95,26 @@ import { AiChatService, ChatMessage, ChatContext } from '../../../core/services/
                         pTooltip="Send message">
                     </p-button>
                 </div>
-                <small *ngIf="!isReady" class="text-orange-500 block mt-2 text-center">
-                    <i class="pi pi-info-circle mr-1"></i>
-                    Configure your OpenAI API key to enable AI chat
-                </small>
             </div>
         </ng-container>
+            
+            <!-- API Key Warning (always show when not ready) - Premium Design -->
+            <div *ngIf="!isReady" class="api-key-card">
+                <div class="api-key-card-inner">
+                    <div class="openai-mini-logo">
+                        <svg viewBox="0 0 24 24" width="32" height="32" fill="currentColor">
+                            <path d="M22.282 9.821a5.985 5.985 0 0 0-.516-4.91 6.046 6.046 0 0 0-6.51-2.9A6.065 6.065 0 0 0 4.981 4.18a5.985 5.985 0 0 0-3.998 2.9 6.046 6.046 0 0 0 .743 7.097 5.98 5.98 0 0 0 .51 4.911 6.051 6.051 0 0 0 6.515 2.9A5.985 5.985 0 0 0 13.26 24a6.056 6.056 0 0 0 5.772-4.206 5.99 5.99 0 0 0 3.997-2.9 6.056 6.056 0 0 0-.747-7.073zM13.26 22.43a4.476 4.476 0 0 1-2.876-1.04l.141-.081 4.779-2.758a.795.795 0 0 0 .392-.681v-6.737l2.02 1.168a.071.071 0 0 1 .038.052v5.583a4.504 4.504 0 0 1-4.494 4.494zM3.6 18.304a4.47 4.47 0 0 1-.535-3.014l.142.085 4.783 2.759a.771.771 0 0 0 .78 0l5.843-3.369v2.332a.08.08 0 0 1-.033.062L9.74 19.95a4.5 4.5 0 0 1-6.14-1.646zM2.34 7.896a4.485 4.485 0 0 1 2.366-1.973V11.6a.766.766 0 0 0 .388.676l5.815 3.355-2.02 1.168a.076.076 0 0 1-.071 0l-4.83-2.786A4.504 4.504 0 0 1 2.34 7.896zm16.597 3.855l-5.833-3.387L15.119 7.2a.076.076 0 0 1 .071 0l4.83 2.791a4.494 4.494 0 0 1-.676 8.105v-5.678a.79.79 0 0 0-.407-.667zm2.01-3.023l-.141-.085-4.774-2.782a.776.776 0 0 0-.785 0L9.409 9.23V6.897a.066.066 0 0 1 .028-.061l4.83-2.787a4.5 4.5 0 0 1 6.68 4.66zm-12.64 4.135l-2.02-1.164a.08.08 0 0 1-.038-.057V6.075a4.5 4.5 0 0 1 7.375-3.453l-.142.08-4.778 2.758a.795.795 0 0 0-.393.681zm1.097-2.365l2.602-1.5 2.607 1.5v2.999l-2.597 1.5-2.607-1.5z"/>
+                        </svg>
+                    </div>
+                    <div class="api-key-card-content">
+                        <strong class="api-key-title">Connect OpenAI</strong>
+                        <p class="api-key-subtitle">Enable AI-powered features</p>
+                    </div>
+                    <button pButton label="Connect" icon="pi pi-arrow-right" iconPos="right" 
+                        size="small" class="p-button-primary api-key-btn" (click)="requestApiKey()">
+                    </button>
+                </div>
+            </div>
         </div>
     `,
     styles: [`
@@ -239,10 +254,64 @@ import { AiChatService, ChatMessage, ChatContext } from '../../../core/services/
         .empty-state {
             padding: 3rem 0;
         }
+
+        /* Premium API Key Card */
+        .api-key-card {
+            padding: 12px 16px;
+            background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
+            border-top: 1px solid #bae6fd;
+        }
+
+        .api-key-card-inner {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px 16px;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+        }
+
+        .openai-mini-logo {
+            width: 44px;
+            height: 44px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+            border-radius: 10px;
+            color: white;
+            flex-shrink: 0;
+        }
+
+        .api-key-card-content {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .api-key-title {
+            display: block;
+            font-size: 0.95rem;
+            color: var(--text-color);
+            margin-bottom: 2px;
+        }
+
+        .api-key-subtitle {
+            margin: 0;
+            font-size: 0.8rem;
+            color: var(--text-color-secondary);
+        }
+
+        .api-key-btn {
+            flex-shrink: 0;
+            border-radius: 20px !important;
+            padding: 8px 16px !important;
+        }
     `]
 })
 export class AiChatComponent implements OnInit, OnDestroy {
     private chatService = inject(AiChatService);
+    private connectionTest = inject(AiConnectionTestService);
     private cdr = inject(ChangeDetectorRef);
     private destroy$ = new Subject<void>();
 
@@ -263,6 +332,9 @@ export class AiChatComponent implements OnInit, OnDestroy {
     /** Whether to show the input area (set to false when using external input) */
     @Input() showInputArea: boolean = true;
 
+    /** Event emitted when API key is needed but not configured */
+    @Output() apiKeyNeeded = new EventEmitter<void>();
+
     messages: ChatMessage[] = [];
     inputMessage: string = '';
     isLoading: boolean = false;
@@ -270,6 +342,12 @@ export class AiChatComponent implements OnInit, OnDestroy {
 
     ngOnInit(): void {
         this.isReady = this.chatService.isReady();
+
+        // Log diagnostics on init if not ready
+        if (!this.isReady) {
+            console.log('[AI Chat] Not ready - running diagnostics...');
+            this.connectionTest.runDiagnostics();
+        }
 
         // Subscribe to context updates
         this.chatService.getContext(this.context, this.systemPrompt)
@@ -327,6 +405,25 @@ export class AiChatComponent implements OnInit, OnDestroy {
 
     clearChat(): void {
         this.chatService.clearContext(this.context);
+    }
+
+    /** Run connection diagnostics */
+    async runConnectionTest(): Promise<void> {
+        console.log('[AI Chat] Running connection test...');
+        await this.connectionTest.runDiagnostics();
+        this.isReady = this.chatService.isReady();
+        this.cdr.markForCheck();
+    }
+
+    /** Request API key from parent component */
+    requestApiKey(): void {
+        this.apiKeyNeeded.emit();
+    }
+
+    /** Refresh the ready state (call after API key is saved) */
+    refreshReadyState(): void {
+        this.isReady = this.chatService.isReady();
+        this.cdr.markForCheck();
     }
 
     trackMessage(index: number, message: ChatMessage): string {

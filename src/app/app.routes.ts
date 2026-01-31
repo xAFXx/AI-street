@@ -32,7 +32,9 @@ export const routes: Routes = [
             { path: 'template-editor/:id', loadComponent: () => import('./features/template-editor/template-editor.component').then(m => m.TemplateEditorComponent), canActivate: [adminGuard] },
             { path: 'report-wizard', loadComponent: () => import('./features/report-wizard/report-wizard.component').then(m => m.ReportWizardComponent) },
             { path: 'search', loadComponent: () => import('./features/search-action/search-action.component').then(m => m.SearchActionComponent) },
-            { path: 'document-management', loadComponent: () => import('./features/document-management/document-management.component').then(m => m.DocumentManagementComponent) }
+            { path: 'document-management', loadComponent: () => import('./features/document-management/document-management.component').then(m => m.DocumentManagementComponent) },
+            { path: 'schema-editor', loadComponent: () => import('./features/schema-editor/schema-editor.component').then(m => m.SchemaEditorComponent) },
+            { path: 'schema-editor/:id', loadComponent: () => import('./features/schema-editor/schema-editor.component').then(m => m.SchemaEditorComponent) }
         ]
     },
 

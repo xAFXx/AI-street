@@ -24,6 +24,7 @@ import { AiChatService, ChatMessage } from '../../core/services/ai-chat.service'
 
 // Components
 import { AiChatComponent } from '../../shared/components/ai-chat/ai-chat.component';
+import { OnboardingDialogComponent } from '../../shared/components/onboarding-dialog.component';
 
 // Interfaces
 export interface SearchSession {
@@ -73,6 +74,7 @@ export interface PanelState {
         TagModule,
         DialogModule,
         AiChatComponent,
+        OnboardingDialogComponent,
         IconFieldModule,
         InputIconModule
     ],
@@ -121,6 +123,9 @@ export class SearchActionComponent implements OnInit, OnDestroy {
     ];
 
     showSessionsSidebar = true;
+
+    // API Key dialog state
+    showApiKeyDialog = signal<boolean>(false);
 
     ngOnInit(): void {
         this.loadSessions();
@@ -446,5 +451,26 @@ export class SearchActionComponent implements OnInit, OnDestroy {
 
     formatDate(date: Date): string {
         return date.toLocaleDateString('en-GB', { day: '2-digit', month: '2-digit', year: 'numeric' });
+    }
+
+    // ========================
+    // API Key Dialog
+    // ========================
+
+    onApiKeyNeeded(): void {
+        this.showApiKeyDialog.set(true);
+    }
+
+    onApiKeySaved(): void {
+        this.showApiKeyDialog.set(false);
+        // Refresh the chat component's ready state
+        if (this.chatComponent) {
+            this.chatComponent.refreshReadyState();
+        }
+        this.cdr.markForCheck();
+    }
+
+    onApiKeyDialogClosed(): void {
+        this.showApiKeyDialog.set(false);
     }
 }

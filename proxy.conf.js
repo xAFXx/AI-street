@@ -1,29 +1,32 @@
 /**
- * Dynamic proxy configuration for Angular dev server
+ * Proxy configuration for Angular dev server
  * 
- * This proxy handles CORS by forwarding requests to the tenant-specific API endpoint.
- * The tenant is determined from the X-Tenant-Name header or defaults to 'demo'.
+ * Routes API requests to the specified target server.
+ * Change the target URL and restart the dev server to switch tenants.
  */
 
-const PROXY_CONFIG = [
-    {
-        context: ['/api'],
-        target: 'https://dev_demo-connectapi.apprx.eu',
+// Target API server - change this to switch tenants
+const TARGET_URL = 'https://74426834_connectapi.plattform.nl';
+
+module.exports = {
+    '/api': {
+        target: TARGET_URL,
         secure: true,
         changeOrigin: true,
         logLevel: 'debug',
-        router: function (req) {
-            // Try to get tenant from custom header
-            const tenant = req.headers['x-tenant-name'] || 'demo';
-            const target = `https://dev_${tenant}-connectapi.apprx.eu`;
-            console.log(`[Proxy] Routing to: ${target}`);
-            return target;
-        },
-        onProxyReq: function (proxyReq, req, res) {
-            // Log the proxied request for debugging
-            console.log(`[Proxy] ${req.method} ${req.url} -> ${proxyReq.host}${proxyReq.path}`);
+        on: {
+            proxyReq: (proxyReq, req, res) => {
+                console.log(`[Proxy] ${req.method} ${req.url} -> ${TARGET_URL}${req.url}`);
+            },
+            error: (err, req, res) => {
+                console.error(`[Proxy] Error:`, err.message);
+            }
         }
+    },
+    '/AbpUserConfiguration': {
+        target: TARGET_URL,
+        secure: true,
+        changeOrigin: true,
+        logLevel: 'debug'
     }
-];
-
-module.exports = PROXY_CONFIG;
+};

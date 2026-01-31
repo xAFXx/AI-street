@@ -85,7 +85,8 @@
                     <div class="panel-content flex-grow-1 overflow-hidden">
                         <app-ai-chat #chatComponent context="search-action-chat" [showInputArea]="false"
                             emptyStateMessage="Ask AI anything about your data"
-                            systemPrompt="You are Rocky, an AI assistant for enterprise search. Help users find information, answer questions about their data, and provide insights.">
+                            systemPrompt="You are Rocky, an AI assistant for enterprise search. Help users find information, answer questions about their data, and provide insights."
+                            (apiKeyNeeded)="onApiKeyNeeded()">
                         </app-ai-chat>
                     </div>
                 </div>
@@ -372,3 +373,8 @@
         </div>
     </div>
 </p-dialog>
+
+<!-- API Key Configuration Dialog -->
+<app-onboarding-dialog *ngIf="showApiKeyDialog()" [forceShow]="true" (apiKeySaved)="onApiKeySaved()"
+    (dialogClosed)="onApiKeyDialogClosed()">
+</app-onboarding-dialog>

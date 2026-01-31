@@ -1,6 +1,10 @@
 import { Injectable, inject } from '@angular/core';
 import { BehaviorSubject, Observable, Subject } from 'rxjs';
 import { AI_CONFIG, hasApiKey } from '../../features/template-editor/ai-providers/ai-config';
+import * as pdfjsLib from 'pdfjs-dist';
+
+// Configure PDF.js worker
+pdfjsLib.GlobalWorkerOptions.workerSrc = 'assets/pdf.worker.min.mjs';
 
 /**
  * Chat message model
@@ -38,6 +42,84 @@ export class AiChatService {
 
     // Global loading state
     private isLoading$ = new BehaviorSubject<boolean>(false);
+
+    // ==================== Rate Limiting ====================
+    // Exponential backoff settings
+    private readonly MAX_RETRIES = 5;
+    private readonly BASE_DELAY_MS = 1000;  // Initial delay 1 second
+    private readonly MAX_DELAY_MS = 60000;  // Max delay 60 seconds
+
+    // Request queue settings
+    private readonly MIN_REQUEST_INTERVAL_MS = 500;  // Minimum 500ms between requests
+    private lastRequestTime = 0;
+
+    // Conversation history limit (to reduce prompt size)
+    private readonly MAX_CONVERSATION_HISTORY = 10;  // Keep only last 10 messages
+
+    /**
+     * Helper function to delay execution
+     */
+    private delay(ms: number): Promise<void> {
+        return new Promise(resolve => setTimeout(resolve, ms));
+    }
+
+    /**
+     * Wait for rate limit window before making request
+     */
+    private async waitForRateLimit(): Promise<void> {
+        const now = Date.now();
+        const elapsed = now - this.lastRequestTime;
+        if (elapsed < this.MIN_REQUEST_INTERVAL_MS) {
+            await this.delay(this.MIN_REQUEST_INTERVAL_MS - elapsed);
+        }
+        this.lastRequestTime = Date.now();
+    }
+
+    /**
+     * Fetch with exponential backoff retry for rate limiting (429) and server errors (5xx)
+     */
+    private async fetchWithRetry(
+        url: string,
+        options: RequestInit,
+        retryCount = 0
+    ): Promise<Response> {
+        // Wait for rate limit window
+        await this.waitForRateLimit();
+
+        const response = await fetch(url, options);
+
+        // Handle rate limit (429) or server errors (5xx)
+        if (response.status === 429 || (response.status >= 500 && response.status < 600)) {
+            if (retryCount >= this.MAX_RETRIES) {
+                console.error(`[AiChatService] Max retries (${this.MAX_RETRIES}) exceeded for ${response.status}`);
+                throw new Error(`API rate limit exceeded after ${this.MAX_RETRIES} retries`);
+            }
+
+            // Calculate delay with exponential backoff + jitter
+            const baseDelay = this.BASE_DELAY_MS * Math.pow(2, retryCount);
+            const jitter = Math.random() * 1000;  // Add up to 1 second of random jitter
+            const delayMs = Math.min(baseDelay + jitter, this.MAX_DELAY_MS);
+
+            console.warn(`[AiChatService] Rate limited (${response.status}), retry ${retryCount + 1}/${this.MAX_RETRIES} after ${Math.round(delayMs)}ms`);
+
+            await this.delay(delayMs);
+            return this.fetchWithRetry(url, options, retryCount + 1);
+        }
+
+        return response;
+    }
+
+    /**
+     * Trim conversation history to reduce prompt size
+     */
+    private trimConversationHistory(messages: ChatMessage[]): ChatMessage[] {
+        if (messages.length <= this.MAX_CONVERSATION_HISTORY) {
+            return messages;
+        }
+        // Keep the most recent messages
+        console.log(`[AiChatService] Trimming conversation history from ${messages.length} to ${this.MAX_CONVERSATION_HISTORY} messages`);
+        return messages.slice(-this.MAX_CONVERSATION_HISTORY);
+    }
 
     /**
      * Set the AI model to use
@@ -245,12 +327,15 @@ export class AiChatService {
             throw new Error('OpenAI API key not configured. Please add it in settings.');
         }
 
+        // Trim conversation history to reduce prompt size
+        const trimmedMessages = this.trimConversationHistory(messages);
+
         const apiMessages = [
             { role: 'system', content: systemPrompt },
-            ...messages.map(m => ({ role: m.role, content: m.content }))
+            ...trimmedMessages.map(m => ({ role: m.role, content: m.content }))
         ];
 
-        const response = await fetch(this.apiEndpoint, {
+        const response = await this.fetchWithRetry(this.apiEndpoint, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -283,12 +368,15 @@ export class AiChatService {
             throw new Error('OpenAI API key not configured');
         }
 
+        // Trim conversation history to reduce prompt size
+        const trimmedMessages = this.trimConversationHistory(messages);
+
         const apiMessages = [
             { role: 'system', content: systemPrompt },
-            ...messages.map(m => ({ role: m.role, content: m.content }))
+            ...trimmedMessages.map(m => ({ role: m.role, content: m.content }))
         ];
 
-        const response = await fetch(this.apiEndpoint, {
+        const response = await this.fetchWithRetry(this.apiEndpoint, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -373,7 +461,7 @@ export class AiChatService {
 
     /**
      * Analyze a file using GPT-4 Vision (for images and PDFs)
-     * Uses base64 encoding for direct image analysis
+     * PDFs are rendered to images first using pdfjs-dist
      */
     async analyzeFileWithVision(file: File, prompt: string): Promise<string> {
         const apiKey = AI_CONFIG.openai.apiKey;
@@ -381,13 +469,48 @@ export class AiChatService {
             throw new Error('OpenAI API key not configured');
         }
 
-        // Convert file to base64
-        const base64 = await this.fileToBase64(file);
-        const mimeType = file.type || 'application/octet-stream';
+        const isPdf = file.type === 'application/pdf' || file.name.toLowerCase().endsWith('.pdf');
 
-        console.log('[AiChatService] Analyzing file with Vision:', file.name, mimeType);
+        console.log('[AiChatService] Analyzing file with Vision:', file.name, file.type, 'isPDF:', isPdf);
 
-        const response = await fetch(this.apiEndpoint, {
+        // Build content array with images
+        const content: any[] = [{ type: 'text', text: prompt }];
+
+        if (isPdf) {
+            // Render PDF pages to images
+            console.log('[AiChatService] Rendering PDF to images...');
+            const pageImages = await this.renderPdfToImages(file);
+            console.log('[AiChatService] Rendered', pageImages.length, 'pages from PDF');
+
+            // Add each page as an image (limit to first 5 pages for API limits)
+            const maxPages = Math.min(pageImages.length, 5);
+            for (let i = 0; i < maxPages; i++) {
+                content.push({
+                    type: 'image_url',
+                    image_url: {
+                        url: pageImages[i], // Already has data:image/png;base64 prefix
+                        detail: 'high'
+                    }
+                });
+            }
+
+            if (pageImages.length > maxPages) {
+                content[0].text += `\n\n[Note: This PDF has ${pageImages.length} pages but only the first ${maxPages} are shown. Focus on extracting all data from the visible pages.]`;
+            }
+        } else {
+            // Direct image - convert to base64
+            const base64 = await this.fileToBase64(file);
+            const mimeType = file.type || 'image/png';
+            content.push({
+                type: 'image_url',
+                image_url: {
+                    url: `data:${mimeType};base64,${base64}`,
+                    detail: 'high'
+                }
+            });
+        }
+
+        const response = await this.fetchWithRetry(this.apiEndpoint, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -398,16 +521,7 @@ export class AiChatService {
                 messages: [
                     {
                         role: 'user',
-                        content: [
-                            { type: 'text', text: prompt },
-                            {
-                                type: 'image_url',
-                                image_url: {
-                                    url: `data:${mimeType};base64,${base64}`,
-                                    detail: 'high'
-                                }
-                            }
-                        ]
+                        content: content
                     }
                 ],
                 max_tokens: 4096
@@ -424,6 +538,42 @@ export class AiChatService {
         const result = data.choices[0]?.message?.content || '';
         console.log('[AiChatService] Vision analysis complete, response length:', result.length);
         return result;
+    }
+
+    /**
+     * Render PDF pages to PNG images using pdfjs-dist
+     * Returns array of data URLs (data:image/png;base64,...)
+     */
+    private async renderPdfToImages(file: File): Promise<string[]> {
+        const arrayBuffer = await file.arrayBuffer();
+        const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+
+        const pageImages: string[] = [];
+        const scale = 2.0; // Render at 2x for better quality
+
+        for (let pageNum = 1; pageNum <= pdf.numPages; pageNum++) {
+            const page = await pdf.getPage(pageNum);
+            const viewport = page.getViewport({ scale });
+
+            // Create canvas for rendering
+            const canvas = document.createElement('canvas');
+            const context = canvas.getContext('2d')!;
+            canvas.width = viewport.width;
+            canvas.height = viewport.height;
+
+            // Render PDF page to canvas
+            await page.render({
+                canvasContext: context,
+                viewport: viewport,
+                canvas: canvas as any
+            }).promise;
+
+            // Convert canvas to PNG data URL
+            const dataUrl = canvas.toDataURL('image/png');
+            pageImages.push(dataUrl);
+        }
+
+        return pageImages;
     }
 
     /**

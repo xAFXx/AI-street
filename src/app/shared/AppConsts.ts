@@ -8,6 +8,9 @@ export class AppConsts {
     // Placeholder used in URLs that gets replaced with the actual tenant name
     static readonly tenancyNamePlaceHolderInUrl = '{TENANCY_NAME}';
 
+    // Default URL format for apprx.eu (used when only tenant name is provided)
+    static readonly defaultApiUrlFormat = 'https://dev_{TENANCY_NAME}_connectapi.apprx.eu';
+
     // Application name from config
     static applicationName: string = 'APPRX True North';
 
@@ -36,40 +39,36 @@ export class AppConsts {
     static tenancyName: string = '';
 
     /**
-     * Update the URLs with a new tenancy name
+     * Set tenancy from a simple tenant name (uses apprx.eu default format)
+     * E.g., "demo" -> https://dev_demo_connectapi.apprx.eu
      */
     static setTenancy(tenancyName: string): void {
         AppConsts.tenancyName = tenancyName;
 
         if (tenancyName) {
-            AppConsts.appBaseUrl = AppConsts.appBaseUrlFormat.replace(
-                AppConsts.tenancyNamePlaceHolderInUrl,
-                tenancyName
-            );
-            AppConsts.remoteServiceBaseUrl = AppConsts.remoteServiceBaseUrlFormat.replace(
+            // Use default apprx.eu format
+            AppConsts.remoteServiceBaseUrl = AppConsts.defaultApiUrlFormat.replace(
                 AppConsts.tenancyNamePlaceHolderInUrl,
                 tenancyName
             );
         } else {
-            // Remove placeholder and preceding underscore/hyphen if no tenant
-            AppConsts.appBaseUrl = AppConsts.appBaseUrlFormat.replace(
-                AppConsts.tenancyNamePlaceHolderInUrl + '.',
-                ''
-            ).replace(
-                '_' + AppConsts.tenancyNamePlaceHolderInUrl,
-                ''
-            );
-            AppConsts.remoteServiceBaseUrl = AppConsts.remoteServiceBaseUrlFormat.replace(
-                AppConsts.tenancyNamePlaceHolderInUrl + '.',
-                ''
-            ).replace(
-                '_' + AppConsts.tenancyNamePlaceHolderInUrl,
-                ''
-            );
+            AppConsts.remoteServiceBaseUrl = '';
         }
 
         console.log(`[AppConsts] Tenancy set to: ${tenancyName}`);
         console.log(`[AppConsts] API URL: ${AppConsts.remoteServiceBaseUrl}`);
-        console.log(`[AppConsts] App URL: ${AppConsts.appBaseUrl}`);
+    }
+
+    /**
+     * Set a direct API URL (bypasses template substitution)
+     * Used when user provides a full URL instead of just tenant name
+     */
+    static setDirectUrl(url: string, tenancyName: string): void {
+        AppConsts.tenancyName = tenancyName;
+        AppConsts.remoteServiceBaseUrl = url;
+
+        console.log(`[AppConsts] Direct URL set`);
+        console.log(`[AppConsts] Tenancy: ${tenancyName}`);
+        console.log(`[AppConsts] API URL: ${AppConsts.remoteServiceBaseUrl}`);
     }
 }

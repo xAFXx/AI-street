@@ -51,14 +51,14 @@ import { AppConsts } from '../../shared/AppConsts';
                             </span>
                             <input 
                                 pInputText 
-                                [(ngModel)]="tenantName"
+                                [(ngModel)]="tenantInput"
                                 class="w-full"
-                                placeholder="Enter tenant name (e.g., demo)"
+                                placeholder="Enter tenant name or full URL (e.g., demo or https://demo_connectapi...)"
                                 (blur)="onTenantChange()"
                                 (keyup.enter)="focusUsername()">
                         </div>
                         <small class="text-500 mt-1 block">
-                            API: {{ resolvedApiUrl || 'Enter tenant to see API URL' }}
+                            Tenant: {{ tenantName || '—' }} | API: {{ resolvedApiUrl || 'Enter tenant to see API URL' }}
                         </small>
                     </div>
 
@@ -194,6 +194,7 @@ export class LoginComponent implements OnInit {
     private router: Router;
     private authService: AuthService;
 
+    tenantInput = '';
     tenantName = '';
     username = '';
     password = '';
@@ -208,18 +209,109 @@ export class LoginComponent implements OnInit {
     }
 
     ngOnInit(): void {
-        // Load saved tenant from AppConsts or localStorage
-        this.tenantName = AppConsts.tenancyName ||
-            localStorage.getItem('tenancy_name') || '';
+        // Load saved tenant from localStorage
+        this.tenantName = localStorage.getItem('tenancy_name') || '';
+        const customUrl = localStorage.getItem('custom_api_url');
+
+        if (customUrl) {
+            // Restore full custom URL
+            this.tenantInput = customUrl;
+            AppConsts.setDirectUrl(customUrl, this.tenantName);
+        } else if (this.tenantName) {
+            // Simple tenant name - use default apprx.eu format
+            this.tenantInput = this.tenantName;
+            AppConsts.setTenancy(this.tenantName);
+        }
+
         this.updateResolvedUrl();
     }
 
     onTenantChange(): void {
-        if (this.tenantName.trim()) {
-            // Update AppConsts with new tenant
-            AppConsts.setTenancy(this.tenantName.trim());
-            localStorage.setItem('tenancy_name', this.tenantName.trim());
-            this.updateResolvedUrl();
+        const input = this.tenantInput.trim();
+        if (!input) return;
+
+        console.log('[Login] onTenantChange input:', input);
+
+        // Check if input is a URL:
+        // - Contains :// (explicit protocol)
+        // - Contains _connectapi (well-known pattern)
+        // - Contains a dot and common TLD patterns (looks like a domain)
+        const isFullUrl = input.includes('://') ||
+            input.includes('_connectapi') ||
+            /\.(nl|eu|com|org|net|io)/i.test(input);
+
+        console.log('[Login] isFullUrl:', isFullUrl);
+
+        if (isFullUrl) {
+            // Full URL provided - extract tenant name for display, but use full URL
+            const extracted = this.extractTenantFromUrl(input);
+            this.tenantName = extracted || 'custom';
+
+            // Normalize the URL (ensure https://)
+            let fullUrl = input;
+            if (!fullUrl.includes('://')) {
+                fullUrl = 'https://' + fullUrl;
+            }
+
+            console.log('[Login] Setting direct URL:', fullUrl);
+            console.log('[Login] Extracted tenant:', this.tenantName);
+
+            // Use the full URL directly
+            AppConsts.setDirectUrl(fullUrl, this.tenantName);
+            localStorage.setItem('tenancy_name', this.tenantName);
+            localStorage.setItem('custom_api_url', fullUrl);
+        } else {
+            // Simple tenant name - use apprx.eu default format
+            this.tenantName = input;
+            console.log('[Login] Using simple tenant, apprx.eu format:', this.tenantName);
+            AppConsts.setTenancy(this.tenantName);
+            localStorage.setItem('tenancy_name', this.tenantName);
+            localStorage.removeItem('custom_api_url');
+        }
+
+        console.log('[Login] AppConsts.remoteServiceBaseUrl:', AppConsts.remoteServiceBaseUrl);
+        this.updateResolvedUrl();
+    }
+
+    /**
+     * Extract tenant name from a full URL.
+     * Looks for the pattern: {tenant}_connectapi in the hostname.
+     * Handles environment prefixes: dev_, acc_, acc-
+     * E.g., https://dev_demo_connectapi.example.com -> 'demo'
+     * E.g., https://demo_connectapi.example.com -> 'demo'
+     */
+    private extractTenantFromUrl(url: string): string | null {
+        try {
+            // Ensure it's a valid URL
+            let urlToParse = url;
+            if (!urlToParse.includes('://')) {
+                urlToParse = 'https://' + urlToParse;
+            }
+
+            const parsed = new URL(urlToParse);
+            const hostname = parsed.hostname; // e.g., dev_demo_connectapi.example.com
+
+            // Find the part before _connectapi
+            const connectApiIndex = hostname.indexOf('_connectapi');
+            if (connectApiIndex > 0) {
+                // Extract everything before _connectapi
+                let subdomain = hostname.substring(0, connectApiIndex);
+
+                // Strip environment prefixes: dev_, acc_, acc-
+                const envPrefixes = ['dev_', 'acc_', 'acc-', 'tst_', 'prd_'];
+                for (const prefix of envPrefixes) {
+                    if (subdomain.startsWith(prefix)) {
+                        subdomain = subdomain.substring(prefix.length);
+                        break;
+                    }
+                }
+
+                return subdomain;
+            }
+
+            return null;
+        } catch {
+            return null;
         }
     }
 
@@ -245,9 +337,8 @@ export class LoginComponent implements OnInit {
     login(): void {
         if (!this.username.trim() || !this.password || !this.tenantName.trim()) return;
 
-        // Ensure tenant is set before login
-        AppConsts.setTenancy(this.tenantName.trim());
-        localStorage.setItem('tenancy_name', this.tenantName.trim());
+        // Note: Don't call setTenancy here - it was already set in onTenantChange()
+        // and could overwrite a custom URL with the default apprx.eu format
 
         this.isLoading = true;
         this.errorMessage = '';

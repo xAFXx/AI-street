@@ -1,0 +1,133 @@
+﻿node.exe : npm warn Unknown project config "always-auth" (//swdevtfs.fa
+n2customer.com/Ublion/_packaging/Axilla.Npm/npm/registry/:always-auth).
+ This will stop working in the next major version of npm.
+At C:\Program Files\nodejs\npx.ps1:29 char:3
++   & $NODE_EXE $NPX_CLI_JS $args
++   ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (npm warn Unknow...version 
+    of npm.:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+[33mΓ¥»[39m Building...
+[32mΓ£ö[39m Building...
+Application bundle generation failed. [16.971 seconds] - 2026-01-30T21:21:32.393Z
+
+[1m[33m[33mΓû▓ [43;33m[[43;30mWARNING[43;33m][0m [1mNG8107: 
+The left side of this optional chain operation does not include 'null' 
+or 'undefined' in its type, therefore the '?.' operator can be 
+replaced with the '.' operator.[0m [1m[35m[plugin 
+angular-compiler][0m
+
+    src/app/features/report-wizard/report-wizard.component.html:116:77:
+[37m      116 Γöé ...           
+state.selectedTemplate.chapters?.[32mlength[37m || 0 }}</span>
+          Γò╡                                                
+[32m~~~~~~[0m
+
+  Warning occurs in the template of component ReportWizardComponent.
+
+    src/app/features/report-wizard/report-wizard.component.ts:51:17:
+[37m      51 Γöé     templateUrl: 
+[32m'./report-wizard.component.html'[37m,
+         Γò╡                  [32m~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~[0m
+
+
+[33mΓû▓ [43;33m[[43;30mWARNING[43;33m][0m [1mNG8107: The left 
+side of this optional chain operation does not include 'null' or 
+'undefined' in its type, therefore the '?.' operator can be replaced 
+with the '.' operator.[0m [1m[35m[plugin angular-compiler][0m
+
+    src/app/features/report-wizard/report-wizard.component.html:121:78:
+[37m      121 Γöé ...          
+state.selectedTemplate.aiSummary?.[32mlength[37m || 0 }}</span>
+          Γò╡                                                
+[32m~~~~~~[0m
+
+  Warning occurs in the template of component ReportWizardComponent.
+
+    src/app/features/report-wizard/report-wizard.component.ts:51:17:
+[37m      51 Γöé     templateUrl: 
+[32m'./report-wizard.component.html'[37m,
+         Γò╡                  [32m~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~[0m
+
+
+[33mΓû▓ [43;33m[[43;30mWARNING[43;33m][0m [1mNG8107: The left 
+side of this optional chain operation does not include 'null' or 
+'undefined' in its type, therefore the '?.' operator can be replaced 
+with the '.' operator.[0m [1m[35m[plugin angular-compiler][0m
+
+    src/app/features/report-wizard/report-wizard.component.html:127:74:
+[37m      127 Γöé ...iv 
+*ngIf="state.selectedTemplate.aiSummary?.[32mlength[37m" 
+class="mb-3">
+          Γò╡                                                
+[32m~~~~~~[0m
+
+  Warning occurs in the template of component ReportWizardComponent.
+
+    src/app/features/report-wizard/report-wizard.component.ts:51:17:
+[37m      51 Γöé     templateUrl: 
+[32m'./report-wizard.component.html'[37m,
+         Γò╡                  [32m~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~[0m
+
+[39m[22m
+[1m[31m[31mX [41;31m[[41;97mERROR[41;31m][0m [1mNG5002: Parser 
+Error: Bindings cannot contain assignments at column 72 in 
+[formatDuration(averageProcessingTimeMs() * processingQueue().filter(i 
+=> i.status !== 'completed').length)] in C:\Users\olievtushenko\.gemini
+\antigravity\scratch\ai-street-manager\src\app\features\document-manage
+ment\document-management.component.html@607:25[0m [1m[35m[plugin 
+angular-compiler][0m
+
+    src/app/features/document-management/document-management.component.
+html:608:25:
+[37m      608 Γöé ...     Est. 
+[32m{{formatDuration(averageProcessingTimeMs() * process[37m...
+          Γò╡              
+[32m~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~[0m
+
+  Error occurs in the template of component 
+DocumentManagementComponent.
+
+    src/app/features/document-management/document-management.component.
+ts:83:17:
+[37m      83 Γöé     templateUrl: 
+[32m'./document-management.component.html'[37m,
+         Γò╡                  
+[32m~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~[0m
+
+
+[31mX [41;31m[[41;97mERROR[41;31m][0m [1mTS2769: No overload 
+matches this call.
+  Overload 1 of 2, '(predicate: (value: ProcessingQueueItem, index: 
+number, array: ProcessingQueueItem[]) => value is ProcessingQueueItem, 
+thisArg?: any): ProcessingQueueItem[]', gave the following error.
+    Argument of type 'undefined' is not assignable to parameter of 
+type '(value: ProcessingQueueItem, index: number, array: 
+ProcessingQueueItem[]) => value is ProcessingQueueItem'.
+  Overload 2 of 2, '(predicate: (value: ProcessingQueueItem, index: 
+number, array: ProcessingQueueItem[]) => unknown, thisArg?: any): 
+ProcessingQueueItem[]', gave the following error.
+    Argument of type 'undefined' is not assignable to parameter of 
+type '(value: ProcessingQueueItem, index: number, array: 
+ProcessingQueueItem[]) => unknown'.[0m [1m[35m[plugin 
+angular-compiler][0m
+
+    src/app/features/document-management/document-management.component.
+html:608:95:
+[37m      608 Γöé ...geProcessingTimeMs() * 
+processingQueue().filter([32mi => i.status !==[37m
+          Γò╡                                                    
+[32m~~~~~~~~~~~~~~~~~[0m
+
+  Error occurs in the template of component 
+DocumentManagementComponent.
+
+    src/app/features/document-management/document-management.component.
+ts:83:17:
+[37m      83 Γöé     templateUrl: 
+[32m'./document-management.component.html'[37m,
+         Γò╡                  
+[32m~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~[0m
+
+[39m[22m

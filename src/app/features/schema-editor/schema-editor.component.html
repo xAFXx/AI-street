@@ -1,0 +1,92 @@
+<div class="schema-editor-container">
+    <!-- Header -->
+    <div
+        class="editor-header flex align-items-center justify-content-between px-4 py-3 surface-card border-bottom-1 surface-border">
+        <div class="flex align-items-center gap-3">
+            <button pButton icon="pi pi-arrow-left" severity="secondary" [text]="true" (click)="goBack()"
+                pTooltip="Back to Documents"></button>
+            <div>
+                <h2 class="m-0 text-lg font-semibold flex align-items-center gap-2">
+                    <i class="pi pi-code text-primary"></i>Schema Editor
+                </h2>
+                <small class="text-secondary">Manage JSON schemas for document mapping</small>
+            </div>
+        </div>
+        <div class="flex gap-2">
+            <button pButton icon="pi pi-plus" label="New Schema" severity="secondary" [outlined]="true"
+                (click)="newSchema()"></button>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="editor-content">
+        <!-- Schema List (Left) -->
+        <div class="schema-list surface-card border-right-1 surface-border">
+            <div class="p-3 border-bottom-1 surface-border">
+                <span class="text-sm font-semibold text-secondary uppercase">Schemas</span>
+                <span class="ml-2 text-xs text-500">({{schemas().length}})</span>
+            </div>
+            <div class="schema-items overflow-y-auto">
+                <div *ngFor="let schema of schemas(); let i = index"
+                    class="schema-item p-3 cursor-pointer border-bottom-1 surface-border"
+                    [class.selected]="schema.id === selectedSchemaId()" [class.focused]="i === selectedSchemaIndex()"
+                    (click)="selectSchema(schema.id)">
+                    <div class="font-medium text-sm">{{schema.name}}</div>
+                    <div class="text-xs text-500 mt-1">{{schema.properties.length}} properties</div>
+                </div>
+                <div *ngIf="schemas().length === 0" class="p-4 text-center text-500">
+                    <i class="pi pi-inbox text-3xl mb-2 block"></i>
+                    <span>No schemas yet</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Editor (Right) -->
+        <div class="editor-panel flex flex-column">
+            <!-- Editor Header -->
+            <div
+                class="editor-panel-header flex align-items-center justify-content-between px-4 py-2 surface-100 border-bottom-1 surface-border">
+                <div class="flex align-items-center gap-3">
+                    <input pInputText [ngModel]="schemaName()" (ngModelChange)="schemaName.set($event)"
+                        placeholder="Schema name..." class="schema-name-input font-semibold"
+                        [class.p-invalid]="!schemaName()">
+                    <p-message *ngIf="isNewSchema()" severity="info" text="New schema" styleClass="text-xs"></p-message>
+                    <p-message *ngIf="hasChanges()" severity="warn" text="Unsaved changes"
+                        styleClass="text-xs"></p-message>
+                </div>
+                <div class="flex gap-2">
+                    <button pButton icon="pi pi-save" label="Save" severity="success" size="small"
+                        [disabled]="!editorContent() || !schemaName() || !!validationError()"
+                        (click)="saveSchema()"></button>
+                    <button pButton icon="pi pi-trash" severity="danger" size="small" [outlined]="true"
+                        [disabled]="isNewSchema()" (click)="deleteSchema()" pTooltip="Delete schema"></button>
+                </div>
+            </div>
+
+            <!-- Validation Error -->
+            <p-message *ngIf="validationError()" severity="error" [text]="validationError()!"
+                styleClass="m-3"></p-message>
+
+            <!-- JSON Editor -->
+            <div class="editor-textarea-container flex-grow-1 p-3">
+                <textarea pTextarea [ngModel]="editorContent()" (ngModelChange)="onEditorChange($event)"
+                    class="w-full h-full font-mono text-sm" placeholder="Enter JSON schema..."
+                    [autoResize]="false"></textarea>
+            </div>
+
+            <!-- Editor Footer -->
+            <div
+                class="editor-panel-footer flex align-items-center justify-content-between px-4 py-2 surface-100 border-top-1 surface-border">
+                <small class="text-500">
+                    <i class="pi pi-info-circle mr-1"></i>
+                    Use ↑↓ to navigate schemas, Escape to go back
+                </small>
+                <small class="text-500">
+                    JSON Schema Draft-07
+                </small>
+            </div>
+        </div>
+    </div>
+</div>
+
+<p-confirmDialog></p-confirmDialog>
