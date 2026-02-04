@@ -1,0 +1,242 @@
+<div tabindex="-1"
+     role="dialog"
+     aria-labelledby="createOrEditApiCallModal"
+     aria-hidden="true">
+    <div class="modal-dialog modal-xl m-0 w-80">
+        <div class="modal-content">
+            <form [formGroup]="createOrEditModalForm" (ngSubmit)="save()">
+                <div class="modal-header">
+                    <h4 class="modal-title">
+                        <span *ngIf="!this.editModele; else createSpan">
+                            <span translation="Axilla.App.Api.Modal.EditApiCall" source="AxillaAppBase" print="true"></span>
+                        </span>
+                        <ng-template #createSpan>
+                            <span>
+                                <span translation="Axilla.App.Api.Modal.CreateApiCall" source="AxillaAppBase" print="true"></span>
+                            </span>
+                        </ng-template>
+                    </h4>
+                    <button type="button" class="close" (click)="close()" [attr.aria-label]="l('Close')">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <tabset>
+                        <tab heading="{{'Ublion.Apps.Api.Call.Base' | localize}}">
+                            <div class="form-group">
+                                <label class="col-lg-12 control-label">
+                                    <span translation="Axilla.App.Api.Modal.Title" source="AxillaAppBase" print="true"></span>
+                                </label>
+                                <div class="col-lg-12">
+                                    <input type="text"
+                                           class="form-control"
+                                           name="title"
+                                           placeholder="{{'Axilla.App.Api.Modal.TitlePlaceholder' | localize}}"
+                                           formControlName="title">
+                                </div>
+                            </div>
+
+                            <div class="form-group">
+                                <label class="col-lg-12 control-label">
+                                    <span translation="Axilla.App.Api.Modal.Call" source="AxillaAppBase" print="true"></span>
+                                </label>
+                                <div class="col-lg-12">
+                                    <input type="text"
+                                           class="form-control"
+                                           name="call"
+                                           placeholder="{{'Axilla.App.Api.Modal.CallPlaceholder' | localize}}"
+                                           formControlName="call">
+                                </div>
+                            </div>
+
+                            <div class="form-group">
+                                <label class="col-lg-12 control-label">
+                                    <span translation="Axilla.App.Api.Modal.Description" source="AxillaAppBase" print="true"></span>
+                                </label>
+                                <div class="col-lg-12">
+                                    <textarea class="form-control"
+                                              rows="5"
+                                              name="description"
+                                              placeholder="{{'Axilla.App.Api.Modal.DescriptionPlaceholder' | localize}}"
+                                              formControlName="description">
+                                        </textarea>
+                                </div>
+                            </div>
+
+                            <div class="form-group">
+                                <label class="col-lg-12 control-label">
+                                    <span translation="Axilla.App.Api.Modal.RequestHeader" source="AxillaAppBase" print="true"></span>
+                                </label>
+                                <div class="col-lg-12">
+                                    <input type="text"
+                                           class="form-control"
+                                           name="requestHeader"
+                                           placeholder="{{'Axilla.App.Api.Modal.RequestHeader' | localize}}"
+                                           formControlName="requestHeader">
+                                </div>
+                            </div>
+
+                            <div class="form-group">
+                                <label class="col-lg-12 control-label">
+                                    <span translation="Axilla.App.Api.Modal.AcceptHeader" source="AxillaAppBase" print="true"></span>
+                                </label>
+                                <div class="col-lg-12">
+                                    <input type="text"
+                                           class="form-control"
+                                           name="acceptHeader"
+                                           placeholder="{{'Axilla.App.Api.Modal.AcceptHeader' | localize}}"
+                                           formControlName="acceptHeader">
+                                </div>
+                            </div>
+
+                            <div class="form-group checkbox-container">
+                                <label class="col-lg-12 control-label">
+                                    <span translation="Axilla.App.Api.Modal.AuthenticationRequired" source="AxillaAppBase" print="true"></span>
+                                </label>
+                                <div class="col-lg-12">
+                                    <input type="checkbox"
+                                           style="height:20px;width:20px;"
+                                           class="form-control"
+                                           name="authenticationRequired"
+                                           placeholder="{{'Axilla.App.Api.Modal.AuthenticationRequired' | localize}}"
+                                           formControlName="authenticationRequired">
+                                </div>
+                            </div>
+
+                            <div class="form-group checkbox-container">
+                                <label class="col-lg-12 control-label">
+                                    <span translation="Axilla.App.Api.Modal.UsedForAuthentication" source="AxillaAppBase" print="true"></span>
+                                </label>
+                                <div class="col-lg-12">
+                                    <input type="checkbox"
+                                           style="height:20px;width:20px;"
+                                           class="form-control"
+                                           name="usedForAuthentication"
+                                           placeholder="{{'Axilla.App.Api.Modal.UsedForAuthentication' | localize}}"
+                                           formControlName="usedForAuthentication">
+                                </div>
+                            </div>
+
+                            <div class="form-group">
+                                <label class="col-lg-12 control-label">
+                                    <span translation="Axilla.App.Api.Modal.Method" source="AxillaAppBase" print="true"></span>
+                                </label>
+                                <div class="col-lg-12">
+                                    <select formControlName="method"
+                                            class="form-control"
+                                            name="status">
+                                        <option *ngFor="let item of methods | keyvalue"
+                                                [value]="item.value"
+                                                [ngValue]="item.value">
+                                            {{ item.value }}
+                                        </option>
+                                    </select>
+                                </div>
+                            </div>
+                        </tab>
+
+                        <tab heading="{{'Ublion.Apps.Api.Call.Body' | localize}}">
+                            <div class="form-group">
+                                <label class="col-lg-12 control-label">
+                                    <span translation="Axilla.App.Api.Modal.Body" source="AxillaAppBase" print="true"></span>
+                                </label>
+                                <div class="col-lg-12">
+                                    <textarea class="form-control"
+                                              rows="5"
+                                              name="body"
+                                              placeholder="{{'Axilla.App.Api.Modal.BodyPlaceholder' | localize}}"
+                                              formControlName="body">
+                                        </textarea>
+                                </div>
+                            </div>
+
+                            <div class="form-group">
+                                <label class="col-lg-12 control-label">
+                                    <span translation="Axilla.App.Api.Modal.OutputMapping" source="AxillaAppBase" print="true"></span>
+                                </label>
+                                <div class="col-lg-12">
+                                    <textarea class="form-control"
+                                              rows="5"
+                                              name="outputMapping"
+                                              placeholder="{{'Axilla.App.Api.Modal.OutputMappingPlaceholder' | localize}}"
+                                              formControlName="outputMapping">
+                                        </textarea>
+                                </div>
+                            </div>
+                        </tab>
+                        <tab heading="{{'Ublion.Apps.Api.Call.Headers' | localize}}">
+                            <div class="form-group">
+                                <div class="col primeng-datatable-container">
+                                    <p-table #dataTable
+                                             [value]="primengTableHelper.records"
+                                             [rows]="primengTableHelper.defaultRecordsCountPerPage"
+                                             [paginator]="false"
+                                             [resizableColumns]="primengTableHelper.resizableColumns"
+                                             [rowTrackBy]="trackByFunction">
+
+                                        <ng-template pTemplate="body" let-record="$implicit" let-rowIndex="rowIndex">
+                                            <tr>
+                                                <td>
+                                                    <api-call-header-item [apiCallHeader]="record"
+                                                                          [index]="getApiCallHeaderIndex(rowIndex)"
+                                                                          (itemSelected)="onApiCallHeaderSelected($event)"
+                                                                          (deleteItem)="deleteItem($event)">
+                                                    </api-call-header-item>
+                                                </td>
+                                            </tr>
+                                        </ng-template>
+
+                                    </p-table>
+
+                                    <div class="primeng-no-data" *ngIf="primengTableHelper.totalRecordsCount === 0">
+                                        <span translation='NoData'><span translation="Axilla.NoData" source="Axilla"></span></span>
+                                    </div>
+
+                                    <div class="primeng-paging-container">
+                                        <p-paginator [rows]="primengTableHelper.defaultRecordsCountPerPage"
+                                                     #paginator
+                                                     (onPageChange)="onPagingItem($event)"
+                                                     [totalRecords]="primengTableHelper.totalRecordsCount"
+                                                     [rowsPerPageOptions]="primengTableHelper.predefinedRecordsCountPerPage">
+                                        </p-paginator>
+                                        <span class="total-records-count">
+                                            {{'TotalRecordsCount' | localize:primengTableHelper.totalRecordsCount}}
+                                        </span>
+                                    </div>
+
+                                    <div class="d-flex justify-content-center align-items-center">
+                                        <button type="button"
+                                                (click)="addNewCallHeader()"
+                                                [disabled]="isPrevIsEmpty"
+                                                class="btn ubl-btn ubl-electron-blue btn-validate white-text border-none"
+                                                style="max-width: 315px; width: 100%; white-space: nowrap;">
+                                            <i class="kt-menu__link-icon fas fa-plus"></i>
+                                            <span translation='Axilla.Proserve.Order.Modal.AddOrderItem' source="AxillaAppBase" print="true"></span>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </tab>
+                    </tabset>
+
+                    <div class="modal-footer">
+                        <button type="button"
+                                class="btn btn-secondary"
+                                (click)="close()">
+                            <span translation="Cancel">{{"Cancel" | localize}}</span>
+                        </button>
+
+                        <ng-container *ngIf="accessGranted">
+                            <button type="submit"
+                                    class="btn btn-primary"
+                                    [disabled]="isValid">
+                                <i class="fa fa-save"></i><span translation="Save">{{"Save" | localize}}</span>
+                            </button>
+                        </ng-container>
+
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>

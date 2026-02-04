@@ -1,0 +1,40 @@
+.ped-connected-component-container {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+
+    & + & {
+        margin-top: 5px;
+    }
+}
+
+.ped-command {
+    flex: 1;
+    word-wrap: break-word;
+    word-break: break-all;
+}
+
+.ped-step-icon {
+    img {
+        height: 24px;
+    }
+}
+
+.ped-step-action,
+.ped-step-name {
+    max-width: 150px;
+    width: 100%;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.ped-connected-component {
+    .ui-fieldset-legend {
+        padding: 0 !important;
+    }
+
+    .ui-fieldset {
+        margin-bottom: .5em !important;
+    }
+}

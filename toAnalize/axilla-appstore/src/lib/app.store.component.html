@@ -1,0 +1,48 @@
+<div [@routerTransition]>
+    <div class="kt-subheader kt-grid__item">
+        <div class="kt-subheader__main">
+            <h3 class="kt-subheader__title">
+                <span translation="Axilla.Menu.Apps.AppStore" source="AxillaAppBase"></span>
+            </h3>
+            <!--<span class="kt-subheader__separator kt-subheader__separator--v"></span>
+            <span class="kt-subheader__desc">
+                <span translation="RolesHeaderInfo">{{"RolesHeaderInfo" | localize}}</span>
+            </span>-->
+        </div>
+        <div class="kt-subheader__toolbar">
+            <div class="kt-subheader__wrapper">
+                <button *ngIf="AppStorePermissions.ManageAppPermission.AppPermission.Edit | permission"
+                        type="submit"
+                        class="btn btn-success"
+                        (click)="openAddAppModal()">
+                    <i class="fa fa-plus"></i>
+                    <span translation="Axilla.App.Store.CreateNewApp" source="AxillaAppBase"></span>
+                </button>
+                <button type="submit"
+                        class="btn btn-success"
+                        (click)="openAddSelectApp()">
+                    <i class="fa fa-plus"></i>
+                    <span translation="Axilla.App.Store.AddNewApp" source="AxillaAppBase"></span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <div class="kt-content">
+        <div class="kt-portlet">
+            <div class="kt-portlet__body">
+                <div class="row align-items-center">
+                    <ng-container *ngFor="let item of apps$ | async">
+                        <div class="col-lg-4 col-md-6 col-sm-12 margin-top-15">
+                            <app-item [app]="item"
+                                      (openApp)="onOpenApp($event)"
+                                      (editApp)="openEditAppModal($event)"
+                                      (removeFromTenant)="onRemoveFromTenant($event)">
+                            </app-item>
+                        </div>
+                    </ng-container>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

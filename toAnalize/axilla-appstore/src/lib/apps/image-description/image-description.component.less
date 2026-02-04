@@ -1,0 +1,136 @@
+@import "./shared/id-colors";
+
+/* 📷 Image Upload Button */
+.icon-container,
+.image-upload {
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+  position: relative;
+}
+
+.image-upload input[type="file"] {
+  position: absolute;
+  opacity: 0;
+  width: 100%;
+  height: 100%;
+  cursor: pointer;
+}
+
+.image-upload i {
+  font-size: 18px;
+  color: #007bff;
+}
+
+.image-preview-container {
+  width: 36px;
+  height: 32px;
+  margin: auto 0;
+  overflow: hidden;
+  position: relative;
+}
+
+/* 📂 Image Upload Popup */
+.image-upload-popup {
+  position: absolute;
+  top: 0;
+  left: 0;
+  background: white;
+  width: 100%;
+  min-height: 212px;
+  padding: 8px 12px 12px 12px;
+  border-radius: 21px;
+  box-shadow: 0 1px 4px rgba(12, 12, 13, 0.05);
+  border: 1px @Gray-200 solid;
+  text-align: center;
+  z-index: 10;
+
+  .upload-popup-header {
+    margin-bottom: 4px;
+    gap: 8px;
+
+    > div {
+      gap: 8px;
+    }
+  }
+
+  span {
+    font-size: 14px;
+  }
+
+  i {
+    font-size: 16px;
+    color: #aaa;
+
+    &.pi-times {
+      cursor: pointer;
+
+      &:hover {
+        border-radius: 2px;
+        background: @Gray-200;
+      }
+    }
+  }
+}
+
+.image-upload-popup p {
+  font-size: 14px;
+  color: #666;
+  margin-bottom: 10px;
+}
+
+/* 🖼 Drag & Drop Area */
+.drop-area {
+  padding: 20px;
+  border: 2px dashed @Gray-300;
+  border-radius: 10px;
+  background: @Gray-100;
+  cursor: pointer;
+  min-height: 160px;
+  transition: border 0.2s ease-in-out;
+
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 8px;
+
+  &.hovered {
+    background-color: rgba(52, 152, 219, 0.20);
+    border-color: @Blue-500;
+  }
+
+  .es-photo {
+    font-size: 38px;
+    color: @Blue-500;
+  }
+}
+
+.drop-area:hover {
+  border-color: #007bff;
+}
+
+/* 🌟 Upload Link */
+.upload-link {
+  color: #007bff;
+  font-weight: 500;
+  cursor: pointer;
+  text-decoration: underline;
+}
+
+/* ⚠️ Error Message */
+.error-message {
+  color: red;
+  font-size: 12px;
+  background: #ffe6e6;
+  padding: 6px;
+  margin-top: 10px;
+  border-radius: 6px;
+}
+
+/* 🖼 Image Preview */
+.image-preview {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+}

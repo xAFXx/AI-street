@@ -1,0 +1,456 @@
+<div class="template-editor h-screen flex flex-column surface-ground">
+    <!-- Header Toolbar -->
+    <div class="editor-header surface-section shadow-1 p-3">
+        <div class="flex justify-content-between align-items-center">
+            <div class="flex align-items-center gap-3">
+                <button pButton icon="pi pi-arrow-left" class="p-button-text p-button-secondary" (click)="goBack()"
+                    pTooltip="Back to Templates"></button>
+                <div>
+                    <h2 class="m-0 text-xl font-bold">
+                        {{ mode === 'create' ? 'Create Template' : 'Edit Template' }}
+                    </h2>
+                    <div class="flex align-items-center gap-2 mt-1" *ngIf="template">
+                        <p-tag [value]="template.status" [severity]="getStatusSeverity(template.status)"></p-tag>
+                        <span class="text-xs text-secondary">v{{ template.version }}</span>
+                        <span class="text-xs text-secondary" *ngIf="template.lastModified">
+                            • Last modified: {{ template.lastModified | date:'short' }}
+                        </span>
+                    </div>
+                </div>
+            </div>
+            <div class="flex gap-2">
+                <button pButton label="Save Draft" icon="pi pi-save" class="p-button-outlined" [loading]="isSaving"
+                    [disabled]="!hasUnsavedChanges" (click)="saveTemplate()"></button>
+                <button pButton label="Publish Final" icon="pi pi-check-circle" class="p-button-success"
+                    [disabled]="!canPublish()" (click)="showPublishConfirm = true"></button>
+            </div>
+        </div>
+    </div>
+
+    <!-- CREATION MODE: Document Upload Onboarding (shown when no analysis done yet) -->
+    <div class="onboarding-section flex-grow-1 p-4 overflow-auto" *ngIf="mode === 'create' && !hasAnalyzed">
+        <div class="flex flex-column align-items-center justify-content-center h-full">
+            <div class="onboarding-card surface-section border-round-xl shadow-2 p-5"
+                style="max-width: 700px; width: 100%;">
+                <!-- Header -->
+                <div class="text-center mb-4">
+                    <i class="pi pi-file-import text-5xl text-primary mb-3"></i>
+                    <h2 class="m-0 text-2xl font-bold">Create Report Framework</h2>
+                    <p class="mt-2 text-secondary">
+                        Upload existing report documents (PDF or Word) to automatically analyze and generate
+                        a structured framework template with chapters, blocks, and AI validation rules.
+                    </p>
+                </div>
+
+                <!-- Step Indicator -->
+                <div class="steps-indicator flex justify-content-center gap-4 mb-4">
+                    <div class="step flex align-items-center gap-2" [class.text-primary]="true">
+                        <span
+                            class="step-number flex align-items-center justify-content-center border-circle bg-primary text-white font-bold"
+                            style="width: 28px; height: 28px;">1</span>
+                        <span class="text-sm font-medium">Upload Documents</span>
+                    </div>
+                    <i class="pi pi-arrow-right text-300"></i>
+                    <div class="step flex align-items-center gap-2 text-300">
+                        <span
+                            class="step-number flex align-items-center justify-content-center border-circle surface-200 font-bold"
+                            style="width: 28px; height: 28px;">2</span>
+                        <span class="text-sm">AI Analysis</span>
+                    </div>
+                    <i class="pi pi-arrow-right text-300"></i>
+                    <div class="step flex align-items-center gap-2 text-300">
+                        <span
+                            class="step-number flex align-items-center justify-content-center border-circle surface-200 font-bold"
+                            style="width: 28px; height: 28px;">3</span>
+                        <span class="text-sm">Review & Refine</span>
+                    </div>
+                </div>
+
+                <!-- Upload Area -->
+                <div class="upload-area border-2 border-dashed border-round-xl p-5 mb-4 text-center"
+                    [class.border-primary]="uploadedDocuments.length > 0"
+                    [class.border-300]="uploadedDocuments.length === 0">
+
+                    <div *ngIf="uploadedDocuments.length === 0">
+                        <i class="pi pi-cloud-upload text-4xl text-300 mb-3"></i>
+                        <div class="text-lg font-medium mb-2">Upload Report Documents</div>
+                        <p class="text-secondary text-sm mb-3">
+                            Drag and drop PDF or Word documents here, or click to browse
+                        </p>
+                        <p-fileUpload mode="basic" chooseLabel="Choose Files" accept=".pdf,.docx,.doc" [auto]="true"
+                            [multiple]="true" (onSelect)="onDocumentUpload($event)" styleClass="p-button-outlined">
+                        </p-fileUpload>
+                    </div>
+
+                    <!-- Uploaded Files List -->
+                    <div *ngIf="uploadedDocuments.length > 0" class="text-left">
+                        <div class="flex justify-content-between align-items-center mb-3">
+                            <span class="font-bold text-secondary">
+                                <i class="pi pi-file mr-2"></i>{{ uploadedDocuments.length }} Document(s) Ready
+                            </span>
+                            <p-fileUpload mode="basic" chooseLabel="Add More" accept=".pdf,.docx,.doc" [auto]="true"
+                                [multiple]="true" (onSelect)="onDocumentUpload($event)"
+                                styleClass="p-button-text p-button-sm">
+                            </p-fileUpload>
+                        </div>
+
+                        <div class="document-list">
+                            <div class="doc-item flex align-items-center justify-content-between p-3 surface-ground border-round-lg mb-2"
+                                *ngFor="let doc of uploadedDocuments; let i = index">
+                                <div class="flex align-items-center gap-3">
+                                    <div class="file-icon flex align-items-center justify-content-center border-round"
+                                        [class.bg-red-100]="doc.type === 'pdf'" [class.bg-blue-100]="doc.type !== 'pdf'"
+                                        style="width: 40px; height: 40px;">
+                                        <i [class]="doc.type === 'pdf' ? 'pi pi-file-pdf text-red-500' : 'pi pi-file-word text-blue-500'"
+                                            style="font-size: 1.25rem;"></i>
+                                    </div>
+                                    <div>
+                                        <div class="font-medium">{{ doc.name }}</div>
+                                        <div class="text-xs text-secondary">{{ doc.size }}</div>
+                                    </div>
+                                </div>
+                                <button pButton icon="pi pi-times" class="p-button-text p-button-danger p-button-sm"
+                                    pTooltip="Remove" (click)="removeDocument(doc)"></button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Analyze Button -->
+                <div class="flex flex-column gap-3">
+                    <button pButton label="Analyze Documents with AI" icon="pi pi-sparkles" class="p-button-lg w-full"
+                        [loading]="isAnalyzing" [disabled]="uploadedDocuments.length === 0"
+                        (click)="analyzeDocuments()">
+                    </button>
+
+                    <div class="flex align-items-center justify-content-center gap-2">
+                        <span class="text-secondary text-sm">or</span>
+                    </div>
+
+                    <button pButton label="Start from Scratch" icon="pi pi-file-edit"
+                        class="p-button-outlined p-button-secondary w-full" (click)="skipOnboarding()">
+                    </button>
+                </div>
+
+                <!-- Info Note -->
+                <div class="mt-4 p-3 surface-ground border-round-lg">
+                    <div class="flex align-items-start gap-2">
+                        <i class="pi pi-info-circle text-primary mt-1"></i>
+                        <div class="text-sm text-secondary">
+                            <strong>How it works:</strong> Upload existing audit reports and our AI will analyze
+                            the document structure to suggest chapters, content blocks, required fields, and
+                            validation constraints. You can then review and refine the generated framework.
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- EDIT MODE or POST-ANALYSIS: Regular Editor View -->
+    <div class="editor-content flex-grow-1 overflow-hidden p-3" *ngIf="mode === 'edit' || hasAnalyzed">
+        <p-splitter [panelSizes]="[30, 70]" styleClass="h-full">
+            <!-- Left Panel: Chapter Tree -->
+            <ng-template pTemplate>
+                <div
+                    class="left-panel h-full flex flex-column surface-section border-round-lg shadow-1 overflow-hidden">
+                    <!-- Template Info -->
+                    <div class="template-info p-3 border-bottom-1 border-200">
+                        <div class="mb-3">
+                            <label class="block text-sm font-bold mb-1 text-secondary">Template Name *</label>
+                            <input pInputText [(ngModel)]="templateName" (input)="hasUnsavedChanges = true"
+                                placeholder="Enter template name" class="w-full" />
+                        </div>
+                        <div>
+                            <label class="block text-sm font-bold mb-1 text-secondary">Description</label>
+                            <textarea pInputTextarea [(ngModel)]="templateDescription"
+                                (input)="hasUnsavedChanges = true" placeholder="Template description" rows="2"
+                                class="w-full"></textarea>
+                        </div>
+                        <!-- Constraint Summary -->
+                        <div class="mt-2 text-xs text-secondary" *ngIf="selectedChapter">
+                            <i class="pi pi-info-circle mr-1"></i> {{ getConstraintSummary() }}
+                        </div>
+                    </div>
+
+                    <!-- Creation Mode: Document Upload -->
+                    <div class="upload-section p-3 border-bottom-1 border-200" *ngIf="mode === 'create'">
+                        <div class="flex justify-content-between align-items-center mb-2">
+                            <span class="text-sm font-bold text-secondary">Upload Documents</span>
+                            <span class="text-xs text-400">PDF, Word only</span>
+                        </div>
+                        <p-fileUpload mode="basic" chooseLabel="Upload" accept=".pdf,.docx,.doc" [auto]="true"
+                            (onSelect)="onDocumentUpload($event)">
+                        </p-fileUpload>
+
+                        <!-- Uploaded Documents List -->
+                        <div class="uploaded-docs mt-2" *ngIf="uploadedDocuments.length > 0">
+                            <div class="doc-item flex align-items-center justify-content-between p-2 surface-ground border-round mb-1"
+                                *ngFor="let doc of uploadedDocuments">
+                                <div class="flex align-items-center gap-2">
+                                    <i
+                                        [class]="doc.type === 'pdf' ? 'pi pi-file-pdf text-red-500' : 'pi pi-file-word text-blue-500'"></i>
+                                    <span class="text-sm">{{ doc.name }}</span>
+                                    <i class="pi pi-check-circle text-green-500" *ngIf="doc.analyzed"></i>
+                                </div>
+                                <button pButton icon="pi pi-times" class="p-button-text p-button-danger p-button-sm"
+                                    (click)="removeDocument(doc)"></button>
+                            </div>
+                            <button pButton label="Analyze with AI" icon="pi pi-sparkles"
+                                class="p-button-outlined p-button-info w-full mt-2" [loading]="isAnalyzing"
+                                [disabled]="uploadedDocuments.length === 0" (click)="analyzeDocuments()"></button>
+                        </div>
+                    </div>
+
+                    <!-- AI Summary Section -->
+                    <div class="ai-summary-section p-3 border-bottom-1 border-200" *ngIf="template?.aiSummary?.length">
+                        <div class="flex justify-content-between align-items-center mb-2">
+                            <span class="text-sm font-bold text-secondary">
+                                <i class="pi pi-stars mr-1"></i> AI Summary
+                            </span>
+                            <button pButton icon="pi pi-question-circle"
+                                class="p-button-text p-button-sm p-button-secondary"
+                                pTooltip="Required information for this template. AI will use these to generate content."></button>
+                        </div>
+                        <div class="ai-field mb-2" *ngFor="let field of template?.aiSummary || []">
+                            <label class="block text-xs font-bold mb-1 text-secondary">
+                                {{ field.label }}
+                                <i class="pi pi-check-circle text-green-500 ml-1" *ngIf="field.validated"></i>
+                                <i class="pi pi-sparkles text-blue-500 ml-1"
+                                    *ngIf="field.aiGenerated && !field.validated"></i>
+                            </label>
+                            <div class="flex gap-2">
+                                <input pInputText [(ngModel)]="field.value" [placeholder]="field.placeholder"
+                                    (input)="onFieldChange(field)" class="flex-grow-1 text-sm" />
+                                <button pButton icon="pi pi-check"
+                                    class="p-button-outlined p-button-success p-button-sm" pTooltip="Validate with AI"
+                                    [loading]="validatingFieldId === field.id" [disabled]="field.validated"
+                                    (click)="validateField(field)"></button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Chapters Header -->
+                    <div
+                        class="chapters-header p-3 border-bottom-1 border-200 flex justify-content-between align-items-center">
+                        <span class="font-bold text-secondary">Chapters</span>
+                        <div class="flex gap-1">
+                            <button pButton icon="pi pi-plus" class="p-button-text p-button-sm" pTooltip="Add Chapter"
+                                (click)="addChapter()"></button>
+                            <button pButton icon="pi pi-plus-circle" class="p-button-text p-button-sm"
+                                pTooltip="Add Sub-chapter" [disabled]="!selectedChapter"
+                                (click)="addSubChapter()"></button>
+                        </div>
+                    </div>
+
+                    <!-- Chapter Tree -->
+                    <div class="chapter-tree flex-grow-1 overflow-auto p-2">
+                        <p-tree [value]="chapterTree" selectionMode="single" [(selection)]="selectedChapterNode"
+                            (onNodeSelect)="onChapterSelect($event)" styleClass="border-none">
+                            <ng-template let-node pTemplate="default">
+                                <div class="flex align-items-center gap-2">
+                                    <span>{{ node.label }}</span>
+                                    <i class="pi pi-star-fill text-yellow-500 text-xs"
+                                        *ngIf="hasMandatoryBlocks(node.data)" pTooltip="Has mandatory blocks"></i>
+                                </div>
+                            </ng-template>
+                        </p-tree>
+
+                        <div class="empty-state text-center p-4" *ngIf="chapterTree.length === 0 && !isAnalyzing">
+                            <i class="pi pi-folder-open text-3xl text-200 mb-2"></i>
+                            <div class="text-sm text-secondary">No chapters yet</div>
+                            <div class="text-xs text-400">Add a chapter or upload documents to analyze</div>
+                        </div>
+                    </div>
+
+                    <!-- Chapter Actions -->
+                    <div class="chapter-actions p-2 border-top-1 border-200 flex gap-1 justify-content-center"
+                        *ngIf="selectedChapter">
+                        <button pButton icon="pi pi-arrow-up" class="p-button-text p-button-sm" pTooltip="Move Up"
+                            (click)="moveChapterUp()"></button>
+                        <button pButton icon="pi pi-arrow-down" class="p-button-text p-button-sm" pTooltip="Move Down"
+                            (click)="moveChapterDown()"></button>
+                        <button pButton icon="pi pi-arrow-right" class="p-button-text p-button-sm" pTooltip="Indent"
+                            (click)="indentChapter()"></button>
+                        <button pButton icon="pi pi-arrow-left" class="p-button-text p-button-sm" pTooltip="Outdent"
+                            [disabled]="selectedChapter.indent <= 0" (click)="outdentChapter()"></button>
+                    </div>
+                </div>
+            </ng-template>
+
+            <!-- Right Panel: Block Configuration -->
+            <ng-template pTemplate>
+                <div
+                    class="right-panel h-full flex flex-column surface-section border-round-lg shadow-1 ml-3 overflow-hidden">
+                    <!-- No Chapter Selected -->
+                    <div class="empty-state flex flex-column align-items-center justify-content-center h-full"
+                        *ngIf="!selectedChapter">
+                        <i class="pi pi-file-edit text-5xl text-200 mb-3"></i>
+                        <div class="text-lg font-bold text-secondary">Select a Chapter</div>
+                        <div class="text-sm text-400">Choose a chapter from the left to configure blocks</div>
+                    </div>
+
+                    <!-- Chapter Configuration -->
+                    <ng-container *ngIf="selectedChapter">
+                        <!-- Chapter Header -->
+                        <div class="chapter-config-header p-3 border-bottom-1 border-200">
+                            <div class="flex justify-content-between align-items-center">
+                                <div>
+                                    <input pInputText [(ngModel)]="selectedChapter.label"
+                                        (input)="onChapterLabelChange()" class="text-lg font-bold border-none p-0"
+                                        style="background: transparent;" />
+                                    <div class="text-xs text-secondary mt-1">
+                                        {{ selectedChapter.blocks.length }} block(s) •
+                                        {{ getMandatoryBlockCount(selectedChapter) }} mandatory
+                                    </div>
+                                </div>
+                                <button pButton icon="pi pi-plus" label="Add Block"
+                                    class="p-button-outlined p-button-sm" (click)="addBlock()"></button>
+                            </div>
+                        </div>
+
+                        <p-splitter [panelSizes]="[40, 60]" layout="vertical" styleClass="flex-grow-1">
+                            <!-- Block List -->
+                            <ng-template pTemplate>
+                                <div class="block-list p-3 overflow-auto">
+                                    <div class="block-item p-3 mb-2 border-round-lg cursor-pointer"
+                                        *ngFor="let block of selectedChapter.blocks; let i = index"
+                                        [ngClass]="{'surface-ground': selectedBlock?.id !== block.id, 'bg-primary-50 border-primary-200 border-1': selectedBlock?.id === block.id}"
+                                        (click)="selectBlock(block)">
+                                        <div class="flex justify-content-between align-items-start">
+                                            <div class="flex align-items-center gap-2">
+                                                <span class="text-lg font-bold text-300">{{ i + 1 }}</span>
+                                                <div>
+                                                    <div class="flex align-items-center gap-2">
+                                                        <span class="font-medium">{{ block.type | titlecase }}
+                                                            Block</span>
+                                                        <i class="pi pi-star-fill text-yellow-500 text-xs"
+                                                            *ngIf="block.mandatory" pTooltip="Mandatory"></i>
+                                                    </div>
+                                                    <div class="text-xs text-secondary mt-1">
+                                                        {{ block.constraints.length }} constraint(s)
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <button pButton icon="pi pi-trash"
+                                                class="p-button-text p-button-danger p-button-sm"
+                                                (click)="deleteBlock(block); $event.stopPropagation()"></button>
+                                        </div>
+                                    </div>
+
+                                    <div class="empty-state text-center p-4"
+                                        *ngIf="selectedChapter.blocks.length === 0">
+                                        <i class="pi pi-inbox text-3xl text-200 mb-2"></i>
+                                        <div class="text-sm text-secondary">No blocks in this chapter</div>
+                                        <button pButton label="Add Block" icon="pi pi-plus"
+                                            class="p-button-outlined p-button-sm mt-2" (click)="addBlock()"></button>
+                                    </div>
+                                </div>
+                            </ng-template>
+
+                            <!-- Block Editor -->
+                            <ng-template pTemplate>
+                                <div class="block-editor p-3 border-top-1 border-200 overflow-auto"
+                                    *ngIf="selectedBlock">
+                                    <!-- Block Settings -->
+                                    <div class="flex justify-content-between align-items-center mb-3">
+                                        <span class="font-bold text-secondary">Block Configuration</span>
+                                        <div class="flex align-items-center gap-2">
+                                            <p-checkbox [(ngModel)]="selectedBlock.mandatory" [binary]="true"
+                                                inputId="mandatory" (onChange)="toggleBlockMandatory(selectedBlock)">
+                                            </p-checkbox>
+                                            <label for="mandatory" class="text-sm cursor-pointer">
+                                                <i class="pi pi-star-fill text-yellow-500 mr-1"></i> Mandatory
+                                            </label>
+                                        </div>
+                                    </div>
+
+                                    <!-- Content Editor -->
+                                    <div class="mb-3">
+                                        <label class="block text-sm font-bold mb-1 text-secondary">Block Content</label>
+                                        <p-editor [(ngModel)]="blockContent" (onTextChange)="onBlockContentChange()"
+                                            [style]="{ height: '150px' }"></p-editor>
+                                    </div>
+
+                                    <!-- Constraints -->
+                                    <div class="constraints-section">
+                                        <div class="flex justify-content-between align-items-center mb-2">
+                                            <span class="text-sm font-bold text-secondary">Constraints</span>
+                                            <button pButton icon="pi pi-plus" label="Add"
+                                                class="p-button-text p-button-sm" (click)="addConstraint()"></button>
+                                        </div>
+
+                                        <div class="constraint-item flex gap-2 align-items-start mb-2"
+                                            *ngFor="let constraint of selectedBlock.constraints">
+                                            <p-checkbox [(ngModel)]="constraint.requiresValidation" [binary]="true"
+                                                pTooltip="Require AI validation"
+                                                (onChange)="toggleConstraintValidation(constraint)">
+                                            </p-checkbox>
+                                            <input pInputText [(ngModel)]="constraint.text"
+                                                (input)="hasUnsavedChanges = true" placeholder="Enter constraint..."
+                                                class="flex-grow-1 text-sm" />
+                                            <i class="pi pi-sparkles text-blue-500" *ngIf="constraint.aiGenerated"
+                                                pTooltip="AI Generated"></i>
+                                            <i class="pi pi-check-circle text-green-500" *ngIf="constraint.validated"
+                                                pTooltip="Validated"></i>
+                                            <button pButton icon="pi pi-times"
+                                                class="p-button-text p-button-danger p-button-sm"
+                                                (click)="removeConstraint(constraint)"></button>
+                                        </div>
+
+                                        <div class="text-center p-3 text-secondary text-sm"
+                                            *ngIf="selectedBlock.constraints.length === 0">
+                                            <i class="pi pi-info-circle mr-1"></i>
+                                            No constraints. Add constraints to guide AI content generation.
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- No Block Selected -->
+                                <div class="empty-state flex flex-column align-items-center justify-content-center p-4"
+                                    *ngIf="!selectedBlock">
+                                    <i class="pi pi-file text-3xl text-200 mb-2"></i>
+                                    <div class="text-sm text-secondary">Select a block to edit</div>
+                                </div>
+                            </ng-template>
+                        </p-splitter>
+                    </ng-container>
+                </div>
+            </ng-template>
+        </p-splitter>
+    </div>
+</div>
+
+<!-- Delete Confirmation Dialog -->
+<p-dialog [(visible)]="showDeleteConfirm" [modal]="true" header="Confirm Delete" [style]="{width: '400px'}">
+    <div class="flex align-items-center gap-3">
+        <i class="pi pi-exclamation-triangle text-3xl text-orange-500"></i>
+        <span>This is a mandatory block. Are you sure you want to delete it? This action requires approval.</span>
+    </div>
+    <ng-template pTemplate="footer">
+        <button pButton label="Cancel" class="p-button-text" (click)="showDeleteConfirm = false"></button>
+        <button pButton label="Delete" class="p-button-danger" (click)="showDeleteConfirm = false"></button>
+    </ng-template>
+</p-dialog>
+
+<!-- Publish Confirmation Dialog -->
+<p-dialog [(visible)]="showPublishConfirm" [modal]="true" header="Publish Template" [style]="{width: '450px'}">
+    <div *ngIf="template">
+        <p class="mt-0">Publishing will make this template available for use in reports.</p>
+        <div class="surface-ground p-3 border-round-lg">
+            <div class="flex justify-content-between mb-2">
+                <span class="text-secondary">Current Version:</span>
+                <span class="font-bold">{{ template.version }}</span>
+            </div>
+            <div class="flex justify-content-between">
+                <span class="text-secondary">Status:</span>
+                <p-tag [value]="template.status" [severity]="getStatusSeverity(template.status)"></p-tag>
+            </div>
+        </div>
+    </div>
+    <ng-template pTemplate="footer">
+        <button pButton label="Cancel" class="p-button-text" (click)="showPublishConfirm = false"></button>
+        <button pButton label="Publish Final" icon="pi pi-check-circle" class="p-button-success"
+            (click)="publishTemplate()"></button>
+    </ng-template>
+</p-dialog>

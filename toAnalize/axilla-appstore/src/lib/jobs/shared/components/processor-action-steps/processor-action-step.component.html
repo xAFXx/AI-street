@@ -1,0 +1,54 @@
+<div class="step-row">
+
+    <div class="step-container" [ngClass]="getStepOrigin(step)" (click)="onShowResult($event)">
+        <div class="step-content">
+            <div class="step-header-container">
+                <i [ngClass]="{'pi-cog': step.stepType == 'Processor', 'pi-ellipsis-v': step.stepType == 'Step'}" class="pi"></i>
+
+                <div class="step-info one-line-ellipsis" (click)="onEditStep($event)">{{getStepInfo(step)}}</div>
+                <div class="step-actions" [ngClass]="{'edit-mode': isEditMode }">
+
+                    <ng-container *ngIf="isEditMode">
+                        <i class="fa fa-arrow-left" aria-hidden="true" (click)="goBack()"></i>
+                    </ng-container>
+
+                    <i class="fa fa-pen"
+                       [ngClass]="{'dissabled-icon': isEditMode}"
+                       aria-hidden="true"
+                       (click)="onEditStep()"></i>
+                    <i class="fa fa-eye"
+                       aria-hidden="true"
+                       (click)="onShowResult($event)"></i>
+                    <i class="fa fa-play"
+                       aria-hidden="true"
+                       (click)="onRunStep()"></i>
+                </div>
+            </div>
+
+            <div class="step-body-container one-line-ellipsis ">{{getStepDescription(step)}}</div>
+
+            <ng-container *ngIf="isEditMode">
+                <div>
+                    <div class="input-container d-flex align-items-center pt-2">
+                        <p-inputSwitch (onChange)="stepDisableHandler($event)" [(ngModel)]="isStepDisabled" ngDefaultControl></p-inputSwitch>
+                        <span class="ml-1">{{ 'Disable' | localize }}</span>
+                    </div>
+
+                    <div class="d-flex align-items-center pt-2">
+                        <div class="input-container d-flex align-items-center pt-2">
+
+                            <button class="btn btn-dark"
+                                    (click)="addErrorNotificationGroup($event)">Add</button>
+                            <button class="btn btn-dark"
+                                    (click)="updateErrorNotificationGroup($event)">Update</button>
+                            <button class="btn btn-dark"
+                                    (click)="removeErrorNotificationGroup($event)">Remove</button>
+
+                            <span class="ml-1">{{ 'OnErrorHandling' | localize }}</span>
+                        </div>
+                    </div>
+                </div>
+            </ng-container>
+        </div>
+    </div>
+</div>

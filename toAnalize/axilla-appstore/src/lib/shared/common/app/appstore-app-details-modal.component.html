@@ -1,0 +1,121 @@
+<div bsModal #appStoreAppDetails="bs-modal" class="modal fade" tabindex="-1" (onShown)="onShown()" role="dialog" aria-labelledby="createOrEditModal" aria-hidden="true" [config]="{backdrop: 'static'}">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h4 class="modal-title">
+                    <span>
+                        <span translation="Axilla.AppStore.Article.ItemDetails" source="AxillaAppBase"></span>
+                    </span>
+                </h4>
+                <button type="button" class="close" (click)="close()" aria-label="Close" [disabled]="saving">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body item-modal">
+                <div class="product-list-item list-card" *ngIf="active">
+                    <div class="product-list-detail d-flex">
+
+                        <!--<div class="favorite-container" (click)="addToFavorite($event, product)">
+                            <i class="fa fa-heart"></i>
+                        </div>-->
+
+
+                        <div class="product-image">
+                            <app-img [img]="app.imageCSS" (openApp)="openDetails()"></app-img>
+                        </div>
+                        <div style="width: 100%">
+                            <div class="header-flex">
+                                <div style="flex: 1 1 auto">
+                                    <div class="product-name no">{{app.title}}</div>
+                                    <!--<div class="product-description">{{app.code}}</div>-->
+                                    <div class="product-description no">{{app.description}}</div>
+                                </div>
+                                <div class="top-right">
+
+                                    <!--<span *ngIf="selectedItems.amount == 1" class="product-badge amount-pce">
+                                        <span translation="Axilla.OrderGuide.Article.AmountPce" source="Axilla">
+                                        </span>
+                                    </span>
+                                    <span *ngIf="selectedItems.amount > 1" class="product-badge amount-box">
+                                        {{app.amount}}
+                                        <span *ngIf="selectedItems.amount > 1" translation="Axilla.OrderGuide.Article.AmountBox" source="Axilla">
+                                        </span>
+                                    </span>
+
+
+                                    <ng-container>
+                                        <div class="details-stock-container" *ngIf="selectedItems.stockAmount > 0">
+                                            {{app.stockAmount}} Stock
+                                        </div>
+
+                                        <div class="stock-container sold-out" *ngIf="selectedItems.stockAmount == 0">
+                                            Sold OUT
+                                        </div>
+                                    </ng-container>-->
+
+                                </div>
+                            </div>
+
+                            <div class="modal-item-bottom">
+
+                                <div>
+                                    <i class="pi pi-tag product-category-icon"></i>
+                                    <span class="product-category">App</span>
+                                </div>
+
+                                <!--<div>
+                                    <span class="product-price">{{app.price | currency:getCurrency():'symbol-narrow':'.2-2'}}</span>
+
+                                    <p-spinner [(ngModel)]="selectedItems.quantity"
+                                               [step]="1"
+                                               [min]="0"
+                                               OnlyNumber="true"
+                                               inputStyleClass="item-quantity"
+                                               [formatInput]="true"
+                                               (onChange)="calculateAvailable()"
+                                               thousandSeparator=","
+                                               decimalSeparator="."></p-spinner>
+                                </div>-->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <div class="item-details-footer d-flex justify-content-between align-items-center">
+                    <!--<ng-container *ngIf="selectedItems">
+                        <div class="d-flex" *ngIf="'Pages.App.Webshop.View.ShowAvailableStockInfo' | permission">
+                            <ng-container *ngIf="showAvailableAmount">
+                                <div class="available-items-container ubl-mint-leaf">
+                                    {{availableAmount}}-->
+                                    <!--<span translation="Axilla.Webshop.AvailableItems" source="Axilla"></span>-->
+                                    <!--Available
+                                </div>
+                            </ng-container>
+
+                            <ng-container *ngIf="deficiteItems > 0">
+                                <div class="dificite-amount-container ubl-pink-glamour">
+                                    {{deficiteItems}}
+                                    {{deficiteWaitingTime}}-->
+                                    <!--<span translation="Axilla.Webshop.ItemAvailability" source="Axilla"></span>-->
+                                    <!--weeks
+                                </div>
+
+                            </ng-container>
+                        </div>
+                    </ng-container>-->
+
+                    <div>
+                        <button [disabled]="saving"
+                                type="button"
+                                class="btn btn-primary"
+                                (click)="close()">
+                            {{l("Cancel")}}
+                        </button>
+                        <p-button icon="pi pi-shopping-cart" label="Install" (click)="installApp(app.id)"></p-button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

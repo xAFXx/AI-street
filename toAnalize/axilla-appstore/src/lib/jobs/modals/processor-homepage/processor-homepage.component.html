@@ -1,0 +1,88 @@
+<div class="modal-body">
+  <!-- DataView Component -->
+  <p-dataView #dv [value]="processorList" [paginator]="true" [rows]="12" filterBy="name" layout="grid">
+    <!-- Header Section -->
+    <p-header>
+      <div class="ui-helper-clearfix">
+        <div class="p-grid">
+          <!-- Search Field -->
+          <div class="p-col-6 p-md-4 filter-container">
+            <form [formGroup]="searchForm"> <!-- Add this form -->
+              <div>
+                <input
+                  type="search"
+                  name="search"
+                  formControlName="search"
+                  pInputText
+                  placeholder="Search by Name">
+              </div>
+            </form>
+          </div>
+
+          <!-- Add Button -->
+          <div class="p-col-6 p-md-offset-4 p-md-4 filter-container">
+            <div style="display: flex; justify-content: end">
+              <button (click)="createNewPed()" class="btn btn-success">
+                <i class="fa fa-plus"></i>
+                <span translation="Axilla.App.AppStore.App.ProcessorExecuteDefinition.AddNew" source="AxillaAppBase"></span>
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </p-header>
+
+    <!-- Grid Item Template -->
+    <ng-template let-processor pTemplate="gridItem">
+      <div class="p-col-12 p-md-6 p-lg-4" (click)="openProcessor(processor)">
+        <div class="step-grid-item" (click)="openProcessor(processor)"  style="position: relative;">
+
+
+          <!-- Status Icon -->
+          <div class="status-icon">
+            <!-- Green Loop Icon -->
+            <i class="fa fa-refresh" *ngIf="getProcessorDetails(processor)?.Aggregated?.ControlBlockInfo?.LoopEnabled" aria-hidden="true" style="color: #28a745;"></i>
+            <i class="fa fa-bug" *ngIf="getProcessorDetails(processor)?.Aggregated?.ControlBlockInfo?.DebugLog" aria-hidden="true" style="color: #6f42c1;"></i>
+            <i class="fa fa-sitemap" (click)="navigateToProcessor(processor)" aria-hidden="true"  style="color: #007bff; cursor: pointer; margin-left: 10px;">
+            </i>
+          </div>
+
+
+          <!-- Abbreviation Block -->
+          <div class="abbreviation-container">
+<div class="initials-block" [ngStyle]="getColor(processor)" style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap; padding: 5px; border-radius: 4px; box-shadow: 0px 1px 2px rgba(0, 0, 0, 0.2);">
+              {{ getInitials(processor.name) }}
+            </div>
+            <div class="step-name">
+              {{ processor.name }}
+            </div>
+          </div>
+
+          <!-- Description -->
+          <div class="step-description" [ngStyle]="{'background-color': getProcessorDetails(processor)?.Aggregated?.Description?.startsWith('Error:') ? 'red' : 'transparent'}">
+            {{ getProcessorDetails(processor)?.Aggregated?.Description }}
+          </div>
+
+          <div class="statistics-container">
+            <ul class="statistics-inline">
+              <li>
+                <i class="fa fa-download" aria-hidden="true"></i>
+                <strong>Data:</strong> {{ getProcessorDetails(processor)?.Aggregated?.TotalDataCount || 0 }}
+              </li>
+              <li>
+                <i class="fa fa-tasks" aria-hidden="true"></i>
+                <strong>Actions:</strong> {{ getProcessorDetails(processor)?.Aggregated?.TotalActionsCount || 0 }}
+              </li>
+              <li>
+                <i class="fa fa-upload" aria-hidden="true"></i>
+                <strong>Output:</strong> {{ getProcessorDetails(processor)?.Aggregated?.TotalOutputsCount || 0 }}
+              </li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </ng-template>
+
+  </p-dataView>
+</div>
+

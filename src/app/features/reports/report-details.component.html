@@ -1,0 +1,575 @@
+<div class="grid m-0 h-full overflow-hidden">
+    <div class="col-12 h-full overflow-hidden p-0">
+        <div class="card h-full p-0 surface-card border-none shadow-none flex flex-column overflow-hidden">
+
+            <div class="reports-page flex flex-column h-full">
+                <!-- Top bar -->
+                <p-toolbar class="border-none surface-0">
+                    <div class="p-toolbar-group-left flex flex-column align-items-start">
+                        <div class="topbar-title">{{ reportTitle }}</div>
+                    </div>
+
+                    <div class="p-toolbar-group-right flex align-items-center gap-3">
+                        <div class="topbar-actions flex align-items-center gap-2 mr-2">
+                            <button pButton label="Export Report" icon="pi pi-file-export"
+                                class="p-button-primary p-button-sm px-3" (click)="exportReport()"></button>
+                            <button pButton icon="pi pi-print" class="p-button-text p-button-secondary p-button-sm"
+                                pTooltip="Print Report" tooltipPosition="bottom" (click)="printReport()"></button>
+                            <button pButton icon="pi pi-envelope" class="p-button-text p-button-secondary p-button-sm"
+                                pTooltip="Email Report" tooltipPosition="bottom" (click)="emailReport()"></button>
+                        </div>
+                        <p-tag [value]="reportStatus" [severity]="getStatusSeverity(reportStatus)"></p-tag>
+                    </div>
+                </p-toolbar>
+
+                <!-- Main -->
+                <div class="flex-grow-1 min-h-0">
+                    <div class="main-container h-full surface-card border-top-1 border-200 shadow-none overflow-hidden">
+                        <p-splitter styleClass="main-splitter h-full" [panelSizes]="[15, 60, 25]">
+
+                            <!-- LEFT: Chapter tree -->
+                            <ng-template pTemplate>
+                                <div class="panel w-full h-full flex flex-column">
+                                    <!-- Static Header Section -->
+                                    <div class="panel-header p-3 border-200 surface-section flex-shrink-0">
+                                        <!-- Report Identity Block -->
+                                        <div
+                                            class="report-identity-card p-3 border-round-xl surface-ground border-1 border-200 shadow-sm">
+                                            <div class="template-info flex flex-column border-top-1 border-100">
+                                                <span
+                                                    class="label text-xs text-secondary uppercase font-bold mb-1">Template</span>
+                                                <span class="value font-bold text-green-500 text-xs">{{ templateName
+                                                    }}</span>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <!-- Static Chapters Title & Search -->
+                                    <div class="chapters-header px-3 pt-3 pb-2 surface-section flex-shrink-0">
+                                        <div
+                                            class="panel-title font-bold text-base text-color uppercase tracking-wider px-1 mb-3">
+                                            Chapters</div>
+                                        <span class="p-input-icon-left w-full mb-2">
+                                            <i class="pi pi-search"></i>
+                                            <input pInputText type="text" [(ngModel)]="chapterSearchText"
+                                                placeholder="Search chapters..." class="w-full p-inputtext-sm"
+                                                (input)="filterChapters()">
+                                        </span>
+                                    </div>
+
+                                    <!-- Scrollable Tree Content -->
+                                    <div class="panel-body scroll overflow-y-auto px-3 flex-grow-1 min-h-0">
+                                        <p-tree [value]="chapterTree" selectionMode="single"
+                                            [(selection)]="selectedNode" [filter]="false"
+                                            styleClass="w-full border-none p-0" (onNodeSelect)="selectChapter($event)">
+                                            <ng-template let-node pTemplate="default">
+                                                <div class="flex align-items-center gap-2 w-full">
+                                                    <p-checkbox [binary]="true" [ngModel]="isChapterFinished(node)"
+                                                        [disabled]="true"></p-checkbox>
+                                                    <span [class.completed]="isChapterFinished(node)">{{ node.label
+                                                        }}</span>
+                                                </div>
+                                            </ng-template>
+                                        </p-tree>
+                                    </div>
+
+                                    <!-- Static Footer with Review Button -->
+                                    <div class="panel-footer p-3 border-top-1 border-200 surface-section flex-shrink-0">
+                                        <!-- Review Button -->
+                                        <button pButton label="Review Full Report" icon="pi pi-eye"
+                                            class="p-button-success w-full mb-3" (click)="openReviewModal()"></button>
+
+                                        <!-- Progress Bar -->
+                                        <div class="flex justify-content-between align-items-center mb-2">
+                                            <span class="text-xs font-bold text-secondary uppercase">Overall Report
+                                                Progress</span>
+                                            <span class="text-xs font-bold text-primary">{{ overallProgress }}%</span>
+                                        </div>
+                                        <p-progressBar [value]="overallProgress" [showValue]="false"
+                                            styleClass="report-progress-bar h-1rem"
+                                            [style.--progress-color]="getProgressColor()">
+                                        </p-progressBar>
+                                    </div>
+                                </div>
+                            </ng-template>
+
+                            <!-- CENTER: Editor / Preview -->
+                            <ng-template pTemplate>
+                                <div class="panel h-full w-full flex flex-column border-x-1 border-200">
+                                    <p-splitter layout="vertical" styleClass="center-splitter border-none h-full"
+                                        [panelSizes]="[65,35]">
+
+                                        <!-- Editor -->
+                                        <ng-template pTemplate>
+                                            <div class="panel-inner flex flex-column h-full">
+                                                <div
+                                                    class="panel-header sticky py-3 px-4 border-200 surface-section flex justify-content-between align-items-center">
+                                                    <div>
+                                                        <div class="panel-title font-bold">Chapter Editor</div>
+                                                        <div class="panel-subtitle text-sm text-secondary">Manage and
+                                                            organize your report content.</div>
+                                                    </div>
+                                                    <button pButton label="Add Block" icon="pi pi-plus"
+                                                        class="p-button-primary p-button-sm border-round-md"
+                                                        (click)="openAddBlockModal()"></button>
+                                                </div>
+
+                                                <div class="panel-body p-3 flex-grow-1 overflow-y-auto scroll min-h-0">
+
+                                                    <p-divider styleClass="my-4"></p-divider>
+
+                                                    <div class="section-title font-bold mb-3 text-lg">Blocks
+                                                    </div>
+
+                                                    <div class="empty-state flex flex-column align-items-center justify-content-center py-5 border-2 border-dashed border-200 border-round-lg"
+                                                        *ngIf="blocks.length === 0">
+                                                        <i class="pi pi-folder-open text-4xl text-200 mb-3"></i>
+                                                        <div class="empty-title font-bold text-secondary">No
+                                                            blocks
+                                                            yet
+                                                        </div>
+                                                        <div
+                                                            class="empty-text text-sm text-secondary text-center max-w-20rem">
+                                                            Add a
+                                                            text block or image block above to build this
+                                                            chapter.
+                                                        </div>
+                                                    </div>
+
+                                                    <div class="block-list flex flex-column gap-3"
+                                                        *ngIf="blocks.length > 0" cdkDropList
+                                                        (cdkDropListDropped)="onDrop($event)">
+                                                        <div class="block-item p-3 border-1 border-200 border-round-lg surface-card shadow-1 relative"
+                                                            *ngFor="let b of blocks; let i = index" cdkDrag>
+
+                                                            <!-- Drag Handle -->
+                                                            <div class="drag-handle absolute flex align-items-center justify-content-center cursor-move"
+                                                                cdkDragHandle>
+                                                                <i class="pi pi-bars text-300"></i>
+                                                            </div>
+
+                                                            <div
+                                                                class="block-item-content flex align-items-start gap-4 pl-4 relative">
+                                                                <!-- Left: Index -->
+                                                                <div class="block-meta-side pt-1">
+                                                                    <span
+                                                                        class="block-index bg-primary text-white w-2rem h-2rem flex align-items-center justify-content-center border-round-circle text-xs font-bold shadow-1">
+                                                                        {{ i + 1 }}
+                                                                    </span>
+                                                                </div>
+
+                                                                <!-- Middle: Body -->
+                                                                <div class="block-body flex-grow-1 min-w-0">
+                                                                    <div class="block-text m-0 mb-3 line-height-3 text-color ql-editor p-0"
+                                                                        *ngIf="b.text" [innerHTML]="b.text">
+                                                                    </div>
+
+                                                                    <div class="block-images-grid grid p-0"
+                                                                        *ngIf="b.images && b.images.length > 0">
+                                                                        <div *ngFor="let img of b.images"
+                                                                            class="col-12 md:col-4 lg:col-3 mb-3">
+                                                                            <img class="block-image w-full border-round-md border-1 border-200 shadow-1"
+                                                                                [src]="safe(img.url)" alt="image" />
+                                                                            <div class="block-caption mt-2 text-xs text-secondary italic"
+                                                                                *ngIf="img.caption">{{ img.caption
+                                                                                }}
+                                                                            </div>
+                                                                        </div>
+                                                                    </div>
+                                                                </div>
+
+                                                                <!-- Right: Actions -->
+                                                                <div class="block-actions pt-0 flex gap-1">
+                                                                    <button pButton icon="pi pi-pencil"
+                                                                        class="p-button-text p-button-secondary p-button-sm border-round-circle"
+                                                                        (click)="editBlock(b)"></button>
+                                                                    <button pButton icon="pi pi-trash"
+                                                                        class="p-button-text p-button-danger p-button-sm border-round-circle"
+                                                                        (click)="deleteBlock(i)"></button>
+                                                                </div>
+                                                            </div>
+
+                                                            <!-- CDK Drag Placeholder -->
+                                                            <div class="cdk-drag-placeholder" *cdkDragPlaceholder>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+
+
+                                                </div>
+                                            </div>
+                                        </ng-template>
+
+                                        <!-- Preview -->
+                                        <ng-template pTemplate>
+                                            <div class="panel-inner flex flex-column h-full border-top-1 border-200">
+                                                <div class="panel-header sticky py-3 px-4  border-200 surface-section">
+                                                    <div class="panel-title font-bold text-primary">Rendered Result
+                                                    </div>
+                                                    <div class="panel-subtitle text-sm text-secondary">Preview of the
+                                                        selected
+                                                        chapter as it will appear in the final report.</div>
+                                                </div>
+
+                                                <div class="panel-body scroll overflow-y-auto p-4 flex-grow-1 bg-white">
+                                                    <div class="preview p-4 shadow-1 border-round-md">
+                                                        <div class="empty-state flex flex-column align-items-center justify-content-center py-5"
+                                                            *ngIf="blocks.length === 0">
+                                                            <i class="pi pi-eye-slash text-4xl text-200 mb-3"></i>
+                                                            <div class="empty-title font-bold text-secondary">Nothing to
+                                                                render
+                                                            </div>
+                                                            <div class="empty-text text-sm text-secondary">Add blocks in
+                                                                the editor
+                                                                to see the preview.</div>
+                                                        </div>
+
+                                                        <ng-container *ngFor="let b of blocks">
+                                                            <div class="preview-text mb-4 line-height-4 text-color-secondary ql-editor p-0"
+                                                                *ngIf="b.text" [innerHTML]="b.text">
+                                                            </div>
+
+                                                            <div class="preview-image-cluster flex flex-wrap gap-3 mb-4"
+                                                                *ngIf="b.images && b.images.length > 0">
+                                                                <figure class="preview-figure m-0"
+                                                                    *ngFor="let img of b.images"
+                                                                    style="flex: 0 0 calc(25% - 0.75rem); max-width: calc(25% - 0.75rem);">
+                                                                    <img class="w-full border-round-md shadow-2"
+                                                                        [src]="safe(img.url)" alt="image" />
+                                                                    <figcaption
+                                                                        class="mt-2 text-center text-sm text-secondary"
+                                                                        *ngIf="img.caption">
+                                                                        {{ img.caption }}
+                                                                    </figcaption>
+                                                                </figure>
+                                                            </div>
+                                                        </ng-container>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </ng-template>
+
+                                    </p-splitter>
+                                </div>
+                            </ng-template>
+
+                            <!-- RIGHT: References + Chat -->
+                            <ng-template pTemplate>
+                                <div class="panel h-full w-full flex flex-column">
+                                    <p-splitter layout="vertical" styleClass="right-splitter border-none h-full"
+                                        [panelSizes]="[28, 72]">
+
+                                        <!-- References & Referred Documents Tabs -->
+                                        <ng-template pTemplate>
+                                            <div class="panel-inner flex flex-column border-200">
+                                                <p-tabs value="0" class="flex-grow-1 min-h-0">
+                                                    <p-tablist>
+                                                        <p-tab value="0" class="flex-grow-1 font-bold text-sm">
+                                                            <div class="flex align-items-center gap-2">
+                                                                <span>Reference</span>
+                                                                <p-tag [value]="referenceDocs.length.toString()"
+                                                                    severity="secondary" styleClass="text-xs"></p-tag>
+                                                            </div>
+                                                            <button pButton icon="pi pi-plus"
+                                                                class="p-button-rounded p-button-text p-button-secondary p-0 w-2rem h-2rem ml-2"
+                                                                (click)="$event.stopPropagation(); openAddRefModal()"
+                                                                pTooltip="Add Reference Document"
+                                                                tooltipPosition="bottom"></button>
+                                                        </p-tab>
+                                                        <p-tab value="1" class="flex-grow-1 font-bold text-sm">
+                                                            <div class="flex align-items-center gap-2">
+                                                                <span>Referred</span>
+                                                                <p-tag [value]="referredDocs.length.toString()"
+                                                                    [severity]="referredDocs.length > 0 ? 'success' : 'secondary'"
+                                                                    styleClass="text-xs"></p-tag>
+                                                            </div>
+                                                        </p-tab>
+                                                    </p-tablist>
+
+                                                    <p-tabpanels class="p-0">
+                                                        <!-- TAB 1: Reference Docs -->
+                                                        <p-tabpanel value="0">
+                                                            <div class="panel-body p-3">
+                                                                <div class="ref-grid flex flex-column gap-2 mb-4">
+                                                                    <div class="ref-card border-1 border-200 border-round-lg p-3 surface-card hover:border-primary transition-colors cursor-pointer shadow-1"
+                                                                        *ngFor="let d of referenceDocs">
+                                                                        <div
+                                                                            class="flex justify-content-between align-items-center mb-2">
+                                                                            <div class="flex align-items-center gap-2">
+                                                                                <i [class]="getRefIcon(d.type)"
+                                                                                    [style.color]="getRefColor(d.type)"></i>
+                                                                                <span
+                                                                                    class="font-bold text-sm text-color">{{
+                                                                                    d.title }}</span>
+                                                                            </div>
+                                                                            <p-tag [value]="d.type.toUpperCase()"
+                                                                                severity="secondary"
+                                                                                styleClass="text-xs"></p-tag>
+                                                                        </div>
+                                                                        <div class="ref-desc text-xs text-secondary line-height-3 mb-2"
+                                                                            *ngIf="d.description">
+                                                                            {{ d.description }}
+                                                                        </div>
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+                                                        </p-tabpanel>
+
+                                                        <!-- TAB 2: Referred Docs -->
+                                                        <p-tabpanel value="1">
+                                                            <div class="panel-body p-3">
+                                                                <div class="ref-grid flex flex-column gap-2 mb-4">
+                                                                    <div *ngIf="referredDocs.length === 0"
+                                                                        class="text-center py-5 text-secondary text-sm italic surface-ground border-round-lg border-1 border-100">
+                                                                        No documents referred in current chapter.
+                                                                    </div>
+                                                                    <div class="ref-card border-1 border-200 border-round-lg p-3 surface-card hover:border-primary transition-colors cursor-pointer shadow-1"
+                                                                        *ngFor="let d of referredDocs">
+                                                                        <div
+                                                                            class="flex justify-content-between align-items-center mb-2">
+                                                                            <div class="flex align-items-center gap-2">
+                                                                                <i [class]="getRefIcon(d.type)"
+                                                                                    [style.color]="getRefColor(d.type)"></i>
+                                                                                <span
+                                                                                    class="font-bold text-sm text-color">{{
+                                                                                    d.title }}</span>
+                                                                            </div>
+                                                                            <p-tag [value]="d.type.toUpperCase()"
+                                                                                severity="secondary"
+                                                                                styleClass="text-xs"></p-tag>
+                                                                        </div>
+                                                                        <div class="ref-desc text-xs text-secondary line-height-3 mb-2"
+                                                                            *ngIf="d.description">
+                                                                            {{ d.description }}
+                                                                        </div>
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+                                                        </p-tabpanel>
+                                                    </p-tabpanels>
+                                                </p-tabs>
+                                            </div>
+                                        </ng-template>
+
+                                        <!-- Chat -->
+                                        <ng-template pTemplate>
+                                            <div class="panel-inner chat flex flex-column">
+                                                <!-- AI Readiness Section -->
+                                                <div
+                                                    class="ai-readiness p-3 border-bottom-1 border-200 surface-section">
+                                                    <div class="flex justify-content-between align-items-center mb-2">
+                                                        <span class="text-xs font-bold text-secondary uppercase">AI
+                                                            Readiness</span>
+                                                        <span class="text-xs font-bold"
+                                                            [ngClass]="getAiReadinessClass()">{{ aiReadinessProgress
+                                                            }}%</span>
+                                                    </div>
+                                                    <p-progressBar [value]="aiReadinessProgress" [showValue]="false"
+                                                        styleClass="ai-readiness-bar h-1rem"
+                                                        [style.--progress-color]="getAiReadinessColor()">
+                                                    </p-progressBar>
+                                                    <div class="ai-readiness-details mt-2">
+                                                        <div class="flex flex-wrap gap-2">
+                                                            <p-tag *ngFor="let item of aiReadinessItems"
+                                                                [value]="item.label"
+                                                                [severity]="item.available ? 'success' : 'secondary'"
+                                                                [icon]="item.available ? 'pi pi-check' : 'pi pi-times'"
+                                                                styleClass="text-xs">
+                                                            </p-tag>
+                                                        </div>
+                                                    </div>
+                                                    <div class="text-xs text-secondary mt-2 line-height-3">
+                                                        {{ getAiReadinessMessage() }}
+                                                    </div>
+                                                </div>
+
+                                                <div class="panel-header sticky py-3 px-4  border-200 surface-section">
+                                                    <div class="panel-title font-bold">AI Chat Assistant</div>
+                                                    <div class="panel-subtitle text-sm text-secondary">Improve writing
+                                                        or summarize.
+                                                    </div>
+                                                </div>
+
+                                                <div class="panel-body scroll overflow-y-auto p-3 flex-grow-1">
+                                                    <div class="chat-messages flex flex-column gap-3">
+                                                        <div class="chat-msg flex flex-column"
+                                                            *ngFor="let m of chatMessages"
+                                                            [class.user]="m.side==='user'" [class.ai]="m.side==='ai'">
+                                                            <div class="bubble p-3 border-round-xl shadow-1 max-w-100"
+                                                                [ngClass]="m.side === 'user' ? 'bg-primary text-white border-noround-br' : 'surface-ground text-color border-noround-bl'">
+                                                                <div class="bubble-text text-sm line-height-3">{{ m.text
+                                                                    }}</div>
+                                                            </div>
+                                                            <div class="bubble-meta text-xs text-secondary mt-1 px-1">{{
+                                                                m.at |
+                                                                date:'HH:mm' }}</div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+
+                                                <div
+                                                    class="chat-input p-3 border-top-1 border-200 surface-section flex align-items-center gap-2">
+                                                    <input pInputText class="flex-grow-1 border-round-md"
+                                                        [formControl]="chatInput" placeholder="Ask AI..."
+                                                        (keyup.enter)="sendChat()">
+                                                    <button pButton type="button" icon="pi pi-send"
+                                                        class="p-button-primary border-round-md"
+                                                        (click)="sendChat()"></button>
+                                                </div>
+                                            </div>
+                                        </ng-template>
+
+                                    </p-splitter>
+                                </div>
+                            </ng-template>
+
+                        </p-splitter>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<p-dialog [header]="editingBlockId ? 'Edit Content Block' : 'New Content Block'" [(visible)]="showAddBlockModal"
+    [modal]="true" [style]="{width: '800px'}" [draggable]="false" [resizable]="false" appendTo="body">
+
+    <div class="modal-body p-2">
+        <!-- Text Block Area -->
+        <div class="mb-4">
+            <label class="block font-bold mb-2 text-secondary">Content</label>
+            <form [formGroup]="textForm">
+                <p-editor formControlName="text" placeholder="Enter chapter text here..." [style]="{ height: '320px' }">
+                </p-editor>
+            </form>
+        </div>
+
+        <!-- Image Cluster Area -->
+        <div class="mb-4">
+            <label class="block font-bold mb-2 text-secondary">Images</label>
+            <div class="upload-zone p-4 border-2 border-dashed border-200 border-round-lg bg-surface-ground">
+                <p-fileUpload #fileUpload name="demo[]" [customUpload]="true"
+                    (onSelect)="onFileSelect($event, fileUpload)" [multiple]="true" accept="image/*"
+                    maxFileSize="1000000" mode="basic" chooseLabel="Choose Photos" chooseIcon="pi pi-images"
+                    class="w-full flex justify-content-center" [auto]="true">
+                </p-fileUpload>
+            </div>
+
+            <!-- Pending Images List -->
+            <div class="pending-list grid mt-3" *ngIf="pendingImages.length > 0">
+                <div class="col-12 md:col-3" *ngFor="let img of pendingImages; let i = index; trackBy: trackByImage">
+                    <div
+                        class="pending-item relative surface-card border-1 border-200 border-round-lg shadow-1 p-2 h-full flex flex-column overflow-hidden">
+                        <div class="img-container flex-grow-1 flex align-items-center justify-content-center mb-2 overflow-hidden"
+                            style="min-height: 120px;">
+                            <img [src]="safe(img.url)" class="w-full border-round-sm"
+                                style="object-fit: contain; max-height: 120px;">
+                        </div>
+                        <input pInputText type="text" [(ngModel)]="img.caption" placeholder="Caption..."
+                            class="p-inputtext-sm w-full mt-auto"
+                            (ngModelChange)="updatePendingCaption(i, $any($event))">
+                        <button pButton icon="pi pi-times"
+                            class="p-button-rounded p-button-danger p-button-text p-button-sm absolute top-0 right-0 m-1 shadow-1 bg-white"
+                            (click)="removePendingImage(i)"></button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <ng-template pTemplate="footer">
+        <div class="flex justify-content-end gap-2">
+            <button pButton label="Cancel" icon="pi pi-times" class="p-button-text"
+                (click)="showAddBlockModal = false"></button>
+            <button pButton label="Save Block" icon="pi pi-check" class="p-button-primary border-round-md"
+                (click)="saveBlock()"></button>
+        </div>
+    </ng-template>
+</p-dialog>
+
+<!-- Dialog: Add Reference Document -->
+<p-dialog [(visible)]="showAddRefModal" [modal]="true" [header]="'Add Reference Document'" [style]="{ width: '450px' }"
+    appendTo="body" styleClass="ref-upload-modal">
+
+    <div class="modal-body p-2">
+        <form [formGroup]="refForm">
+            <div class="mb-4">
+                <label class="block font-bold mb-2 text-secondary">Select Document</label>
+                <p-fileUpload mode="basic" chooseLabel="Choose File" class="w-full" (onSelect)="onRefFileSelect($event)"
+                    accept=".pdf,.png,.jpg,.jpeg,.csv,.xls,.xlsx,.doc,.docx"
+                    styleClass="p-button-outlined w-full"></p-fileUpload>
+                <div class="text-xs text-secondary mt-1">PDF, Images, Excel or Word files.</div>
+            </div>
+
+            <div class="mb-4">
+                <label class="block font-bold mb-2 text-secondary">Title</label>
+                <input type="text" pInputText formControlName="title" placeholder="Enter document title"
+                    class="w-full p-2 border-round-lg surface-100 border-none shadow-1 font-bold">
+            </div>
+
+            <div class="mb-4">
+                <label class="block font-bold mb-2 text-secondary">Description (Optional)</label>
+                <textarea pInputTextarea formControlName="description" placeholder="Brief context for this file..."
+                    class="w-full p-3 border-round-lg surface-100 border-none shadow-1" rows="3"></textarea>
+            </div>
+        </form>
+    </div>
+
+    <ng-template pTemplate="footer">
+        <div class="flex justify-content-end gap-2 p-2">
+            <button pButton label="Cancel" icon="pi pi-times" class="p-button-text p-button-secondary"
+                (click)="showAddRefModal = false"></button>
+            <button pButton label="Add Document" icon="pi pi-check" class="p-button-primary"
+                [disabled]="refForm.invalid" (click)="saveReferenceDoc()"></button>
+        </div>
+    </ng-template>
+</p-dialog>
+
+<!-- Dialog: Review Full Report -->
+<p-dialog [(visible)]="showReviewModal" [modal]="true" header="Full Report Review"
+    [style]="{ width: '90vw', maxWidth: '900px' }" [contentStyle]="{height: '75vh', overflow: 'auto'}" appendTo="body"
+    styleClass="review-modal">
+
+    <!-- Rendered View - One Continuous Document -->
+    <div class="preview p-4 shadow-1 border-round-md bg-white" *ngIf="showReviewModal">
+        <ng-container *ngFor="let chapter of chaptersWithContent">
+            <!-- Chapter Heading -->
+            <h3 class="chapter-heading mt-0 mb-3 text-primary font-bold border-bottom-1 border-200 pb-2">
+                {{ chapter.label }}
+            </h3>
+
+            <!-- Chapter Blocks - Continuous Flow -->
+            <ng-container *ngFor="let block of chapter.blocks">
+                <div class="preview-text mb-4 line-height-4 text-color-secondary ql-editor p-0" *ngIf="block.text"
+                    [innerHTML]="block.text">
+                </div>
+
+                <div class="preview-image-cluster flex flex-wrap gap-3 mb-4"
+                    *ngIf="block.images && block.images.length > 0">
+                    <figure class="preview-figure m-0" *ngFor="let img of block.images"
+                        style="flex: 0 0 calc(25% - 0.75rem); max-width: calc(25% - 0.75rem);">
+                        <img class="w-full border-round-md shadow-2" [src]="safe(img.url)" alt="image" />
+                        <figcaption class="mt-2 text-center text-sm text-secondary" *ngIf="img.caption">
+                            {{ img.caption }}
+                        </figcaption>
+                    </figure>
+                </div>
+            </ng-container>
+        </ng-container>
+
+        <!-- Empty State -->
+        <div class="empty-state flex flex-column align-items-center justify-content-center py-5"
+            *ngIf="chaptersWithContent.length === 0">
+            <i class="pi pi-eye-slash text-4xl text-200 mb-3"></i>
+            <div class="empty-title font-bold text-secondary">No content to preview</div>
+            <div class="empty-text text-sm text-secondary">Add content blocks to see the rendered report.</div>
+        </div>
+    </div>
+
+    <ng-template pTemplate="footer">
+        <div class="flex justify-content-end w-full">
+            <button pButton label="Close" icon="pi pi-times" class="p-button-text"
+                (click)="showReviewModal = false"></button>
+        </div>
+    </ng-template>
+</p-dialog>

@@ -1,0 +1,15 @@
+<div class="btn-group dropdown" dropdown container="body">
+    <button dropdownToggle class="dropdown-toggle btn btn-sm btn-primary">
+        <i class="fa fa-cog"></i><span class="caret"></span>
+        {{"Axilla.Apps.VDB.CustomActions" | localizeAxillaAppVDB}}
+    </button>
+    <ul class="dropdown-menu" *dropdownMenu>
+
+        <ng-container *ngFor="let customAction of customActions">
+            <li>
+                <a href="javascript:"
+                   (click)="applyAction($event, customAction)">{{customAction.Name}}</a>
+            </li>
+        </ng-container>
+    </ul>
+</div>

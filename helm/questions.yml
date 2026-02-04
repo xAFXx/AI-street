@@ -1,0 +1,45 @@
+categories:
+- storage
+namespace: openebs
+labels:
+  io.rancher.certified: partner
+questions:
+- variable: metaApplicationName
+  description: "Public application name e.g. for footer"
+  label: "Application name"
+  group: "Meta configuration"
+- variable: metaEnvironmentName
+  description: "Environment name"
+  label: "Environment name"
+  group: "Meta configuration"
+- variable: metaEnvironmentDescription
+  description: "Environment description"
+  label: "Environment description"
+  group: "Meta configuration"
+- variable: apihosturl
+  description: "Host address of the api"
+  label: "Api server header"
+  group: "Environment configuration"
+- variable: apiclienturl
+  description: "Host address of the frontend"
+  label: "Api server of the frontend"
+  group: "Environment configuration"
+- variable: service.type
+  default: "ClusterIP"
+  description: "Ublion backend service type"
+  type: enum
+  group: "Services and Load Balancing"
+  options:
+    - "ClusterIP"
+    - "NodePort"
+  required: true
+  label: Ublion Frontend Service Type
+  show_subquestion_if: "NodePort"
+  subquestions:
+  - variable: service.nodePort
+    default: ""
+    description: "NodePort port number(to set explicitly, choose port between 30000-32767)"
+    type: int
+    min: 30000
+    max: 32767
+    label: Ublion Frontend Service NodePort number

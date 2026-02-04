@@ -1,0 +1,234 @@
+<div class="results-page h-screen flex flex-column surface-ground">
+    <!-- Header -->
+    <div class="header-section surface-section shadow-1 p-4">
+        <div class="flex justify-content-between align-items-start mb-4">
+            <div>
+                <h1 class="m-0 text-2xl font-bold text-primary">Results</h1>
+                <p class="mt-2 mb-0 text-secondary">View and manage final documents generated from reports.</p>
+            </div>
+            <div class="flex gap-2 align-items-center">
+                <p-checkbox [(ngModel)]="showArchived" [binary]="true" inputId="showArchived"
+                    (onChange)="toggleArchived()"></p-checkbox>
+                <label for="showArchived" class="text-sm text-secondary cursor-pointer">Show Archived</label>
+            </div>
+        </div>
+
+        <!-- Search Section -->
+        <div class="search-section">
+            <!-- Simple Search -->
+            <div class="flex gap-2 align-items-center" *ngIf="!showAdvancedSearch">
+                <p-iconfield class="flex-grow-1">
+                    <p-inputicon styleClass="pi pi-search"></p-inputicon>
+                    <input pInputText type="text" [(ngModel)]="searchText" (input)="onSearchChange()"
+                        placeholder="Search documents by name, report, content..." class="w-full" />
+                </p-iconfield>
+                <button pButton icon="pi pi-filter" label="Advanced" class="p-button-outlined p-button-secondary"
+                    (click)="toggleAdvancedSearch()"></button>
+                <button pButton icon="pi pi-times" class="p-button-text p-button-secondary" (click)="clearSearch()"
+                    *ngIf="searchText" pTooltip="Clear search"></button>
+            </div>
+
+            <!-- Advanced Search -->
+            <div class="advanced-search surface-ground p-3 border-round-lg" *ngIf="showAdvancedSearch">
+                <div class="flex justify-content-between align-items-center mb-3">
+                    <span class="font-bold text-primary">Advanced Search</span>
+                    <button pButton icon="pi pi-times" class="p-button-text p-button-sm"
+                        (click)="toggleAdvancedSearch()"></button>
+                </div>
+                <div class="grid">
+                    <div class="col-12 md:col-4">
+                        <label class="block text-sm font-bold mb-2 text-secondary">Document Name</label>
+                        <input pInputText [(ngModel)]="advancedSearchName" (input)="onSearchChange()"
+                            placeholder="Search by name..." class="w-full" />
+                    </div>
+                    <div class="col-12 md:col-4">
+                        <label class="block text-sm font-bold mb-2 text-secondary">Content Contains</label>
+                        <input pInputText [(ngModel)]="advancedSearchContent" (input)="onSearchChange()"
+                            placeholder="Search in content..." class="w-full" />
+                    </div>
+                    <div class="col-12 md:col-2">
+                        <label class="block text-sm font-bold mb-2 text-secondary">Match Mode</label>
+                        <p-select
+                            [options]="[{label: 'Contains', value: 'contains'}, {label: 'Exact Word', value: 'exact'}]"
+                            [(ngModel)]="searchMode" optionLabel="label" optionValue="value" class="w-full"
+                            (onChange)="onSearchChange()"></p-select>
+                    </div>
+                    <div class="col-12 md:col-2">
+                        <label class="block text-sm font-bold mb-2 text-secondary">Format</label>
+                        <p-select [options]="formatOptions" [(ngModel)]="selectedFormat" optionLabel="label"
+                            optionValue="value" class="w-full" (onChange)="applyFilters()"></p-select>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Results Table -->
+    <div class="table-section flex-grow-1 overflow-hidden p-4">
+        <p-table [value]="filteredDocuments" [sortField]="sortField" [sortOrder]="sortOrder" [paginator]="true"
+            [rows]="10" [rowsPerPageOptions]="[10, 25, 50]" styleClass="p-datatable-sm p-datatable-gridlines"
+            [globalFilterFields]="['name', 'reportTitle', 'content']" responsiveLayout="scroll">
+
+            <ng-template pTemplate="header">
+                <tr>
+                    <th pSortableColumn="name" style="width: 25%">
+                        Document Name <p-sortIcon field="name"></p-sortIcon>
+                    </th>
+                    <th pSortableColumn="reportTitle" style="width: 20%">
+                        Source Report <p-sortIcon field="reportTitle"></p-sortIcon>
+                    </th>
+                    <th pSortableColumn="createdAt" style="width: 12%">
+                        Created <p-sortIcon field="createdAt"></p-sortIcon>
+                    </th>
+                    <th style="width: 8%">Format</th>
+                    <th style="width: 8%">Size</th>
+                    <th style="width: 8%">Status</th>
+                    <th style="width: 19%">Actions</th>
+                </tr>
+            </ng-template>
+
+            <ng-template pTemplate="body" let-doc>
+                <tr [class.archived-row]="doc.archived">
+                    <td>
+                        <div class="flex align-items-center gap-2">
+                            <i [class]="getFormatIcon(doc.format)" class="text-lg"
+                                [ngClass]="{'text-red-500': doc.format === 'pdf', 'text-blue-500': doc.format === 'docx', 'text-green-500': doc.format === 'xlsx'}">
+                            </i>
+                            <span class="font-medium" [class.text-400]="doc.archived">{{ doc.name }}</span>
+                        </div>
+                    </td>
+                    <td>
+                        <span class="text-secondary text-sm">{{ doc.reportTitle }}</span>
+                    </td>
+                    <td>
+                        <span class="text-sm">{{ doc.createdAt | date:'MMM dd, yyyy' }}</span>
+                    </td>
+                    <td>
+                        <p-tag [value]="doc.format.toUpperCase()" [severity]="getFormatSeverity(doc.format)"></p-tag>
+                    </td>
+                    <td>
+                        <span class="text-sm text-secondary">{{ doc.size }}</span>
+                    </td>
+                    <td>
+                        <p-tag [value]="doc.status" [severity]="getStatusSeverity(doc.status)"></p-tag>
+                    </td>
+                    <td>
+                        <div class="flex gap-1 flex-wrap">
+                            <button pButton icon="pi pi-download" class="p-button-success p-button-sm p-button-text"
+                                pTooltip="Download" (click)="downloadDocument(doc)">
+                                <span class="ml-1 text-xs">{{ doc.downloads }}</span>
+                            </button>
+                            <button pButton icon="pi pi-envelope" class="p-button-info p-button-sm p-button-text"
+                                pTooltip="Send by Email" (click)="openEmailDialog(doc)">
+                                <span class="ml-1 text-xs">{{ doc.emailsSent }}</span>
+                            </button>
+                            <button pButton icon="pi pi-chart-bar" class="p-button-secondary p-button-sm p-button-text"
+                                pTooltip="View Statistics" (click)="openStatsDialog(doc)"></button>
+                            <button pButton icon="pi pi-inbox"
+                                [class]="doc.archived ? 'p-button-warning p-button-sm p-button-text' : 'p-button-secondary p-button-sm p-button-text'"
+                                [pTooltip]="doc.archived ? 'Unarchive' : 'Archive'"
+                                (click)="doc.archived ? unarchiveDocument(doc) : archiveDocument(doc)"></button>
+                        </div>
+                    </td>
+                </tr>
+            </ng-template>
+
+            <ng-template pTemplate="emptymessage">
+                <tr>
+                    <td colspan="7" class="text-center py-5">
+                        <div class="flex flex-column align-items-center">
+                            <i class="pi pi-folder-open text-4xl text-200 mb-3"></i>
+                            <span class="text-secondary">No documents found</span>
+                            <span class="text-sm text-400" *ngIf="!showArchived">Try enabling "Show Archived" to see
+                                more documents</span>
+                        </div>
+                    </td>
+                </tr>
+            </ng-template>
+        </p-table>
+    </div>
+</div>
+
+<!-- Statistics Dialog -->
+<p-dialog [(visible)]="showStatsDialog" [modal]="true" [header]="'Statistics: ' + (selectedDocument?.name || '')"
+    [style]="{width: '700px'}" styleClass="stats-dialog">
+    <div *ngIf="selectedDocStats">
+        <!-- Summary -->
+        <div class="flex gap-4 mb-4">
+            <div class="flex-1 surface-ground p-3 border-round-lg text-center">
+                <div class="text-3xl font-bold text-primary">{{ selectedDocument?.downloads }}</div>
+                <div class="text-sm text-secondary">Downloads</div>
+            </div>
+            <div class="flex-1 surface-ground p-3 border-round-lg text-center">
+                <div class="text-3xl font-bold text-blue-500">{{ selectedDocument?.emailsSent }}</div>
+                <div class="text-sm text-secondary">Emails Sent</div>
+            </div>
+        </div>
+
+        <!-- Download History -->
+        <div class="mb-4">
+            <h4 class="mt-0 mb-2 text-primary">Download History</h4>
+            <div class="surface-ground border-round-lg overflow-hidden">
+                <div class="p-2 border-bottom-1 border-200 flex justify-content-between text-sm"
+                    *ngFor="let item of selectedDocStats.downloadHistory">
+                    <div>
+                        <i class="pi pi-user mr-2 text-secondary"></i>
+                        <span>{{ item.user }}</span>
+                    </div>
+                    <div class="text-secondary">{{ item.date | date:'MMM dd, HH:mm' }}</div>
+                </div>
+                <div class="p-3 text-center text-secondary text-sm"
+                    *ngIf="selectedDocStats.downloadHistory.length === 0">
+                    No download history
+                </div>
+            </div>
+        </div>
+
+        <!-- Email History -->
+        <div>
+            <h4 class="mt-0 mb-2 text-primary">Email History</h4>
+            <div class="surface-ground border-round-lg overflow-hidden">
+                <div class="p-2 border-bottom-1 border-200 flex justify-content-between text-sm"
+                    *ngFor="let item of selectedDocStats.emailHistory">
+                    <div>
+                        <i class="pi pi-envelope mr-2 text-secondary"></i>
+                        <span>{{ item.recipient }}</span>
+                    </div>
+                    <div class="text-secondary">{{ item.date | date:'MMM dd, HH:mm' }}</div>
+                </div>
+                <div class="p-3 text-center text-secondary text-sm" *ngIf="selectedDocStats.emailHistory.length === 0">
+                    No email history
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <ng-template pTemplate="footer">
+        <button pButton label="Close" class="p-button-text" (click)="showStatsDialog = false"></button>
+    </ng-template>
+</p-dialog>
+
+<!-- Email Dialog -->
+<p-dialog [(visible)]="showEmailDialog" [modal]="true" header="Send Document by Email" [style]="{width: '500px'}">
+    <div class="flex flex-column gap-3">
+        <div>
+            <label class="block text-sm font-bold mb-2 text-secondary">Recipient Email *</label>
+            <input pInputText [(ngModel)]="emailRecipient" placeholder="email@example.com" class="w-full" />
+        </div>
+        <div>
+            <label class="block text-sm font-bold mb-2 text-secondary">Subject</label>
+            <input pInputText [(ngModel)]="emailSubject" class="w-full" />
+        </div>
+        <div>
+            <label class="block text-sm font-bold mb-2 text-secondary">Message</label>
+            <textarea pInputTextarea [(ngModel)]="emailMessage" rows="4" class="w-full"></textarea>
+        </div>
+    </div>
+
+    <ng-template pTemplate="footer">
+        <button pButton label="Cancel" class="p-button-text p-button-secondary"
+            (click)="showEmailDialog = false"></button>
+        <button pButton label="Send" icon="pi pi-send" class="p-button-primary" [disabled]="!emailRecipient"
+            (click)="sendEmail()"></button>
+    </ng-template>
+</p-dialog>

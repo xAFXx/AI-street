@@ -1,0 +1,266 @@
+<div class="modal-header">
+    <h3 class="modal-title"><span translation="Axilla.App.PED.Form.Title" source="AxillaAppBase"></span></h3>
+    <span>
+        <p-button icon="pi pi-home" (click)="goHome()"></p-button>
+        <button type="button" class="close" [attr.aria-label]="l('Close')" (click)="close()">
+            <span aria-hidden="true">&times;</span>
+        </button>
+    </span>
+</div>
+<div class="modal-body">
+    <form [formGroup]="jobForm">
+        <div class="row">
+            <div class="col-12">
+                <div class="form-group">
+                    <label for="params">
+                      {{"Axilla.JobForm.ExecutionDefinition" | localize}}
+                    </label>
+                    <tabset>
+                        <tab heading="{{'View' | localize}}" (selectTab)="selectView()" (deselect)="deselectView()">
+                            <div class="col-12">
+                                <div class="form-group">
+                                    <label for="name">
+                                        <span translation="Axilla.App.PED.Form.Name" source="AxillaAppBase"></span>
+                                    </label>
+                                    <input name="name"
+                                           formControlName="name"
+                                           class="form-control kt-input"
+                                           placeholder="{{'Axilla.JobForm.PEDNamePlaceholder' | localize }}"
+                                           type="text" />
+
+                                </div>
+                            </div>
+                            <div class="col-12">
+                                <div class="form-group">
+                                    <label for="initials">
+                                        <span translation="Axilla.App.PED.Form.Abbreviation" source="AxillaAppBase"></span>
+                                    </label>
+                                    <input name="initials"
+                                           formControlName="initials"
+                                           class="form-control kt-input"
+                                           placeholder="{{'Axilla.JobForm.PEDInitialsPlaceholder' | localize  }}"
+                                           type="text" />
+
+                                </div>
+                            </div>
+                            <div class="col-12">
+                                <div class="form-group d-flex flex-column">
+                                    <label for="color">
+                                        <span translation="Axilla.App.PED.Form.Color" source="AxillaAppBase"></span>
+                                    </label>
+                                    <p-colorPicker formControlName="color"></p-colorPicker>
+                                </div>
+                            </div>
+                            <div class="col-12">
+                                <div class="form-group">
+                                    <label for="channelId">
+                                        <span translation="Axilla.App.PED.Form.ChannelId" source="AxillaAppBase"></span>
+                                    </label>
+                                    <p-dropdown [options]="ddChannelIds"
+                                                [style]="{'width':'100%', 'min-width':'100%'}"
+                                                formControlName="channelId"></p-dropdown>
+
+                                </div>
+                            </div>
+
+                            <div *ngIf="!executionDefinition else showView">
+                                No data
+                            </div>
+                            <ng-template #showView>
+                                <textarea name="executionDefinition"
+                                          style="min-height: 200px; height: 50vh;"
+                                          formControlName="executionDefinition"
+                                          class="form-control kt-input"
+                                          placeholder="{{'Axilla.JobForm.ExecutionDefinitionPlaceholder' | localize}}"></textarea>
+                            </ng-template>
+                        </tab>
+                        <tab heading="{{'Processor' | localize}}" (selectTab)="selectMain()" (deselect)="deselectMain()">
+                            <json-editor [options]="editorOptions" [data]="executionDefinition" (change)="getED($event)" #editor></json-editor>
+
+                        </tab>
+                        <tab heading="{{'Data' | localize}}" (selectTab)="checkSelection()">
+                            <div *ngIf="!datainfo else showData">
+                                No data
+                            </div>
+                            <ng-template #showData>
+                                <json-editor [options]="dataOptions" [data]="datainfo" (change)="getData($event)"></json-editor>
+                            </ng-template>
+                        </tab>
+                        <tab heading="{{'Actions' | localize}}" (selectTab)="checkSelection()">
+                            <div *ngIf="!action else showAction">
+                                No data
+                            </div>
+                            <ng-template #showAction>
+                                <json-editor [options]="actionsOptions" [data]="action" (change)="getAction($event)"></json-editor>
+                            </ng-template>
+                        </tab>
+                        <tab heading="{{'Output' | localize}}" (selectTab)="checkSelection()">
+                            <div *ngIf="!output else showOutput">
+                                No data
+                            </div>
+                            <ng-template #showOutput>
+                                <json-editor [options]="outputsOptions" [data]="output" (change)="getOutput($event)"></json-editor>
+                            </ng-template>
+                        </tab>
+                        <tab heading="{{'Result' | localize}}" (selectTab)="checkSelection()" [active]="isRunResultAvailable">
+                            <div class="kt-portlet__body">
+                                <div class="row align-items-center position-relative">
+                                    <div class="col primeng-datatable-container">
+                                        <button type="button"
+                                                class="fa-button"
+                                                (click)="getLogData()">
+                                            <i class="flaticon2-refresh-button"></i>
+                                        </button>
+                                        <p-table #dataTbleLogs
+                                                 [value]="loggerTableHelper.records"
+                                                 [columns]="cols"
+                                                 rows="{{loggerTableHelper.defaultRecordsCountPerPage}}"
+                                                 [paginator]="false"
+                                                 [responsive]="loggerTableHelper.isResponsive">
+                                            <ng-template pTemplate="header" let-columns>
+                                                <tr>
+                                                    <th *ngFor="let col of columns">
+                                                        {{col.header}}
+                                                    </th>
+                                                </tr>
+                                            </ng-template>
+                                            <ng-template pTemplate="body" let-record="$implicit" let-rowIndex="rowIndex">
+                                                <tr [pSelectableRow]="record">
+                                                    <td>
+                                                        {{record.level}}
+                                                    </td>
+                                                    <td>
+                                                        {{record.message}}
+                                                    </td>
+                                                    <td>
+                                                        {{record.timestamp | dayjsFormat:DEFAULT_DATE_FORMAT}}
+                                                    </td>
+                                                </tr>
+                                            </ng-template>
+                                        </p-table>
+                                        <div class="primeng-no-data" *ngIf="loggerTableHelper.totalRecordsCount == 0">
+                                            <span translation="NoData" source="AxillaAppBase"></span>
+                                        </div>
+                                        <div class="primeng-paging-container">
+                                            <p-paginator [rows]="loggerTableHelper.defaultRecordsCountPerPage"
+                                                         #logPaginator
+                                                         (onPageChange)="getLogData()"
+                                                         [totalRecords]="loggerTableHelper.totalRecordsCount"
+                                                         [rowsPerPageOptions]="loggerTableHelper.predefinedRecordsCountPerPage">
+                                            </p-paginator>
+                                            <span class="total-records-count">
+                                                <span translation="TotalRecordsCount" source="AxillaAppBase:loggerTableHelper.totalRecordsCount"></span>
+                                            </span>
+                                        </div>
+                                    </div>
+                                    <div class="spinner-container" *ngIf="loggerTableHelper.isLoading">
+                                        <p-progressSpinner></p-progressSpinner>
+                                    </div>
+                                </div>
+                            </div>
+                        </tab>
+                        <tab heading="{{'Overview' | localize}}" (selectTab)="loadSteps()">
+                            <div class="d-flex align-items-center justify-content-between">
+                                <div class="input-container">
+                                    <ng-container *ngIf="!isEditMode">
+                                        <p-inputSwitch (onChange)="onlyProcessorHandler($event)" ngDefaultControl></p-inputSwitch>
+                                        <p>Show only processors</p>
+                                    </ng-container>
+                                </div>
+                                <div>
+                                    <button type="button"
+                                            class="btn"
+                                            style="height: calc(1.5em + 1.3rem + 2px);"
+                                            (click)="home()">
+                                        <i class="fa fa-home"></i>
+                                    </button>
+                                </div>
+
+                            </div>
+
+                            <div class="overview-container">
+                                <div class="spinner-container" *ngIf="overviewLoader">
+                                    <p-progressSpinner></p-progressSpinner>
+                                </div>
+
+                                <ng-container *ngIf="!overviewLoader">
+                                    <app-processor-execution-definition-overview [processorId]="processorId"></app-processor-execution-definition-overview>
+                                </ng-container>
+                            </div>
+                        </tab>
+                    </tabset>
+                </div>
+            </div>
+        </div>
+    </form>
+</div>
+
+
+
+<div class="modal-footer" style="display: unset;">
+
+    <ng-container [ngSwitch]="isEditMode">
+        <ng-container *ngSwitchCase="true">
+            <div class="float-right">
+                <button type="button" class="btn btn-dark" (click)="close()">
+                    {{"Cancel" | localize}}
+                </button>
+                <button type="button"
+                        (click)="onUpdateStep()"
+                        class="btn btn-success">
+                    <i class="fa fa-save"></i>
+                    <span translation="Update"></span>
+                </button>
+                <button type="button"
+                        (click)="onUpdateStepAndGoHome()"
+                        class="btn btn-success">
+                    <i class="fa fa-save"></i>
+                    <span translation="UpdateAndGoToHome"></span>
+                </button>
+            </div>
+        </ng-container>
+
+        <ng-container *ngSwitchDefault>
+            <button type="button"
+                    class="btn btn-dark float-left"
+                    (click)="delete()">
+                {{"Delete" | localize}}
+            </button>
+            <div class="float-right">
+                <button type="button"
+                        class="btn btn-dark"
+                        (click)="prettify()">
+                    {{"Prettify" | localize}}
+                </button>
+
+                <button type="button"
+                        class="btn btn-dark"
+                        [disabled]="isAvailableForRun"
+                        (click)="runJob()">
+                    {{"Run" | localize}}
+                </button>
+
+                <button type="button" class="btn btn-dark" (click)="close()">
+                    {{"Cancel" | localize}}
+                </button>
+                <button type="button"
+                        (click)="onCreateJob()"
+                        [disabled]="parseError"
+                        class="btn btn-success">
+                    <i class="fa fa-save"></i>
+                    <span translation="Save">{{"Save" | localize}}</span>
+                </button>
+                <button type="button"
+                        (click)="onCreateJobAndClose()"
+                        [disabled]="parseError"
+                        class="btn btn-success">
+                    <i class="fa fa-save"></i>
+                    <span translation="SaveAndClose">{{"SaveAndClose" | localize}}</span>
+                </button>
+            </div>
+        </ng-container>
+    </ng-container>
+
+
+</div>
+<app-confirmation-modal #deleteModal (onConfirmation)="confirmDelete()"></app-confirmation-modal>

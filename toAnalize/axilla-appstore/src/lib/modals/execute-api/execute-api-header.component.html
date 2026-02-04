@@ -1,0 +1,48 @@
+<div class="p-d-flex p-jc-between p-ai-center gap-2 flex-wrap" [formGroup]="headerForm">
+    <div class="form-group mb-0" style="flex:1">
+        <label for="name" class="control-label">
+            <span> {{ "Name" | localize }}</span>
+        </label>
+        <input style="flex: 1"
+               id="name"
+               formControlName="headerName"
+               class="form-control"
+               type="text"
+               name="name"
+               (keyup)="onSelectApiCallHeader()"
+               required>
+    </div>
+
+    <div class="form-group mb-0" style="flex:1">
+        <label for="value" class="control-label">
+            <span> {{ "Value" | localize }}</span>
+        </label>
+        <input style="flex: 1"
+               id="value"
+               formControlName="headerValue"
+               class="form-control"
+               type="text"
+               name="value"
+               (keyup)="onSelectApiCallHeader()"
+               required>
+    </div>
+    <div class="form-group mb-0" style="flex:1">
+        <label for="resolvedValue" class="control-label">
+            <span> {{ "Axilla.Api.Header.ResolvedValue" | localize }}</span>
+        </label>
+        <input style="flex: 1"
+               id="resolvedValue"
+               formControlName="headerResolvedValue"
+               class="form-control"
+               type="text"
+               (keyup)="onSelectApiCallHeader()"
+               readonly
+               name="value">
+    </div>
+
+    <button class="fa-button ubl-trash ml-2"
+            type="button"
+            (click)="delete()">
+        <i class="fa fa-trash"></i>
+    </button>
+</div>

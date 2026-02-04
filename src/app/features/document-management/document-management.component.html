@@ -1,0 +1,820 @@
+<div class="document-management-container" [class.side-by-side-active]="sideBySideMode()">
+    <!-- Header Bar -->
+    <div
+        class="toolbar flex align-items-center justify-content-between px-4 py-2 surface-card border-bottom-1 surface-border">
+        <div class="flex align-items-center gap-3">
+            <i class="pi pi-file-edit text-primary text-xl"></i>
+            <div>
+                <span class="font-semibold">Document Processing</span>
+                <small class="text-secondary ml-2">Extract structured data from documents</small>
+            </div>
+        </div>
+
+        <!-- AI Provider Info Chip -->
+        <div class="ai-provider-chip flex align-items-center gap-2 px-3 py-2 surface-100 border-round-xl cursor-pointer hover:surface-200"
+            pTooltip="Using {{selectedAiModel()}} for document analysis" tooltipPosition="bottom">
+            <i class="pi pi-bolt text-primary"></i>
+            <span class="text-sm font-medium">{{selectedAiModel()}}</span>
+            @if (isAnalyzing()) {
+            <p-tag severity="info" value="Active" styleClass="text-xs ml-1"></p-tag>
+            }
+        </div>
+        <div class="flex gap-2 align-items-center">
+            <!-- View Mode Toggle (visible on larger screens) -->
+            <div class="view-mode-toggle hidden lg:flex border-round surface-100 p-1">
+                <button pButton [text]="true" size="small" icon="pi pi-window-maximize"
+                    [class.active]="!sideBySideMode()" (click)="sideBySideMode.set(false)"
+                    pTooltip="Overlay Mode"></button>
+                <button pButton [text]="true" size="small" icon="pi pi-th-large" [class.active]="sideBySideMode()"
+                    (click)="sideBySideMode.set(true)" pTooltip="Side-by-Side"></button>
+            </div>
+            <button pButton icon="pi pi-download" label="Export CSV" severity="success" [outlined]="true" size="small"
+                (click)="exportToCsv()" [disabled]="mappedFiles().length === 0"
+                pTooltip="Export mapped documents to CSV"></button>
+            <button pButton icon="pi pi-refresh" label="Reset" severity="secondary" [outlined]="true" size="small"
+                (click)="resetAll()" pTooltip="Clear all"></button>
+        </div>
+    </div>
+
+    <!-- Main Content: Two Panel Layout -->
+    <div class="main-content">
+        <!-- Left Panel: Config & Upload -->
+        <div class="left-panel surface-card border-right-1 surface-border">
+            <!-- Schema Selection -->
+            <div class="panel-section p-3 border-bottom-1 surface-border">
+                <div class="flex justify-content-between align-items-center mb-2">
+                    <span class="text-xs font-bold text-secondary uppercase">Schema</span>
+                    <a routerLink="/schema-editor" class="text-primary text-xs cursor-pointer">
+                        <i class="pi pi-pencil mr-1"></i>Edit Schemas
+                    </a>
+                </div>
+                <p-select [options]="schemaOptions()" [ngModel]="selectedSchemaId()"
+                    (ngModelChange)="onSchemaSelect($event)" placeholder="Select a schema..." styleClass="w-full"
+                    [showClear]="true"></p-select>
+                <div *ngIf="selectedSchema()" class="mt-2 text-xs text-500">
+                    {{selectedSchema()!.properties.length}} properties defined
+                </div>
+            </div>
+
+            <!-- File Upload -->
+            <div class="panel-section p-3 border-bottom-1 surface-border">
+                <div class="flex justify-content-between align-items-center mb-2">
+                    <span class="text-xs font-bold text-secondary uppercase">Documents</span>
+                    <button pButton icon="pi pi-trash" [text]="true" severity="danger" size="small"
+                        (click)="clearFiles()" [disabled]="uploadedFiles().length === 0"></button>
+                </div>
+
+                <!-- Upload Buttons Row -->
+                <div class="flex gap-2 mb-2">
+                    <p-fileUpload mode="basic" [multiple]="true"
+                        accept=".txt,.doc,.docx,.pdf,.json,.csv,.png,.jpg,.jpeg,.zip,.xml" [maxFileSize]="100000000"
+                        (onSelect)="onFileUpload($event)" chooseLabel="Files" chooseIcon="pi pi-file"
+                        styleClass="upload-zone-btn flex-1"></p-fileUpload>
+
+                    <!-- Folder Upload Button -->
+                    <button pButton icon="pi pi-folder" label="Folder" severity="secondary" [outlined]="true"
+                        (click)="folderInput.click()" class="flex-1"></button>
+                    <input #folderInput type="file" webkitdirectory multiple hidden (change)="onFolderSelect($event)">
+                </div>
+
+                <div class="drop-zone surface-ground border-round border-dashed border-1 surface-border p-3 text-center cursor-pointer"
+                    (click)="triggerFileUpload()" (dragover)="$event.preventDefault()" (drop)="onFileDrop($event)">
+                    <i class="pi pi-cloud-upload text-primary text-2xl mb-2 block"></i>
+                    <span class="text-sm text-500">or drop files/folders here</span>
+                </div>
+
+                <!-- File Hierarchy Tree -->
+                <div *ngIf="fileHierarchy().length > 0" class="file-tree mt-3">
+                    <ng-container *ngFor="let node of fileHierarchy()">
+                        <ng-container
+                            *ngTemplateOutlet="fileNodeTpl; context: { $implicit: node, depth: 0 }"></ng-container>
+                    </ng-container>
+                </div>
+
+                <!-- Fallback: Flat File List (when no hierarchy) - excludes mapped files -->
+                <div *ngIf="fileHierarchy().length === 0 && pendingFiles().length > 0" class="file-list mt-2">
+                    <div *ngFor="let file of pendingFiles(); let i = index"
+                        class="file-item flex justify-content-between align-items-center p-2 surface-ground border-round mb-1 text-xs">
+                        <div class="flex align-items-center gap-2 overflow-hidden">
+                            <i class="pi pi-file text-primary"></i>
+                            <span
+                                class="font-medium text-overflow-ellipsis overflow-hidden white-space-nowrap">{{file.name}}</span>
+                        </div>
+                        <div class="flex align-items-center gap-1 flex-shrink-0">
+                            <p-tag [value]="file.status" [severity]="getStatusSeverity(file.status)"
+                                styleClass="text-xs"></p-tag>
+                            <button pButton icon="pi pi-times" [text]="true" severity="danger" size="small"
+                                (click)="removeFile(i)"></button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Active Processing Files Grid (4 concurrent) -->
+                @if (activeProcessingFiles().length > 0) {
+                <div class="active-processing-grid mt-3 p-3 surface-ground border-round">
+                    <div class="flex align-items-center gap-2 mb-3">
+                        <p-progress-spinner strokeWidth="3" animationDuration="1s"
+                            [style]="{width: '18px', height: '18px'}"></p-progress-spinner>
+                        <span class="text-sm font-semibold">Processing {{activeProcessingFiles().length}} of
+                            {{MAX_CONCURRENT_PROCESSING}} simultaneous</span>
+                    </div>
+                    <div class="grid">
+                        @for (activeFile of activeProcessingFiles(); track activeFile.index) {
+                        <div class="col-6">
+                            <div class="processing-card surface-card border-round-lg p-2 shadow-1 mb-2"
+                                style="animation: pulse 1.5s ease-in-out infinite;">
+                                <!-- Thumbnail -->
+                                <div class="thumbnail-container mb-2 border-round overflow-hidden"
+                                    style="height: 80px; background: var(--surface-100); display: flex; align-items: center; justify-content: center;">
+                                    @if (activeFile.thumbnail) {
+                                    <img [src]="activeFile.thumbnail" [alt]="activeFile.file.name"
+                                        style="max-width: 100%; max-height: 100%; object-fit: contain;">
+                                    } @else {
+                                    <i class="pi {{getFileIcon(activeFile.file)}} text-4xl text-primary opacity-60"></i>
+                                    }
+                                </div>
+                                <!-- File info -->
+                                <div class="flex align-items-center gap-2">
+                                    <p-progress-spinner strokeWidth="4" animationDuration=".8s"
+                                        [style]="{width: '16px', height: '16px'}"></p-progress-spinner>
+                                    <span
+                                        class="text-xs font-medium text-overflow-ellipsis overflow-hidden white-space-nowrap"
+                                        style="max-width: 120px;" [pTooltip]="activeFile.file.name">
+                                        {{activeFile.file.name}}
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                        }
+                    </div>
+                </div>
+                }
+
+                <!-- Failed Files Panel -->
+                <div *ngIf="failedFiles().length > 0" class="failed-files-panel mt-3 surface-ground border-round p-2">
+                    <div class="flex justify-content-between align-items-center mb-2 cursor-pointer"
+                        (click)="showFailedFilesPanel.set(!showFailedFilesPanel())">
+                        <div class="flex align-items-center gap-2">
+                            <i class="pi pi-exclamation-triangle text-red-500"></i>
+                            <span class="text-xs font-semibold text-red-500">{{failedFiles().length}} Failed</span>
+                        </div>
+                        <i class="pi text-xs" [class.pi-chevron-down]="!showFailedFilesPanel()"
+                            [class.pi-chevron-up]="showFailedFilesPanel()"></i>
+                    </div>
+                    <div *ngIf="showFailedFilesPanel()" class="failed-files-list">
+                        <div *ngFor="let failed of failedFiles()"
+                            class="failed-file-item flex justify-content-between align-items-center p-2 mb-1 surface-card border-round">
+                            <div class="flex-1 overflow-hidden mr-2">
+                                <div
+                                    class="text-xs font-medium text-overflow-ellipsis overflow-hidden white-space-nowrap">
+                                    {{failed.name}}
+                                </div>
+                                <div class="text-xs text-red-400 text-overflow-ellipsis overflow-hidden"
+                                    style="max-width: 180px;" [pTooltip]="failed.errorMessage">
+                                    {{failed.errorMessage}}
+                                </div>
+                            </div>
+                            <div class="flex gap-1">
+                                <button pButton icon="pi pi-refresh" [text]="true" severity="warn" size="small"
+                                    pTooltip="Retry this file" (click)="retrySingleFile(failed)"></button>
+                                <button pButton icon="pi pi-times" [text]="true" severity="danger" size="small"
+                                    pTooltip="Remove from list" (click)="removeFailedFile(failed)"></button>
+                            </div>
+                        </div>
+                        <div class="flex gap-2 mt-2">
+                            <button pButton label="Retry All" icon="pi pi-refresh" severity="warn" size="small"
+                                class="flex-1" (click)="retryFailedFiles()"></button>
+                            <button pButton label="Clear All" icon="pi pi-trash" severity="danger" size="small"
+                                class="flex-1" [outlined]="true" (click)="clearFailedFiles()"></button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- File Node Template (recursive) -->
+            <ng-template #fileNodeTpl let-node let-depth="depth">
+                <div class="file-node" [style.padding-left.px]="depth * 16">
+                    <div class="node-row flex align-items-center gap-1 p-1 border-round cursor-pointer hover:surface-hover text-xs"
+                        (click)="node.type === 'folder' ? toggleFolderExpand(node) : null">
+                        <!-- Expand/Collapse for folders -->
+                        <i *ngIf="node.type === 'folder'" class="pi text-xs" [class.pi-chevron-right]="!node.isExpanded"
+                            [class.pi-chevron-down]="node.isExpanded"></i>
+                        <span *ngIf="node.type !== 'folder'" style="width: 12px;"></span>
+
+                        <!-- Type Icon -->
+                        <i class="pi" [class.pi-folder]="node.type === 'folder'"
+                            [class.pi-folder-open]="node.type === 'folder' && node.isExpanded"
+                            [class.pi-file]="node.type === 'file'" [class.text-yellow-600]="node.type === 'folder'"
+                            [class.text-primary]="node.type === 'file'"></i>
+
+                        <!-- Name -->
+                        <span
+                            class="node-name flex-1 text-overflow-ellipsis overflow-hidden white-space-nowrap">{{node.name}}</span>
+
+                        <!-- Status Indicator -->
+                        <i *ngIf="node.status === 'processing'" class="pi pi-spin pi-spinner text-primary"></i>
+                        <i *ngIf="node.status === 'completed'" class="pi pi-check-circle text-green-500"></i>
+                        <i *ngIf="node.status === 'error'" class="pi pi-times-circle text-red-500"
+                            [pTooltip]="node.errorMessage"></i>
+                        <i *ngIf="node.status === 'pending'" class="pi pi-circle text-400"
+                            style="font-size: 0.6rem;"></i>
+                    </div>
+
+                    <!-- Children (if folder and expanded) -->
+                    <div *ngIf="node.type === 'folder' && node.isExpanded && node.children.length > 0">
+                        <ng-container *ngFor="let child of node.children">
+                            <ng-container
+                                *ngTemplateOutlet="fileNodeTpl; context: { $implicit: child, depth: depth + 1 }"></ng-container>
+                        </ng-container>
+                    </div>
+                </div>
+            </ng-template>
+
+            <!-- AI Model Selection -->
+            <div class="panel-section p-3 border-bottom-1 surface-border">
+                <span class="text-xs font-bold text-secondary uppercase block mb-2">AI Model</span>
+                <p-select [options]="availableAiModels" optionLabel="name" optionValue="id"
+                    [ngModel]="selectedAiModel()" (ngModelChange)="onAiModelChange($event)"
+                    placeholder="Select AI Model" styleClass="w-full"></p-select>
+            </div>
+
+            <!-- Analyze Button -->
+            <div class="panel-section p-3">
+                <button pButton icon="pi pi-sparkles" label="Analyze Documents" class="w-full"
+                    [disabled]="!hasFilesForAnalysis() || isAnalyzing()" [loading]="isAnalyzing()"
+                    (click)="analyzeFiles()"></button>
+            </div>
+        </div>
+
+        <!-- Right Panel: Results & Preview (with optional side-by-side) -->
+        <div class="right-panel flex" [class.with-original]="sideBySideMode() && currentPreviewFile()">
+            <!-- Results List -->
+            <div class="results-list surface-card border-right-1 surface-border" tabindex="0"
+                (keydown)="onResultsKeydown($event)">
+                <!-- Results Header with Search -->
+                <div class="p-3 border-bottom-1 surface-border">
+                    <div class="flex justify-content-between align-items-center mb-2">
+                        <span class="text-xs font-bold text-secondary uppercase">
+                            Results
+                            <span *ngIf="hasMappedFiles()"
+                                class="text-primary">({{filteredMappedFiles().length}})</span>
+                        </span>
+                        <div *ngIf="hasMappedFiles()" class="flex gap-1">
+                            <button pButton icon="pi pi-download" [text]="true" severity="secondary" size="small"
+                                (click)="exportAllMappedData()" pTooltip="Download All"></button>
+                        </div>
+                    </div>
+                    <!-- Search Input -->
+                    <div *ngIf="hasMappedFiles()" class="search-wrapper">
+                        <span class="p-input-icon-left w-full">
+                            <i class="pi pi-search text-xs"></i>
+                            <input pInputText type="text" [ngModel]="searchQuery()"
+                                (ngModelChange)="searchQuery.set($event)" placeholder="Search results..."
+                                class="w-full text-xs p-inputtext-sm">
+                        </span>
+                    </div>
+                </div>
+
+                <!-- Loading State -->
+                <div *ngIf="isAnalyzing() || isMpping()"
+                    class="flex flex-column align-items-center justify-content-center py-5">
+                    <p-progressSpinner strokeWidth="4" styleClass="mb-3"></p-progressSpinner>
+                    <span class="text-secondary text-sm">{{isMpping() ? 'Mapping...' : 'Analyzing...'}}</span>
+                </div>
+
+                <!-- Empty State -->
+                <div *ngIf="!isAnalyzing() && !isMpping() && !hasMappedFiles()" class="empty-state text-center py-5">
+                    <i class="pi pi-inbox text-4xl text-300 mb-2 block"></i>
+                    <span class="text-secondary text-sm block">No results yet</span>
+                    <small class="text-400">Upload documents and analyze</small>
+                </div>
+
+                <!-- Results -->
+                <div *ngIf="hasMappedFiles()" class="results-items overflow-y-auto">
+                    <!-- Filter & Bulk Actions Toolbar -->
+                    <div
+                        class="filter-toolbar p-2 surface-100 border-bottom-1 surface-border flex flex-wrap gap-2 align-items-center">
+                        <!-- Time Filter -->
+                        <p-select
+                            [options]="[{label: 'All Time', value: 'all'}, {label: 'Today', value: 'today'}, {label: 'This Week', value: 'week'}, {label: 'Older', value: 'older'}]"
+                            [ngModel]="resultsTimeFilter()" (ngModelChange)="resultsTimeFilter.set($event)"
+                            optionLabel="label" optionValue="value" size="small" styleClass="text-xs">
+                        </p-select>
+
+                        <!-- Quality Filter -->
+                        <p-select
+                            [options]="[{label: 'All Quality', value: 'all'}, {label: 'High Quality', value: 'high'}, {label: 'Medium Quality', value: 'medium'}, {label: 'Low Quality', value: 'low'}]"
+                            [ngModel]="resultsQualityFilter()" (ngModelChange)="resultsQualityFilter.set($event)"
+                            optionLabel="label" optionValue="value" size="small" styleClass="text-xs">
+                        </p-select>
+
+                        <div class="flex-grow-1"></div>
+
+                        <!-- Bulk Actions (only show when items selected) -->
+                        @if (selectedCount > 0) {
+                        <span class="text-xs text-secondary mr-2">{{selectedCount}} selected</span>
+                        <button pButton icon="pi pi-refresh" severity="secondary" size="small" [text]="true"
+                            pTooltip="Requeue Selected" (click)="requeueSelectedResults()"></button>
+                        <button pButton icon="pi pi-trash" severity="danger" size="small" [text]="true"
+                            pTooltip="Delete Selected" (click)="deleteSelectedResults()"></button>
+                        }
+
+                        <!-- Select All/None -->
+                        <button pButton icon="pi pi-check-square" severity="secondary" size="small" [text]="true"
+                            pTooltip="Select All" (click)="selectAllResults()"></button>
+                        <button pButton icon="pi pi-stop" severity="secondary" size="small" [text]="true"
+                            pTooltip="Deselect All" (click)="deselectAllResults()"></button>
+                    </div>
+
+                    <!-- Results List -->
+                    <div *ngFor="let file of filteredMappedFiles(); let i = index"
+                        class="result-item p-3 border-bottom-1 surface-border cursor-pointer"
+                        [class.selected]="selectedResultIndex() === i" [class.active]="selectedResultIndex() === i"
+                        (click)="selectResult(i)">
+                        <!-- Selection Indicator -->
+                        <div class="selection-indicator" *ngIf="selectedResultIndex() === i"></div>
+
+                        <!-- Checkbox for multi-select -->
+                        <div class="flex align-items-start gap-2">
+                            <p-checkbox [binary]="true" [ngModel]="isResultSelected(file.name)"
+                                (ngModelChange)="toggleResultSelection(file.name)"
+                                (click)="$event.stopPropagation()"></p-checkbox>
+
+                            <div class="flex justify-content-between align-items-start">
+                                <div class="flex align-items-start gap-2 overflow-hidden flex-grow-1">
+                                    <i class="pi pi-file-check text-primary mt-1"></i>
+                                    <div class="overflow-hidden">
+                                        <span
+                                            class="font-medium text-sm text-overflow-ellipsis overflow-hidden block">{{file.name}}</span>
+                                        <div class="flex align-items-center gap-2 mt-1">
+                                            <small
+                                                class="text-400">{{getRelativeTime(file.mappedData?.timestamp)}}</small>
+                                            <span class="text-400">•</span>
+                                            <small class="text-500">{{file.mappedData?.mappings?.length || 0}}
+                                                fields</small>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="flex flex-column align-items-end gap-1 flex-shrink-0">
+                                    <p-tag [value]="getDataQualityLabel(file.mappedData?.confidence || 0)"
+                                        [severity]="getConfidenceSeverity(file.mappedData?.confidence || 0)"
+                                        styleClass="text-xs" [pTooltip]="getConfidenceTooltip(file)"
+                                        tooltipPosition="left"></p-tag>
+                                    <small *ngIf="getDataQualityIssues(file).length > 0"
+                                        class="text-orange-500 text-xs">
+                                        <i class="pi pi-info-circle mr-1"></i>Review suggested
+                                    </small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- No Search Results -->
+                    <div *ngIf="filteredMappedFiles().length === 0 && searchQuery()" class="text-center py-4">
+                        <i class="pi pi-search text-300 text-2xl mb-2 block"></i>
+                        <small class="text-400">No results match "{{searchQuery()}}"</small>
+                    </div>
+
+                    <!-- Keyboard Hint -->
+                    <div *ngIf="hasMappedFiles()" class="p-2 border-top-1 surface-border text-center">
+                        <small class="text-400"><i class="pi pi-info-circle mr-1"></i>Use ↑↓ to navigate</small>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Preview Panel -->
+            <div class="preview-panel flex-grow-1 surface-ground flex flex-column">
+                <div
+                    class="p-3 border-bottom-1 surface-border surface-card flex justify-content-between align-items-center">
+                    <span class="text-xs font-bold text-secondary uppercase">Extracted Data</span>
+                    <div *ngIf="currentPreviewFile()" class="flex gap-1">
+                        <button pButton icon="pi pi-eye" [text]="true" severity="secondary" size="small"
+                            (click)="toggleOriginalView()"
+                            [pTooltip]="sideBySideMode() ? 'Hide Original' : 'View Original'"></button>
+                        <button pButton icon="pi pi-copy" [text]="true" severity="secondary" size="small"
+                            (click)="copyToClipboard()" pTooltip="Copy JSON"></button>
+                        <button pButton icon="pi pi-download" [text]="true" severity="secondary" size="small"
+                            (click)="exportMappedData()" pTooltip="Download"></button>
+                    </div>
+                </div>
+
+                <!-- Empty Preview -->
+                <div *ngIf="!currentPreviewFile()" class="flex-grow-1 flex align-items-center justify-content-center">
+                    <div class="text-center text-400">
+                        <i class="pi pi-eye text-4xl mb-2 block" style="opacity: 0.3"></i>
+                        <span class="text-sm block">Select a result to preview</span>
+                    </div>
+                </div>
+
+                <!-- Preview Content -->
+                <div *ngIf="currentPreviewFile()" class="preview-content flex-grow-1 overflow-auto p-3">
+                    <!-- File Header -->
+                    <div class="p-3 surface-card border-round mb-3">
+                        <div class="flex justify-content-between align-items-center mb-2">
+                            <span class="font-semibold">{{currentPreviewFile()!.name}}</span>
+                            <p-tag
+                                [value]="getDataQualityLabel(currentPreviewFile()!.mappedData?.confidence || 0) + ' Quality'"
+                                [severity]="getConfidenceSeverity(currentPreviewFile()!.mappedData?.confidence || 0)"></p-tag>
+                        </div>
+                        <small class="text-500">Processed
+                            {{getRelativeTime(currentPreviewFile()!.mappedData?.timestamp)}}</small>
+                    </div>
+
+                    <!-- Data Quality Assessment (if not excellent) -->
+                    <div *ngIf="currentPreviewFile()!.mappedData?.confidence && currentPreviewFile()!.mappedData!.confidence < 90"
+                        class="data-quality-panel p-3 surface-card border-round mb-3 border-left-3"
+                        [class.border-orange-400]="currentPreviewFile()!.mappedData!.confidence >= 70"
+                        [class.border-red-400]="currentPreviewFile()!.mappedData!.confidence < 70">
+                        <div class="flex align-items-center gap-2 mb-2">
+                            <i class="pi pi-info-circle"
+                                [class.text-orange-500]="currentPreviewFile()!.mappedData!.confidence >= 70"
+                                [class.text-red-500]="currentPreviewFile()!.mappedData!.confidence < 70"></i>
+                            <span class="font-medium text-sm">Data Quality Review</span>
+                            <button pButton label="Compare with Original" icon="pi pi-external-link" size="small"
+                                [outlined]="true" severity="secondary" class="ml-auto"
+                                (click)="toggleOriginalView()"></button>
+                        </div>
+                        <p class="text-sm text-600 mt-2 mb-2">
+                            <strong>{{getDataQualityLabel(currentPreviewFile()!.mappedData?.confidence || 0)}}
+                                confidence</strong>
+                            - Some data may need verification before use (e.g., creating bookings or invoices).
+                        </p>
+                        <div *ngIf="getDataQualityIssues(currentPreviewFile()!).length > 0"
+                            class="quality-issues text-sm">
+                            <span class="text-600">Potential issues:</span>
+                            <ul class="m-0 mt-2 pl-4">
+                                <li *ngFor="let issue of getDataQualityIssues(currentPreviewFile()!)"
+                                    class="text-500 mb-1">{{issue}}</li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <!-- View Mode Toggle -->
+                    <div class="view-mode-tabs flex align-items-center gap-2 mb-3">
+                        <div class="flex border-round surface-100 p-1">
+                            <button pButton [text]="true" size="small" icon="pi pi-th-large" label="Friendly"
+                                [class.active]="dataViewMode() === 'friendly'"
+                                (click)="dataViewMode.set('friendly')"></button>
+                            <button pButton [text]="true" size="small" icon="pi pi-table" label="Technical"
+                                [class.active]="dataViewMode() === 'technical'"
+                                (click)="dataViewMode.set('technical')"></button>
+                            <button pButton [text]="true" size="small" icon="pi pi-code" label="Raw"
+                                [class.active]="dataViewMode() === 'raw'" (click)="dataViewMode.set('raw')"></button>
+                        </div>
+                        <span class="text-xs text-400 ml-auto">
+                            {{currentPreviewFile()!.mappedData?.mappings?.length || 0}} fields extracted
+                        </span>
+                    </div>
+
+                    <!-- FRIENDLY VIEW: Card-based with inline issue indicators -->
+                    <div *ngIf="dataViewMode() === 'friendly'" class="friendly-view">
+                        <div class="field-cards grid">
+                            <div *ngFor="let mapping of currentPreviewFile()!.mappedData?.mappings"
+                                class="col-12 md:col-6 lg:col-4">
+                                <div class="field-card p-3 surface-card border-round h-full"
+                                    [class.has-issue]="hasFieldIssue(mapping)"
+                                    [class.low-confidence]="mapping.confidence < 70"
+                                    [class.copyable]="mapping.extractedValue !== null && mapping.extractedValue !== undefined"
+                                    (click)="copyFieldValue(mapping)" pTooltip="Click to copy" tooltipPosition="top">
+                                    <!-- Field Header -->
+                                    <div class="flex justify-content-between align-items-start mb-2">
+                                        <span class="field-label text-xs text-500 uppercase font-medium">
+                                            {{formatFieldName(mapping.propertyName)}}
+                                        </span>
+                                        <div class="flex align-items-center gap-1">
+                                            <i *ngIf="hasFieldIssue(mapping)"
+                                                class="pi pi-exclamation-triangle text-orange-500 text-xs"
+                                                [pTooltip]="getFieldIssueMessage(mapping)" tooltipPosition="left"></i>
+                                            <i class="pi pi-copy text-300 text-xs copy-icon"></i>
+                                            <span class="confidence-badge text-xs px-2 py-1 border-round"
+                                                [class.bg-green-100]="mapping.confidence >= 90"
+                                                [class.text-green-700]="mapping.confidence >= 90"
+                                                [class.bg-yellow-100]="mapping.confidence >= 70 && mapping.confidence < 90"
+                                                [class.text-yellow-700]="mapping.confidence >= 70 && mapping.confidence < 90"
+                                                [class.bg-orange-100]="mapping.confidence < 70"
+                                                [class.text-orange-700]="mapping.confidence < 70">
+                                                {{mapping.confidence}}%
+                                            </span>
+                                        </div>
+                                    </div>
+
+                                    <!-- Field Value -->
+                                    <div class="field-value" [class.text-400]="!mapping.extractedValue">
+                                        <ng-container
+                                            *ngIf="mapping.extractedValue !== null && mapping.extractedValue !== undefined && mapping.extractedValue !== ''">
+                                            <!-- Simple values -->
+                                            <span *ngIf="isSimpleValue(mapping.extractedValue)" class="font-medium">
+                                                {{formatDisplayValue(mapping.extractedValue)}}
+                                            </span>
+
+                                            <!-- Array values - Visual Tree View -->
+                                            <div *ngIf="isArrayValue(mapping.extractedValue)"
+                                                class="array-tree-display">
+                                                <app-json-tree-view [data]="mapping.extractedValue"
+                                                    [initialExpandDepth]="1" [maxChildrenToShow]="3" [compact]="true">
+                                                </app-json-tree-view>
+                                            </div>
+
+                                            <!-- Object values - Visual Tree View -->
+                                            <div *ngIf="isObjectValue(mapping.extractedValue)"
+                                                class="object-tree-display">
+                                                <app-json-tree-view [data]="mapping.extractedValue"
+                                                    [initialExpandDepth]="1" [maxChildrenToShow]="5" [compact]="true">
+                                                </app-json-tree-view>
+                                            </div>
+                                        </ng-container>
+
+                                        <span
+                                            *ngIf="mapping.extractedValue === null || mapping.extractedValue === undefined || mapping.extractedValue === ''"
+                                            class="text-400 italic">
+                                            Not found
+                                        </span>
+                                    </div>
+
+                                    <!-- Source hint -->
+                                    <small *ngIf="mapping.source" class="text-300 mt-2 block text-xs">
+                                        <i class="pi pi-map-marker mr-1"></i>{{mapping.source}}
+                                    </small>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Empty state -->
+                        <div *ngIf="!currentPreviewFile()!.mappedData?.mappings?.length"
+                            class="text-center py-5 text-400">
+                            <i class="pi pi-inbox text-4xl mb-2 block" style="opacity: 0.3"></i>
+                            <span class="text-sm">No fields extracted</span>
+                        </div>
+                    </div>
+
+                    <!-- TECHNICAL VIEW: Table with all details -->
+                    <div *ngIf="dataViewMode() === 'technical'" class="technical-view">
+                        <div class="overflow-auto surface-card border-round">
+                            <table class="w-full text-sm">
+                                <thead>
+                                    <tr class="surface-100">
+                                        <th class="text-left p-3 font-semibold text-600">Field</th>
+                                        <th class="text-left p-3 font-semibold text-600">Value</th>
+                                        <th class="text-center p-3 font-semibold text-600" style="width: 80px">
+                                            Confidence</th>
+                                        <th class="text-left p-3 font-semibold text-600">Source</th>
+                                        <th class="text-center p-3 font-semibold text-600" style="width: 60px">
+                                            Status
+                                        </th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr *ngFor="let mapping of currentPreviewFile()!.mappedData?.mappings; let odd = odd"
+                                        [class.surface-50]="odd" [class.border-left-3]="hasFieldIssue(mapping)"
+                                        [class.border-orange-400]="hasFieldIssue(mapping)">
+                                        <td class="p-3 font-mono text-xs">{{mapping.propertyName}}</td>
+                                        <td class="p-3">
+                                            <span *ngIf="isSimpleValue(mapping.extractedValue)"
+                                                class="font-mono text-xs">
+                                                {{formatTechValue(mapping.extractedValue)}}
+                                            </span>
+                                            <span *ngIf="!isSimpleValue(mapping.extractedValue)"
+                                                class="text-primary font-mono text-xs cursor-pointer"
+                                                (click)="expandField(mapping.propertyName)">
+                                                [Object] <i class="pi pi-external-link"></i>
+                                            </span>
+                                            <span
+                                                *ngIf="mapping.extractedValue === null || mapping.extractedValue === undefined"
+                                                class="text-400 italic">null</span>
+                                        </td>
+                                        <td class="p-3 text-center">
+                                            <span class="font-mono text-xs">{{mapping.confidence}}%</span>
+                                        </td>
+                                        <td class="p-3 text-xs text-400">{{mapping.source || '-'}}</td>
+                                        <td class="p-3 text-center">
+                                            <i *ngIf="!hasFieldIssue(mapping)"
+                                                class="pi pi-check-circle text-green-500"></i>
+                                            <i *ngIf="hasFieldIssue(mapping)"
+                                                class="pi pi-exclamation-triangle text-orange-500"
+                                                [pTooltip]="getFieldIssueMessage(mapping)"></i>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- RAW VIEW: Using shared JsonDataViewer -->
+                    <div *ngIf="dataViewMode() === 'raw'" class="raw-view">
+                        <app-json-data-viewer [data]="currentPreviewFile()?.mappedData" [showHeader]="false"
+                            [showActions]="true" [initialExpandDepth]="3" [maxChildrenToShow]="10"
+                            [defaultViewMode]="'code'" (copyClicked)="copyToClipboard()">
+                        </app-json-data-viewer>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Side-by-Side Original Document Panel (desktop only) -->
+            <div *ngIf="sideBySideMode() && currentPreviewFile()"
+                class="original-panel surface-card border-left-1 surface-border flex flex-column">
+                <div class="p-3 border-bottom-1 surface-border flex justify-content-between align-items-center">
+                    <span class="text-xs font-bold text-secondary uppercase">Original Document</span>
+                    <button pButton icon="pi pi-times" [text]="true" severity="secondary" size="small"
+                        (click)="sideBySideMode.set(false)" pTooltip="Close"></button>
+                </div>
+                <div class="flex-grow-1 overflow-auto p-3">
+                    <div
+                        *ngIf="isOfficeFile(currentPreviewFile()!) && !isPdfFile(currentPreviewFile()!) && currentPreviewFile()!.objectUrl">
+                        <ngx-doc-viewer [url]="currentPreviewFile()!.objectUrl!"
+                            [viewer]="getDocViewerType(currentPreviewFile()!)"
+                            style="width: 100%; height: 100%;"></ngx-doc-viewer>
+                    </div>
+                    <!-- PDF display using iframe (supports both objectUrl and dataUrl) -->
+                    <div *ngIf="isPdfFile(currentPreviewFile()!) && (currentPreviewFile()!.objectUrl || currentPreviewFile()!.dataUrl)"
+                        style="width: 100%; height: 100%; min-height: 500px;">
+                        <iframe [src]="getSanitizedPdfUrl(currentPreviewFile()!)"
+                            style="width: 100%; height: 100%; border: none; min-height: 500px;"></iframe>
+                    </div>
+                    <div
+                        *ngIf="currentPreviewFile()!.content && !isOfficeFile(currentPreviewFile()!) && !isImageFile(currentPreviewFile()!) && !isPdfFile(currentPreviewFile()!)">
+                        <pre class="m-0 p-3 surface-ground border-round text-xs overflow-auto"
+                            style="white-space: pre-wrap;">{{currentPreviewFile()!.content}}</pre>
+                    </div>
+                    <div *ngIf="isImageFile(currentPreviewFile()!) && (currentPreviewFile()!.objectUrl || currentPreviewFile()!.dataUrl)"
+                        class="text-center">
+                        <img [src]="currentPreviewFile()!.objectUrl || currentPreviewFile()!.dataUrl" alt="Original"
+                            style="max-width: 100%; max-height: 100%;" class="border-round">
+                    </div>
+                    <div *ngIf="!currentPreviewFile()!.content && !currentPreviewFile()!.objectUrl && !currentPreviewFile()!.dataUrl"
+                        class="text-center text-400 py-5">
+                        <i class="pi pi-file text-4xl mb-2 block" style="opacity: 0.3"></i>
+                        <span class="text-sm">Original content not available</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Document Preview Modal (for mobile/overlay mode) -->
+<p-dialog [header]="documentPreviewFile()?.name || 'Original Document'" [visible]="documentPreviewVisible()"
+    (visibleChange)="documentPreviewVisible.set($event)" [modal]="true"
+    [style]="{width: '90vw', maxWidth: '900px', maxHeight: '90vh'}" [maximizable]="true">
+    <div *ngIf="documentPreviewFile()" class="flex flex-column gap-3">
+        <div class="flex justify-content-between align-items-center p-2 surface-ground border-round">
+            <div class="flex align-items-center gap-2">
+                <i class="pi pi-file text-primary"></i>
+                <span class="font-semibold text-sm">{{documentPreviewFile()!.name}}</span>
+            </div>
+            <p-tag [value]="documentPreviewFile()!.status"
+                [severity]="getStatusSeverity(documentPreviewFile()!.status)"></p-tag>
+        </div>
+
+        <div
+            *ngIf="isOfficeFile(documentPreviewFile()!) && !isPdfFile(documentPreviewFile()!) && documentPreviewFile()!.objectUrl">
+            <ngx-doc-viewer [url]="documentPreviewFile()!.objectUrl!"
+                [viewer]="getDocViewerType(documentPreviewFile()!)"
+                style="width: 100%; height: 500px;"></ngx-doc-viewer>
+        </div>
+
+        <!-- PDF files: show embedded PDF viewer -->
+        <div *ngIf="isPdfFile(documentPreviewFile()!) && (documentPreviewFile()!.objectUrl || documentPreviewFile()!.dataUrl)"
+            class="text-center">
+            <iframe [src]="getSanitizedPdfUrl(documentPreviewFile()!)" style="width: 100%; height: 500px; border: none;"
+                title="PDF Preview"></iframe>
+        </div>
+
+        <div
+            *ngIf="documentPreviewFile()!.content && !isOfficeFile(documentPreviewFile()!) && !isImageFile(documentPreviewFile()!) && !isPdfFile(documentPreviewFile()!)">
+            <pre class="m-0 p-3 surface-ground border-round text-xs overflow-auto"
+                style="max-height: 400px; white-space: pre-wrap;">{{documentPreviewFile()!.content}}</pre>
+        </div>
+
+        <div *ngIf="isImageFile(documentPreviewFile()!) && (documentPreviewFile()!.objectUrl || documentPreviewFile()!.dataUrl)"
+            class="text-center">
+            <img [src]="documentPreviewFile()!.objectUrl || documentPreviewFile()!.dataUrl" alt="Preview"
+                style="max-width: 100%; max-height: 500px;" class="border-round">
+        </div>
+    </div>
+    <ng-template pTemplate="footer">
+        <button pButton icon="pi pi-times" label="Close" [outlined]="true" (click)="closeDocumentPreview()"></button>
+    </ng-template>
+</p-dialog>
+
+<!-- Processing Queue Overlay Panel -->
+<div *ngIf="showProcessingQueue()" class="processing-queue-overlay" [@slideIn]>
+    <div class="processing-queue-panel surface-card shadow-4 border-round-lg">
+        <!-- Header -->
+        <div
+            class="queue-header px-4 py-3 border-bottom-1 surface-border flex justify-content-between align-items-center">
+            <div class="flex align-items-center gap-2">
+                <div class="queue-icon-pulse">
+                    <i class="pi pi-spin pi-spinner text-primary text-xl"></i>
+                </div>
+                <div>
+                    <span class="font-semibold block">Processing Documents</span>
+                    <small class="text-500">{{processingQueue().length}} remaining</small>
+                </div>
+            </div>
+            <button pButton icon="pi pi-minus" [text]="true" severity="secondary" size="small"
+                (click)="dismissProcessingQueue()" pTooltip="Minimize"></button>
+        </div>
+
+        <!-- Queue Items -->
+        <div class="queue-items px-4 py-3 overflow-y-auto" style="max-height: 320px;">
+            <div *ngFor="let item of processingQueue(); trackBy: trackQueueItem"
+                class="queue-item mb-3 p-3 surface-ground border-round"
+                [class.queue-item-processing]="item.status === 'processing'"
+                [class.queue-item-completed]="item.status === 'completed'"
+                [class.queue-item-error]="item.status === 'error'">
+
+                <!-- Item Header -->
+                <div class="flex justify-content-between align-items-center mb-2">
+                    <div class="flex align-items-center gap-2 overflow-hidden">
+                        <i class="pi text-lg" [class.pi-spinner]="item.status === 'processing'"
+                            [class.pi-spin]="item.status === 'processing'"
+                            [class.pi-check-circle]="item.status === 'completed'"
+                            [class.pi-exclamation-triangle]="item.status === 'error'"
+                            [class.pi-clock]="item.status === 'queued'"
+                            [class.text-primary]="item.status === 'processing'"
+                            [class.text-green-500]="item.status === 'completed'"
+                            [class.text-red-500]="item.status === 'error'"
+                            [class.text-400]="item.status === 'queued'"></i>
+                        <span class="font-medium text-sm text-overflow-ellipsis overflow-hidden white-space-nowrap">
+                            {{item.name}}
+                        </span>
+                    </div>
+                    <div class="flex align-items-center gap-2 flex-shrink-0">
+                        <span class="text-xs" [class.text-primary]="item.status === 'processing'"
+                            [class.text-green-500]="item.status === 'completed'"
+                            [class.text-red-500]="item.status === 'error'" [class.text-400]="item.status === 'queued'">
+                            {{getTimeRemaining(item)}}
+                        </span>
+                    </div>
+                </div>
+
+                <!-- Progress Bar (only for processing items) -->
+                <div *ngIf="item.status === 'processing'" class="progress-container">
+                    <p-progressBar [value]="item.progress" [showValue]="false"
+                        styleClass="queue-progress-bar"></p-progressBar>
+                </div>
+
+                <!-- Completed Animation -->
+                <div *ngIf="item.status === 'completed'" class="completed-message flex align-items-center gap-2">
+                    <i class="pi pi-arrow-right text-green-500 text-xs"></i>
+                    <small class="text-green-600">Moving to results...</small>
+                </div>
+
+                <!-- Queue Position (only for queued items) -->
+                <div *ngIf="item.status === 'queued'" class="queue-position">
+                    <small class="text-400">{{getQueuePosition(item)}}</small>
+                </div>
+
+                <!-- Error Message -->
+                <div *ngIf="item.status === 'error' && item.errorMessage" class="error-message mt-2">
+                    <small class="text-red-500">{{item.errorMessage}}</small>
+                </div>
+            </div>
+
+            <!-- Empty Queue (all done) -->
+            <div *ngIf="processingQueue().length === 0" class="text-center py-4">
+                <i class="pi pi-check-circle text-green-500 text-4xl mb-2 block"></i>
+                <span class="text-green-600 font-medium block">All documents processed!</span>
+                <small class="text-500">Results are ready to view</small>
+            </div>
+        </div>
+
+        <!-- Footer with overall progress -->
+        <div *ngIf="processingQueue().length > 0" class="queue-footer px-4 py-2 border-top-1 surface-border surface-50">
+            <div class="flex justify-content-between align-items-center">
+                <small class="text-500">
+                    <i class="pi pi-clock mr-1"></i>
+                    Est. {{formatDuration(averageProcessingTimeMs() * pendingQueueCount())}} remaining
+                </small>
+                <button pButton label="View Results" icon="pi pi-arrow-right" size="small" [text]="true"
+                    [disabled]="!hasMappedFiles()" (click)="dismissProcessingQueue()"></button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- API Key Configuration Dialog -->
+<app-onboarding-dialog *ngIf="showApiKeyDialog()" [forceShow]="true" (apiKeySaved)="onApiKeySaved()"
+    (dialogClosed)="onApiKeyDialogClosed()">
+</app-onboarding-dialog>
+
+<!-- Credit Exhaustion Dialog -->
+<p-dialog header="AI Credits Exhausted" [visible]="creditExhausted()" [modal]="true" [closable]="false"
+    [style]="{width: '450px'}">
+    <div class="flex flex-column align-items-center text-center py-4">
+        <i class="pi pi-exclamation-triangle text-6xl text-orange-500 mb-4"></i>
+        <p class="text-lg font-medium mb-2">Processing Paused</p>
+        <p class="text-500 mb-4">{{creditExhaustedMessage() || 'Your AI provider has run out of credits or hit a
+            rate
+            limit. Please wait or update your API key.'}}</p>
+
+        <div class="flex gap-2">
+            <button pButton label="Configure API Key" icon="pi pi-key" severity="secondary" [outlined]="true"
+                (click)="dismissCreditExhaustedDialog(); showApiKeyDialog.set(true)"></button>
+            <button pButton label="Retry" icon="pi pi-refresh"
+                (click)="dismissCreditExhaustedDialog(); retryFailedFiles()"></button>
+        </div>
+
+        <button pButton label="Cancel" [text]="true" class="mt-3" (click)="dismissCreditExhaustedDialog()"></button>
+    </div>
+</p-dialog>

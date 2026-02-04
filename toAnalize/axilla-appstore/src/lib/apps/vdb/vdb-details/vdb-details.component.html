@@ -1,0 +1,201 @@
+<div [@routerTransition]>
+    <div class="kt-subheader kt-grid__item">
+        <div class="kt-subheader__main">
+            <h3 class="kt-subheader__title">
+                <span>{{"Axilla.Menu.VDB" | localize | localizeAxilla}}: {{vdbName}}</span>
+            </h3>
+
+        </div>
+        <div class="kt-subheader__toolbar">
+        </div>
+
+        <div class="kt-subheader__toolbar">
+            <div class="kt-subheader__wrapper">
+                <button
+                        routerLink="/app/appstore/vdb"
+                        type="button"
+                        class="btn btn-primary">
+                    <i class="fa fa-arrow-left"></i> {{"Back" | localize}}
+                </button>
+
+                <button class="btn btn-primary"
+                        (click)="addToVDB()">
+                    <i class="fa fa-plus"></i>{{"Axilla.Apps.VDB.AddToVDB" | localize}}
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <div class="kt-content">
+        <div class="kt-portlet">
+            <div class="kt-portlet__body">
+                <div class="row align-items-center">
+                    <div class="justify-content-end" style="flex: 1; width: 100%">
+                        <div class="custom-card-body tab-lines">
+                            <div class="kt-portlet__body">
+
+                                <ng-template #noVdbPermissions>
+                                    <div class="vdb-permission-required">
+                                        <span translation="Axilla.Apps.VDB.PermissionRequired" source="AxillaAppVDB"></span>
+                                    </div>
+                                </ng-template>
+
+                                <ng-container *ngIf="hasPermission; else noVdbPermissions">
+                                    <tabset #tabset>
+                                        <ng-container *ngIf="AppStorePermissions.VDBPermission.VDBViewPermission.Overview | permission">
+                                            <tab heading="{{'Axilla.Apps.VDB.Overview' | localize}}" *ngIf="isShowOverview" (selectTab)="getVdbSkim()">
+                                                <div class="row align-items-center position-relative">
+                                                    <div class="col primeng-datatable-container">
+                                                        <p-table #dataTable
+                                                                 [value]="databaseTableHelper.records"
+                                                                 [rows]="databaseTableHelper.defaultRecordsCountPerPage"
+                                                                 [paginator]="false">
+                                                            <ng-template pTemplate="header" let-columns>
+                                                                <tr>
+                                                                    <th pSortableColumn="Key" style="width: 150px">
+                                                                        {{'Key' | localize}}
+                                                                        <p-sortIcon field="Key"></p-sortIcon>
+                                                                    </th>
+                                                                    <th pSortableColumn="Value">
+                                                                        {{'Value' | localize}}
+                                                                        <p-sortIcon field="Value"></p-sortIcon>
+                                                                    </th>
+
+
+                                                                    <ng-container *ngIf="isCustomActionsAvailable; else actions">
+                                                                        <th style="width: 330px">
+                                                                            <span>{{'Action' | localize}}</span>
+                                                                        </th>
+                                                                    </ng-container>
+
+                                                                    <ng-template #actions>
+                                                                        <th style="width: 130px">
+                                                                            <span></span>
+                                                                        </th>
+                                                                    </ng-template>
+
+                                                                </tr>
+                                                                <tr [formGroup]="databaseForm">
+                                                                    <td>
+                                                                        <input name="key"
+                                                                               formControlName="key"
+                                                                               class="form-control kt-input"
+                                                                               placeholder="{{'SearchWithThreeDot' | localize}}"
+                                                                               type="text">
+                                                                    </td>
+                                                                    <td>
+                                                                        <input name="fullText"
+                                                                               formControlName="fullText"
+                                                                               class="form-control kt-input"
+                                                                               placeholder="{{'SearchWithThreeDot' | localize}}"
+                                                                               type="text">
+                                                                    </td>
+                                                                    <td></td>
+                                                                </tr>
+                                                            </ng-template>
+                                                            <ng-template pTemplate="body" let-columns="columns" let-record="$implicit">
+                                                                <tr [pSelectableRow]="record">
+                                                                    <td>
+<!--                                                                        <span class="p-column-title"> <span translation="Axilla.VDB.DatabaseKey" source="AxillaAppVDB">{{'Key' | localize}}</span></span>-->
+                                                                        {{record.key}}
+                                                                    </td>
+                                                                    <td>
+                                                                        <div (click)="openItem(record.key, record.value)" *ngIf="openedItem!==record.key" class="value-overflown">
+<!--                                                                            <span class="p-column-title">-->
+<!--                                                                                <span translation="Axilla.VDB.DatabaseValue" source="AxillaAppVDB">{{'Value' | localize}}</span>-->
+<!--                                                                            </span>-->
+                                                                            {{record.value}}
+                                                                        </div>
+                                                                        <div *ngIf="openedItem===record.key">
+                                                                            <app-vdb-details-editor [vdbName]="vdbName"
+                                                                                                    [openedItem]="openedItem"
+                                                                                                    [openedValue]="openedValue"
+                                                                                                    [mode]="mode"
+                                                                                                    (closeRow)="closeItem()"
+                                                                                                    (saveRow)="changeItem($event)"
+                                                                                                    (changeMode)="setNewMode($event)"></app-vdb-details-editor>
+                                                                        </div>
+                                                                    </td>
+                                                                    <td>
+                                                                        <div class="d-flex align-items-center justify-content-between">
+                                                                            <ng-container *ngIf="isCustomActionsAvailable">
+                                                                                <app-vdb-custom-actions [vdbItem]="record" (onApplyAction)="getDatabasesOnPagination()"></app-vdb-custom-actions>
+                                                                            </ng-container>
+
+                                                                            <button type="button"
+                                                                                    class="btn"
+                                                                                    style="height: calc(1.5em + 1.3rem + 2px);"
+                                                                                    (click)="deleteByKeyFromVDB(record.key)">
+                                                                                <i class="fa fa-trash-alt"></i>
+                                                                            </button>
+                                                                        </div>
+                                                                    </td>
+                                                                </tr>
+                                                            </ng-template>
+                                                        </p-table>
+                                                        <div class="primeng-no-data" *ngIf="databaseTableHelper.totalRecordsCount === 0 && !databaseTableHelper.isLoading">
+                                                            <span translation="Axilla.NoData" source="Axilla"></span>
+                                                        </div>
+                                                        <div class="primeng-no-data" *ngIf="databaseTableHelper.isLoading">
+                                                            <span translation="Axilla.LoadingData" source="Axilla"></span>
+                                                        </div>
+                                                        <div class="primeng-paging-container">
+                                                            <p-paginator [rows]="databaseTableHelper.defaultRecordsCountPerPage"
+                                                                         #paginator
+                                                                         (onPageChange)="getDatabasesOnPagination($event)"
+                                                                         [totalRecords]="databaseTableHelper.totalRecordsCount">
+                                                            </p-paginator>
+                                                            <span class="total-records-count">
+                                                                {{'TotalRecordsCount' | localize:databaseTableHelper.totalRecordsCount}}
+                                                            </span>
+                                                        </div>
+                                                        <div class="spinner-container" *ngIf="databaseTableHelper.isLoading">
+                                                            <p-progressSpinner></p-progressSpinner>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </tab>
+                                        </ng-container>
+
+                                        <ng-container *ngIf="AppStorePermissions.VDBPermission.VDBViewPermission.Skim | permission">
+                                            <tab heading="{{'Axilla.Apps.VDB.SkimTableOverview' | localize}}" *ngIf="!isSkim" (selectTab)="getVdbSkim()">
+                                                <p-multiSelect class="custom-multiselect" [options]="columns" [(ngModel)]="selectedColumns" (onChange)="selectColumns($event)"></p-multiSelect>
+
+                                                <div class="d-flex col-12">
+                                                    <div>
+                                                        <strong>Selected Columns:</strong>
+                                                    </div>
+                                                    <div class="skim-column p-d-flex flex-wrap column--selected">
+                                                        <ng-container *ngFor="let column of selectedColumns; let i = index">
+                                                            <span *ngIf="i !== 0">,&nbsp;</span>
+                                                            <span>{{column.name}}</span>
+                                                        </ng-container>
+                                                    </div>
+                                                </div>
+
+                                                <div class="col-12 align-items-center">
+                                                    <app-vdb-table-builder #appTableBuilderComponent
+                                                                           [data]="dynamicData"
+                                                                           [total]="dynamicDataTotal"
+                                                                           [fullTextSearch]="fullTextSearch"
+                                                                           [columns]="selectedColumns"
+                                                                           [vdbName]="vdbName"
+                                                                           [searchLabel]="'Axilla.App.VDB.Search'"
+                                                                           (onDelete)="deleteByKeyFromVDB($event)"
+                                                                           (onPagination)="onPagination($event)"
+                                                                           (onSearch)="onSearchChange($event)"></app-vdb-table-builder>
+                                                </div>
+                                            </tab>
+                                        </ng-container>
+                                    </tabset>
+                                </ng-container>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<app-confirmation-modal #deleteModal (onConfirmation)="confirmDelete()"></app-confirmation-modal>

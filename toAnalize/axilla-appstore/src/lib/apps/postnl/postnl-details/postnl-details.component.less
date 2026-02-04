@@ -1,0 +1,64 @@
+.value-overflown {
+     display: -webkit-box; 
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    text-overflow: ellipsis;
+    overflow: hidden;
+}
+@import "~jsoneditor/dist/jsoneditor.min.css";
+
+/*textarea.jsoneditor-text {
+    min-height: 350px;
+}*/
+
+:host ::ng-deep json-editor,
+:host ::ng-deep json-editor .jsoneditor,
+:host ::ng-deep json-editor > div,
+:host ::ng-deep json-editor jsoneditor-outer {
+    min-height: 200px;
+    /*max-height:400px;*/
+}
+:host ::ng-deep div.jsoneditor-tree {
+    max-height: 400px;
+}
+:host ::ng-deep json-editor .jsoneditor .jsoneditor-contextmenu {
+
+    .jsoneditor-text{
+        width: max-content;
+        min-width: 128px;
+    }
+
+
+    .jsoneditor-menu {
+        li, li ul, li ul li button{
+            width: fit-content;
+            min-width: 128px;
+            height: fit-content !important;
+        }
+
+    }
+}
+
+.form-group {
+    margin-bottom: 1rem;
+}
+
+
+.postnl-error-container {
+    background-color: #f8b7bd;
+    border: 0 none;
+    color: #212121;
+    padding: 5px;
+}
+
+.lable-print-1 {
+    height: 120px;
+    width: 80px;
+    padding: 8px 12px;
+}
+
+.lable-print-default {
+    height: 58px;
+    width: 81px;
+    padding: 8px 12px;
+}

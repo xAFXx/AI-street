@@ -1,0 +1,103 @@
+.kt-login__options {
+    a {
+        cursor: pointer;
+        padding-right: 0.35rem;
+        margin: 0 5px 0 0 !important;
+
+        i.fa-openidconnect {
+            background: url(/assets/common/images/social/openid.png) no-repeat;
+            width: 16px;
+            height: 16px;
+        }
+
+        i.fa-wsfederation {
+            background: url(/assets/common/images/social/adfs.png) no-repeat;
+            width: 16px;
+            height: 16px;
+        }
+    }
+}
+
+.kt-login {
+    &__form {
+        .logo-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+
+            .logo {
+                max-width: 350px;
+            }
+        }
+
+        .kt-login {
+            &__title {
+                margin-top: 5rem;
+                margin-bottom: 0 !important;
+            }
+        }
+
+        .kt-form {
+            margin: 0 auto 4rem !important;
+
+            .form-group.row {
+                display: flex;
+                align-items: stretch;
+                justify-content: space-between;
+                margin-top: 1.25rem;
+                flex-wrap: wrap;
+                flex-direction: column;
+
+                > div {
+                    display: flex;
+                    flex: 1;
+                    align-items: center;
+                    justify-content: space-between;
+                }
+
+                input {
+                    max-width: 400px;
+                    margin-top: 0;
+                }
+
+                validation-messages {
+                    flex: 1;
+                    text-align: right;
+                }
+            }
+        }
+    }
+}
+
+//mobile
+@media screen and (max-width: 479.9px) {
+    .kt-login {
+        &__form {
+            .login-row {
+                flex-direction: column;
+                align-items: flex-start !important;
+            }
+
+            .kt-form {
+
+            }
+        }
+    }
+}
+
+
+//mobile
+@media (min-width: 480px) and (max-width: 767.9px) {
+    .kt-login {
+        &__form {
+            .login-row {
+                flex-direction: column;
+                align-items: flex-start !important;
+            }
+
+            .kt-form {
+                max-width: 400px;
+            }
+        }
+    }
+}

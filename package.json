@@ -1,0 +1,66 @@
+{
+  "name": "ai-street-manager",
+  "version": "0.0.0",
+  "scripts": {
+    "ng": "ng",
+    "start": "ng serve",
+    "build": "ng build",
+    "watch": "ng build --watch --configuration development",
+    "dev-light": "set NODE_OPTIONS=--max_old_space_size=4096 --openssl-legacy-provider --no-experimental-fetch && ng build --watch --configuration development --output-hashing=all",
+    "test": "ng test"
+  },
+  "prettier": {
+    "printWidth": 100,
+    "singleQuote": true,
+    "overrides": [
+      {
+        "files": "*.html",
+        "options": {
+          "parser": "angular"
+        }
+      }
+    ]
+  },
+  "private": true,
+  "packageManager": "npm@11.7.0",
+  "dependencies": {
+    "@angular/animations": "^21.1.0",
+    "@angular/cdk": "^21.1.0",
+    "@angular/common": "^21.1.0",
+    "@angular/compiler": "^21.1.0",
+    "@angular/core": "^21.1.0",
+    "@angular/forms": "^21.1.0",
+    "@angular/platform-browser": "^21.1.0",
+    "@angular/router": "^21.1.0",
+    "@axilla/axilla-shared": "^0.21.1",
+    "@primeng/themes": "^21.0.3",
+    "ang-jsoneditor": "^4.0.2",
+    "chart.js": "^4.5.1",
+    "country-code-lookup": "^0.1.3",
+    "dayjs": "^1.11.19",
+    "is-eu-member": "^1.0.6",
+    "jsoneditor": "^10.4.2",
+    "jszip": "^3.10.1",
+    "just-compare": "^2.3.0",
+    "ngx-bootstrap": "^20.0.2",
+    "ngx-doc-viewer": "^15.0.1",
+    "ngx-spinner": "^21.0.0",
+    "pdfjs-dist": "^5.4.530",
+    "primeflex": "^4.0.0",
+    "primeicons": "^7.0.0",
+    "primeng": "^21.0.3",
+    "quill": "^2.0.3",
+    "rxjs": "~7.8.0",
+    "tslib": "^2.3.0",
+    "zone.js": "^0.16.0"
+  },
+  "devDependencies": {
+    "@angular/build": "^21.1.0",
+    "@angular/cli": "^21.1.0",
+    "@angular/compiler-cli": "^21.1.0",
+    "jsdom": "^27.1.0",
+    "less": "^4.5.1",
+    "typescript": "~5.9.2",
+    "vitest": "^4.0.8"
+  }
+}

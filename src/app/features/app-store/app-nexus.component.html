@@ -1,0 +1,347 @@
+<div class="app-nexus">
+    <!-- Header -->
+    <div class="nexus-header">
+        <div class="header-left">
+            <h1><i class="pi pi-th-large"></i> App Nexus</h1>
+            <span class="subtitle">Install functions, connections, and custom apps</span>
+        </div>
+        <div class="header-actions">
+            <span class="p-input-icon-left">
+                <i class="pi pi-search"></i>
+                <input type="text" pInputText placeholder="Search apps..." [ngModel]="searchQuery()"
+                    (ngModelChange)="searchQuery.set($event)" />
+            </span>
+            <p-button label="Create App" icon="pi pi-plus" severity="primary" (onClick)="openCreateApp()" />
+        </div>
+    </div>
+
+    <!-- Categories Bar -->
+    <div class="categories-bar">
+        <p-chip *ngFor="let cat of categories()" [label]="cat.name" [icon]="cat.icon"
+            [styleClass]="selectedCategory() === cat.id ? 'selected' : ''" (click)="filterByCategory(cat.id)" />
+        <p-button *ngIf="selectedCategory() || searchQuery()" label="Clear" icon="pi pi-times" severity="secondary"
+            size="small" [text]="true" (onClick)="clearFilters()" />
+    </div>
+
+    <!-- Loading Overlay -->
+    <div class="loading-overlay" *ngIf="isLoading()">
+        <p-progressSpinner strokeWidth="4" />
+    </div>
+
+    <!-- Tab View -->
+    <p-tabs value="0">
+        <p-tablist>
+            <p-tab value="0"><i class="pi pi-th-large"></i> All Apps</p-tab>
+            <p-tab value="1"><i class="pi pi-check-circle"></i> Installed</p-tab>
+            <p-tab value="2"><i class="pi pi-star"></i> Featured</p-tab>
+            <p-tab value="3"><i class="pi pi-bolt"></i> Dynamic</p-tab>
+        </p-tablist>
+
+        <p-tabpanels>
+            <!-- All Apps Tab -->
+            <p-tabpanel value="0">
+                <div class="apps-grid">
+                    <div class="app-card" *ngFor="let app of filteredApps()" (click)="openAppDetail(app)">
+                        <div class="app-card-header">
+                            <div class="app-icon">
+                                <i [class]="getAppIcon(app)"></i>
+                            </div>
+                            <div class="app-badges">
+                                <p-tag [value]="app.type" [severity]="getTypeColor(app.type)" />
+                                <p-tag *ngIf="app.installStatus === AppInstallStatus.Installed" value="Installed"
+                                    severity="success" icon="pi pi-check" />
+                            </div>
+                        </div>
+                        <div class="app-card-body">
+                            <h3>{{ app.name }}</h3>
+                            <p class="app-description">{{ app.description }}</p>
+                            <div class="app-meta">
+                                <span class="author"><i class="pi pi-user"></i> {{ app.author }}</span>
+                                <span class="version">v{{ app.currentVersion.version }}</span>
+                            </div>
+                        </div>
+                        <div class="app-card-footer">
+                            <span class="price" [class.free]="app.pricing.type === 'free'">
+                                {{ getPriceDisplay(app) }}
+                            </span>
+                            <div class="app-actions" (click)="$event.stopPropagation()">
+                                <p-button *ngIf="app.installStatus === AppInstallStatus.Available" label="Install"
+                                    icon="pi pi-download" size="small" (onClick)="installApp(app)" />
+                                <p-button
+                                    *ngIf="app.installStatus === AppInstallStatus.Installed && app.hasManageScreen !== false"
+                                    label="Manage" icon="pi pi-cog" size="small" severity="secondary"
+                                    (onClick)="manageApp(app)" />
+                                <p-button
+                                    *ngIf="app.installStatus === AppInstallStatus.Installed && app.hasManageScreen === false"
+                                    label="Open" icon="pi pi-external-link" size="small" (onClick)="openApp(app)" />
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <p-message *ngIf="filteredApps().length === 0" severity="info"
+                    text="No apps found. Try adjusting your search or filters." styleClass="w-full mt-4" />
+            </p-tabpanel>
+
+            <!-- Installed Tab -->
+            <p-tabpanel value="1">
+                <div class="apps-grid">
+                    <div class="app-card installed" *ngFor="let app of installedApps()" (click)="openAppDetail(app)">
+                        <div class="app-card-header">
+                            <div class="app-icon">
+                                <i [class]="getAppIcon(app)"></i>
+                            </div>
+                            <p-tag value="Installed" severity="success" icon="pi pi-check" />
+                        </div>
+                        <div class="app-card-body">
+                            <h3>{{ app.name }}</h3>
+                            <p class="app-description">{{ app.description }}</p>
+                            <div class="app-meta">
+                                <span class="version">v{{ app.installedVersion || app.currentVersion.version }}</span>
+                                <span class="last-used" *ngIf="app.lastUsedAt">
+                                    <i class="pi pi-clock"></i> {{ app.lastUsedAt | date:'short' }}
+                                </span>
+                            </div>
+                        </div>
+                        <div class="app-card-footer">
+                            <p-button label="Open" icon="pi pi-external-link" size="small"
+                                (onClick)="$event.stopPropagation(); openApp(app)" />
+                            <p-button *ngIf="app.hasManageScreen !== false" icon="pi pi-cog" size="small"
+                                severity="secondary" pTooltip="Configure"
+                                (onClick)="$event.stopPropagation(); manageApp(app)" />
+                            <p-button icon="pi pi-trash" size="small" severity="danger" [text]="true"
+                                pTooltip="Uninstall" (onClick)="$event.stopPropagation(); uninstallApp(app)" />
+                        </div>
+                    </div>
+                </div>
+
+                <p-message *ngIf="installedApps().length === 0" severity="info"
+                    text="No apps installed yet. Browse the App Nexus to find apps." styleClass="w-full mt-4" />
+            </p-tabpanel>
+
+            <!-- Featured Tab -->
+            <p-tabpanel value="2">
+                <div class="apps-grid featured">
+                    <div class="app-card featured" *ngFor="let app of featuredApps()" (click)="openAppDetail(app)">
+                        <div class="featured-badge">
+                            <i class="pi pi-star-fill"></i> Featured
+                        </div>
+                        <div class="app-card-header">
+                            <div class="app-icon large">
+                                <i [class]="getAppIcon(app)"></i>
+                            </div>
+                        </div>
+                        <div class="app-card-body">
+                            <h3>{{ app.name }}</h3>
+                            <p class="app-description">{{ app.description }}</p>
+                            <div class="app-tags">
+                                <p-chip *ngFor="let tag of app.tags.slice(0, 3)" [label]="tag" styleClass="small" />
+                            </div>
+                        </div>
+                        <div class="app-card-footer">
+                            <span class="price" [class.free]="app.pricing.type === 'free'">
+                                {{ getPriceDisplay(app) }}
+                            </span>
+                            <p-button *ngIf="app.installStatus === 'available'" label="Install" icon="pi pi-download"
+                                (onClick)="$event.stopPropagation(); installApp(app)" />
+                            <p-button *ngIf="app.installStatus === 'installed'" label="Open" icon="pi pi-external-link"
+                                severity="success" (onClick)="$event.stopPropagation()"
+                                [routerLink]="app.startScreen" />
+                        </div>
+                    </div>
+                </div>
+            </p-tabpanel>
+
+            <!-- Dynamic Apps Tab -->
+            <p-tabpanel value="3">
+                <div class="apps-section">
+                    <div class="section-header">
+                        <h2>Dynamic Apps</h2>
+                        <p>API-defined applications for on-the-fly functionality</p>
+                    </div>
+                    <div class="apps-grid">
+                        <div class="app-card" *ngFor="let app of dynamicApps()" (click)="openAppDetail(app)">
+                            <div class="app-card-header">
+                                <div class="app-icon">
+                                    <i [class]="getAppIcon(app)"></i>
+                                </div>
+                                <p-tag value="Dynamic" severity="success" />
+                            </div>
+                            <div class="app-card-body">
+                                <h3>{{ app.name }}</h3>
+                                <p class="app-description">{{ app.description }}</p>
+                            </div>
+                            <div class="app-card-footer">
+                                <span class="price">{{ getPriceDisplay(app) }}</span>
+                                <p-button *ngIf="app.installStatus === 'available'" label="Install"
+                                    icon="pi pi-download" size="small"
+                                    (onClick)="$event.stopPropagation(); installApp(app)" />
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </p-tabpanel>
+        </p-tabpanels>
+    </p-tabs>
+</div>
+
+<!-- App Detail Dialog -->
+<p-dialog [(visible)]="showAppDetail" [header]="selectedApp()?.name || 'App Details'" [modal]="true"
+    [style]="{ width: '700px' }" [draggable]="false" [resizable]="false">
+    <div class="app-detail" *ngIf="selectedApp() as app">
+        <div class="detail-header">
+            <div class="app-icon large">
+                <i [class]="getAppIcon(app)"></i>
+            </div>
+            <div class="header-info">
+                <h2>{{ app.name }}</h2>
+                <div class="meta-row">
+                    <p-tag [value]="app.type" [severity]="getTypeColor(app.type)" />
+                    <span class="author">by {{ app.author }}</span>
+                    <span class="version">v{{ app.currentVersion.version }}</span>
+                </div>
+            </div>
+            <div class="price-block">
+                <span class="price" [class.free]="app.pricing.type === 'free'">
+                    {{ getPriceDisplay(app) }}
+                </span>
+            </div>
+        </div>
+
+        <p-divider />
+
+        <div class="detail-body">
+            <p class="description">{{ app.description }}</p>
+
+            <div class="tags">
+                <p-chip *ngFor="let tag of app.tags" [label]="tag" />
+            </div>
+
+            <!-- Features -->
+            <div class="features-list"
+                *ngIf="app.usesApiConnection || app.parameters.length || app.processDefinitions.length">
+                <h4>Features</h4>
+                <ul>
+                    <li *ngIf="app.usesApiConnection">
+                        <i class="pi pi-link"></i> Uses API Connection
+                    </li>
+                    <li *ngIf="app.parameters.length">
+                        <i class="pi pi-sliders-h"></i> {{ app.parameters.length }} configurable parameters
+                    </li>
+                    <li *ngIf="app.processDefinitions.length">
+                        <i class="pi pi-sitemap"></i> {{ app.processDefinitions.length }} process definitions
+                    </li>
+                </ul>
+            </div>
+
+            <!-- Parameters preview -->
+            <div class="params-preview" *ngIf="app.parameters.length">
+                <h4>Parameters</h4>
+                <div class="param-item" *ngFor="let param of app.parameters">
+                    <span class="param-name">{{ param.name }}</span>
+                    <p-tag *ngIf="param.isSecret" value="Secret" severity="warn" icon="pi pi-lock" />
+                    <p-tag *ngIf="param.required" value="Required" severity="info" />
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <ng-template pTemplate="footer">
+        <div class="dialog-footer">
+            <p-button label="Close" severity="secondary" (onClick)="closeAppDetail()" />
+            <p-button *ngIf="selectedApp()?.installStatus === 'available'" label="Install" icon="pi pi-download"
+                (onClick)="installApp(selectedApp()!)" />
+            <p-button *ngIf="selectedApp()?.installStatus === 'installed'" label="Uninstall" icon="pi pi-trash"
+                severity="danger" (onClick)="uninstallApp(selectedApp()!)" />
+        </div>
+    </ng-template>
+</p-dialog>
+
+<!-- Configure App Dialog -->
+<p-dialog [(visible)]="showConfigureApp" [header]="'Configure ' + (selectedApp()?.name || 'App')" [modal]="true"
+    [style]="{ width: '500px' }">
+    <div class="configure-app" *ngIf="selectedApp() as app">
+        <p-message severity="info" text="Configure the app parameters before installation."
+            *ngIf="app.installStatus === 'available'" />
+
+        <div class="param-form">
+            <div class="form-field" *ngFor="let param of app.parameters">
+                <label [for]="param.id">
+                    {{ param.name }}
+                    <span class="required" *ngIf="param.required">*</span>
+                </label>
+                <small *ngIf="param.description">{{ param.description }}</small>
+
+                <!-- String input -->
+                <input *ngIf="param.type === 'string' && !param.isSecret" pInputText [id]="param.id"
+                    [placeholder]="param.placeholder || ''"
+                    [ngModel]="parameterValues()[param.id] || param.defaultValue || ''"
+                    (ngModelChange)="updateParameterValue(param.id, $event)" />
+
+                <!-- Secret input -->
+                <input *ngIf="param.isSecret" pInputText type="password" [id]="param.id"
+                    [placeholder]="param.placeholder || 'Enter secret...'" [ngModel]="parameterValues()[param.id] || ''"
+                    (ngModelChange)="updateParameterValue(param.id, $event)" />
+
+                <!-- URL input -->
+                <input *ngIf="param.type === 'url'" pInputText type="url" [id]="param.id"
+                    [placeholder]="param.placeholder || 'https://...'"
+                    [ngModel]="parameterValues()[param.id] || param.defaultValue || ''"
+                    (ngModelChange)="updateParameterValue(param.id, $event)" />
+
+                <!-- Select input -->
+                <p-select *ngIf="param.type === 'select'" [id]="param.id" [options]="param.options || []"
+                    [ngModel]="parameterValues()[param.id] || param.defaultValue"
+                    (ngModelChange)="updateParameterValue(param.id, $event)" optionLabel="label" optionValue="value"
+                    [placeholder]="'Select ' + param.name" />
+
+                <!-- JSON input -->
+                <textarea *ngIf="param.type === 'json'" pTextarea [id]="param.id"
+                    [placeholder]="param.placeholder || '{}'"
+                    [ngModel]="parameterValues()[param.id] || param.defaultValue || '{}'"
+                    (ngModelChange)="updateParameterValue(param.id, $event)" rows="3"></textarea>
+            </div>
+        </div>
+    </div>
+
+    <ng-template pTemplate="footer">
+        <p-button label="Cancel" severity="secondary" (onClick)="showConfigureApp.set(false)" />
+        <p-button *ngIf="selectedApp()?.installStatus === 'available'" label="Install" icon="pi pi-download"
+            (onClick)="confirmInstall()" />
+        <p-button *ngIf="selectedApp()?.installStatus === 'installed'" label="Save" icon="pi pi-check"
+            (onClick)="showConfigureApp.set(false)" />
+    </ng-template>
+</p-dialog>
+
+<!-- Create App Dialog -->
+<p-dialog [(visible)]="showCreateApp" header="Create New App" [modal]="true" [style]="{ width: '500px' }">
+    <div class="create-app-form">
+        <div class="form-field">
+            <label for="app-name">App Name *</label>
+            <input pInputText id="app-name" placeholder="My Custom App" [ngModel]="newApp().name"
+                (ngModelChange)="updateNewAppName($event)" />
+        </div>
+
+        <div class="form-field">
+            <label for="app-desc">Description</label>
+            <textarea pTextarea id="app-desc" placeholder="What does this app do?" [ngModel]="newApp().description"
+                (ngModelChange)="updateNewAppDescription($event)" rows="3"></textarea>
+        </div>
+
+        <div class="form-field">
+            <label for="app-category">Category</label>
+            <p-select id="app-category" [options]="categories()" optionLabel="name" optionValue="id"
+                [ngModel]="newApp().category" (ngModelChange)="updateNewAppCategory($event)" />
+        </div>
+
+        <div class="form-field inline">
+            <label>Uses API Connection</label>
+            <p-toggleswitch [ngModel]="newApp().usesApiConnection" (ngModelChange)="updateNewAppUsesApi($event)" />
+        </div>
+    </div>
+
+    <ng-template pTemplate="footer">
+        <p-button label="Cancel" severity="secondary" (onClick)="showCreateApp.set(false)" />
+        <p-button label="Create App" icon="pi pi-plus" [disabled]="!newApp().name.trim()" (onClick)="createApp()" />
+    </ng-template>
+</p-dialog>

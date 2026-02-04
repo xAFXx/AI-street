@@ -1,0 +1,14 @@
+<span class="p-column-title"> <span translation="Axilla.VDB.DatabaseValue">{{'Value' | localize}}</span></span>
+<json-editor [options]="editorOptions" [(ngModel)]="openedValue" #editor class="text-editor"></json-editor>
+<button type="button"
+        (click)="saveVdbRow()"
+        class="btn btn-info">
+    <i class="fa fa-save"></i>
+    <span translation="Save">{{"Save" | localize}}</span>
+</button>
+<button type="button"
+        (click)="closeItem()"
+        class="btn btn-secondary">
+    <i class="fa fa-save"></i>
+    <span translation="Close">{{"Close" | localize}}</span>
+</button>

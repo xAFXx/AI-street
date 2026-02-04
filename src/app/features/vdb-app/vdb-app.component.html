@@ -1,0 +1,250 @@
+<div class="vdb-browser">
+    <p-toast />
+    <p-confirmDialog />
+
+    <!-- Header Bar -->
+    <div class="browser-header">
+        <div class="header-left">
+            <i class="pi pi-server"></i>
+            <h1>Virtual Database Manager</h1>
+            <p-tag value="VDB" severity="info" />
+        </div>
+        <div class="header-actions">
+            <p-button icon="pi pi-refresh" [text]="true" [rounded]="true" (onClick)="refreshAll()"
+                pTooltip="Refresh All" />
+        </div>
+    </div>
+
+    <!-- Main Split Panel: 3 Panels -->
+    <p-splitter [style]="{'height': 'calc(100vh - 140px)'}" styleClass="browser-splitter" [panelSizes]="[20, 45, 35]"
+        [minSizes]="[15, 30, 20]">
+        <!-- Left Panel: Tables List -->
+        <ng-template pTemplate>
+            <div class="tables-panel">
+                <div class="panel-header">
+                    <span class="panel-title">
+                        <i class="pi pi-database"></i>
+                        Tables
+                    </span>
+                    <span class="panel-count">{{ (tables() || []).length }}</span>
+                </div>
+
+                <div class="panel-search">
+                    <span class="p-input-icon-left w-full">
+                        <i class="pi pi-search"></i>
+                        <input type="text" pInputText placeholder="Filter tables..." [(ngModel)]="tableFilter"
+                            class="w-full" />
+                    </span>
+                </div>
+
+                <div class="tables-list">
+                    @if (isLoadingTables()) {
+                    @for (i of [1,2,3,4,5]; track i) {
+                    <div class="table-item skeleton">
+                        <p-skeleton width="60%" height="1rem" />
+                    </div>
+                    }
+                    } @else if ((filteredTables() || []).length === 0) {
+                    <div class="empty-list">
+                        <i class="pi pi-inbox"></i>
+                        <span>No tables found</span>
+                    </div>
+                    } @else {
+                    @for (table of (filteredTables() || []); track table.name) {
+                    <div class="table-item" [class.selected]="selectedTable()?.name === table.name"
+                        (click)="selectTable(table)">
+                        <div class="table-info">
+                            <i class="pi pi-table"></i>
+                            <span class="table-name">{{ table.name }}</span>
+                        </div>
+                        <p-button icon="pi pi-trash" [text]="true" [rounded]="true" severity="danger" size="small"
+                            pTooltip="Delete" (onClick)="confirmDeleteTable(table, $event)" />
+                    </div>
+                    }
+                    }
+                </div>
+            </div>
+        </ng-template>
+
+        <!-- Right Panel: Keys & Values -->
+        <ng-template pTemplate>
+            <div class="content-panel">
+                @if (!selectedTable()) {
+                <div class="no-selection">
+                    <div class="no-selection-icon">
+                        <i class="pi pi-arrow-left"></i>
+                    </div>
+                    <h3>Select a table</h3>
+                    <p>Choose a table from the left panel to view its keys</p>
+                </div>
+                } @else {
+                <!-- Keys Header -->
+                <div class="panel-header">
+                    <span class="panel-title">
+                        <i class="pi pi-key"></i>
+                        {{ selectedTableName() }}
+                    </span>
+                    <div class="panel-actions">
+                        <span class="key-count">{{ totalKeys() }} keys</span>
+                        <p-button icon="pi pi-refresh" [text]="true" [rounded]="true" size="small"
+                            (onClick)="loadRows(selectedTableName())" pTooltip="Refresh" />
+                        <p-button label="Add Key" icon="pi pi-plus" size="small" (onClick)="openAddDialog()" />
+                    </div>
+                </div>
+
+                <div class="panel-search">
+                    <span class="p-input-icon-left w-full">
+                        <i class="pi pi-search"></i>
+                        <input type="text" pInputText placeholder="Filter keys..." [(ngModel)]="keyFilter"
+                            class="w-full" />
+                    </span>
+                </div>
+
+                <!-- Keys List -->
+                <div class="keys-content">
+                    @if (isLoadingRows()) {
+                    <div class="loading-rows">
+                        <p-progressSpinner strokeWidth="4" [style]="{width: '40px', height: '40px'}" />
+                        <span>Loading keys...</span>
+                    </div>
+                    } @else if ((filteredRows() || []).length === 0) {
+                    <div class="empty-keys">
+                        <i class="pi pi-key"></i>
+                        <span>No keys in this table</span>
+                        <p-button label="Add First Key" icon="pi pi-plus" (onClick)="openAddDialog()" />
+                    </div>
+                    } @else {
+                    <p-table [value]="filteredRows() || []" [paginator]="true" [rows]="15"
+                        [showCurrentPageReport]="true" [rowsPerPageOptions]="[15, 30, 50]"
+                        styleClass="p-datatable-sm p-datatable-striped" selectionMode="single"
+                        [(selection)]="selectedRow" dataKey="key">
+                        <ng-template pTemplate="header">
+                            <tr>
+                                <th style="width: 30%">Key</th>
+                                <th>Value</th>
+                                <th style="width: 100px">Actions</th>
+                            </tr>
+                        </ng-template>
+                        <ng-template pTemplate="body" let-row let-rowIndex="rowIndex">
+                            <tr [pSelectableRow]="row" [pSelectableRowIndex]="rowIndex">
+                                <td>
+                                    <div class="key-cell">
+                                        <i class="pi pi-key"></i>
+                                        <code class="key-text">{{ row.key }}</code>
+                                    </div>
+                                </td>
+                                <td>
+                                    <div class="value-cell">
+                                        <code
+                                            class="value-preview">{{ formatValue(row.value) | slice:0:80 }}{{ formatValue(row.value).length > 80 ? '...' : '' }}</code>
+                                    </div>
+                                </td>
+                                <td>
+                                    <div class="row-actions">
+                                        <p-button icon="pi pi-pencil" [text]="true" [rounded]="true" size="small"
+                                            pTooltip="Edit" (onClick)="openEditDialog(row)" />
+                                        <p-button icon="pi pi-copy" [text]="true" [rounded]="true" size="small"
+                                            pTooltip="Copy Value" (onClick)="copyToClipboard(formatValue(row.value))" />
+                                        <p-button icon="pi pi-trash" [text]="true" [rounded]="true" size="small"
+                                            severity="danger" pTooltip="Delete"
+                                            (onClick)="confirmDeleteRow(row, $event)" />
+                                    </div>
+                                </td>
+                            </tr>
+                        </ng-template>
+                    </p-table>
+                    }
+                </div>
+                }
+            </div>
+        </ng-template>
+
+        <!-- Third Panel: Preview -->
+        <ng-template pTemplate>
+            <div class="preview-panel">
+                @if (!selectedRow()) {
+                <div class="no-selection">
+                    <div class="no-selection-icon">
+                        <i class="pi pi-eye"></i>
+                    </div>
+                    <h3>No selection</h3>
+                    <p>Select a row to preview its value</p>
+                </div>
+                } @else {
+                <div class="value-preview-panel full-height">
+                    <div class="preview-header">
+                        <span class="preview-title">
+                            <i class="pi pi-eye"></i>
+                            {{ selectedRow()?.key }}
+                        </span>
+                        <div class="preview-actions">
+                            <p-button icon="pi pi-copy" [text]="true" size="small" pTooltip="Copy"
+                                (onClick)="copyToClipboard(formatValue(selectedRow()?.value))" />
+                            <p-button icon="pi pi-pencil" [text]="true" size="small" pTooltip="Edit"
+                                (onClick)="openEditDialog(selectedRow()!)" />
+                        </div>
+                    </div>
+
+                    <div class="preview-content">
+                        <app-json-data-viewer [data]="getParsedValue(selectedRow()?.value)" [fullHeight]="true"
+                            [showActions]="false" [initialExpandDepth]="3" [maxChildrenToShow]="10"
+                            (copyClicked)="copyToClipboard(formatValue(selectedRow()?.value))">
+                        </app-json-data-viewer>
+                    </div>
+                </div>
+                }
+            </div>
+        </ng-template>
+    </p-splitter>
+</div>
+
+<!-- Add Key Dialog -->
+<p-dialog header="Add New Key" [(visible)]="showAddDialog" [modal]="true" [style]="{width: '900px', height: '600px'}"
+    [maximizable]="true" [draggable]="true" [resizable]="true">
+    <div class="edit-form">
+        <div class="form-field">
+            <label>Key</label>
+            <input type="text" pInputText [(ngModel)]="editKey" placeholder="my-key" class="w-full" />
+        </div>
+        <div class="form-field flex-1">
+            <label>Value (JSON)</label>
+            <div class="json-editor-wrapper large">
+                <json-editor [options]="jsonEditorOptions" [data]="editData" (change)="onJsonChange($event)" />
+            </div>
+        </div>
+        <div class="form-field">
+            <label>TTL (days)</label>
+            <p-inputNumber [(ngModel)]="editTtl" [min]="1" [max]="365" [showButtons]="true" />
+        </div>
+    </div>
+    <ng-template pTemplate="footer">
+        <p-button label="Cancel" [text]="true" (onClick)="showAddDialog = false" />
+        <p-button label="Add Key" icon="pi pi-plus" (onClick)="saveRow()" [disabled]="!editKey.trim()"
+            [loading]="isSaving()" />
+    </ng-template>
+</p-dialog>
+
+<!-- Edit Key Dialog -->
+<p-dialog [header]="'Edit: ' + editKey" [(visible)]="showEditDialog" [modal]="true"
+    [style]="{width: '900px', height: '650px'}" [maximizable]="true" [draggable]="true" [resizable]="true">
+    <div class="edit-form">
+        <div class="form-field">
+            <label>Key</label>
+            <input type="text" pInputText [(ngModel)]="editKey" class="w-full" [disabled]="true" />
+        </div>
+        <div class="form-field flex-1">
+            <label>Value</label>
+            <div class="json-editor-wrapper large">
+                <json-editor [options]="jsonEditorOptions" [data]="editData" (change)="onJsonChange($event)" />
+            </div>
+        </div>
+        <div class="form-field">
+            <label>Extend TTL (days)</label>
+            <p-inputNumber [(ngModel)]="editTtl" [min]="1" [max]="365" [showButtons]="true" />
+        </div>
+    </div>
+    <ng-template pTemplate="footer">
+        <p-button label="Cancel" [text]="true" (onClick)="showEditDialog = false" />
+        <p-button label="Save Changes" icon="pi pi-check" (onClick)="saveRow()" [loading]="isSaving()" />
+    </ng-template>
+</p-dialog>

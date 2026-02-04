@@ -1,0 +1,104 @@
+<form [formGroup]="fileForm" class="rc-file-action">
+    <div class="row">
+        <div class="col-12">
+            <h4 class="m-0">File action</h4>
+            <small class="text-muted">
+                Upload a file (Base64 will be generated) or provide a file location.
+            </small>
+        </div>
+    </div>
+
+    <div class="row mt-3">
+        <!-- Mode -->
+        <div class="col-12 col-md-6">
+            <div class="form-group">
+                <label class="col-lg-2 control-label">
+                    <span translation="Axilla.App.CreateAssignmentModal.FileLocation"></span>:
+                </label>
+                <div class="col-lg-12">
+                    <input type="text"
+                           class="form-control my-2"
+                           name="name"
+                           placeholder="{{'Axilla.App.RemoteController.CreateAssignmentModal.FileLocationPlaceholder' | localize}}"
+                           formControlName="fileLocation">
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row mt-3">
+        <!-- Mode -->
+        <div class="col-12 col-md-6">
+            <div class="form-group">
+                <div class="col-lg-12">
+                    <div class="kt-checkbox-list ml-4">
+                        <label class="kt-checkbox pl-3">
+                            <input id="Enabled"
+                                   type="checkbox"
+                                   name="Enabled"
+                                   formControlName="forceDecodingBase64">
+                            {{"Axilla.App.CreateAssignmentModal.ForceDecodingBase64" | localize}}
+                            <span></span>
+                        </label>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Upload block -->
+    <div class="row">
+        <div class="col-12">
+            <div class="rc-dropzone"
+                 [class.is-dragover]="isDragOver"
+                 (dragover)="onDragOver($event)"
+                 (dragleave)="onDragLeave($event)"
+                 (drop)="onDrop($event)">
+
+                <div class="rc-dropzone-inner">
+                    <div class="rc-title">Drop file here</div>
+                    <div class="rc-subtitle text-muted">or</div>
+
+                    <input #fileInput
+                           class="d-none"
+                           type="file"
+                           [accept]="accept"
+                           (change)="onFileSelected($event)" />
+
+                    <button type="button" class="btn btn-primary" (click)="fileInput.click()">
+                        Choose file
+                    </button>
+
+                    <div class="mt-2 text-muted">
+                        Allowed: {{ allowedExtensionsLabel }} | Max: {{ maxFileSizeMb }} MB
+                    </div>
+                </div>
+            </div>
+
+            <!-- Selected file info -->
+            <div class="rc-file-info mt-3" *ngIf="fileForm.value.fileName">
+                <div><strong>File:</strong> {{ fileForm.value.fileName }}</div>
+
+                <div class="mt-2 d-flex gap-2 flex-wrap">
+                    <button type="button" class="btn btn-outline-secondary" (click)="copyBase64()" [disabled]="!fileForm.value.base64File">
+                        Copy Base64
+                    </button>
+                    <button type="button" class="btn btn-outline-danger" (click)="clearFile()">
+                        Clear
+                    </button>
+                </div>
+
+                <div class="mt-2" *ngIf="fileForm.value.base64File">
+                    <label class="control-label">Base64 preview (first 300 chars)</label>
+                    <pre class="rc-base64-preview">{{ fileForm.value.base64File | slice:0:300 }}{{ fileForm.value.base64File.length > 300 ? '…' : '' }}</pre>
+                </div>
+            </div>
+
+            <!-- Error -->
+            <div class="alert alert-danger mt-3" *ngIf="errorMessage">
+                {{ errorMessage }}
+            </div>
+        </div>
+    </div>
+
+</form>

@@ -1,0 +1,121 @@
+.titleRibbon {
+    max-width: 50%;
+    float: left;
+}
+
+    .titleRibbon > h2 {
+        margin-top: 20px;
+        display: inline-block;
+        width: auto;
+        max-width: 100%;
+        min-width: 300px;
+        margin-bottom: 0;
+        background: #a10d59;
+        padding: 0px 10px 7px 40px;
+        border-radius: 0 30px 30px 0;
+        margin-left: -40px;
+        color: #fff;
+        -webkit-box-shadow: 2px 2px 10px 0px rgba(0,0,0,0.4);
+        -moz-box-shadow: 2px 2px 10px 0px rgba(0,0,0,0.4);
+        box-shadow: 2px 2px 10px 0px rgba(0,0,0,0.4);
+    }
+
+        .titleRibbon > h2 > span {
+            display: inline-block;
+            position: relative;
+            padding-right: 100px;
+            font-size: 24px;
+        }
+
+        .titleRibbon > h2 > a {
+            border-radius: 100%;
+            float: right;
+            background-color: #0DA155;
+            border-color: white;
+            box-shadow: none;
+            border-width: 2px;
+            width: 40px;
+            height: 40px;
+            padding: 0;
+        }
+
+    .titleRibbon > div {
+        position: relative;
+        left: -40px;
+        top: 0;
+        width: 0;
+        height: 0;
+        border-style: solid;
+        border-width: 20px 0 0 25px;
+        border-color: rgba(161, 13, 89, 0.5) transparent transparent;
+        z-index: 3;
+    }
+
+.btnCustom {
+    border-radius: 10px;
+    box-shadow: inset 0 -5px 20px -3px rgba(0,0,0,0.7);
+    border: none;
+    cursor: pointer;
+}
+
+    .btnCustom:hover {
+        box-shadow: none;
+    }
+
+    .btnCustom .buttonIcon {
+        width: 50px;
+        height: 40px;
+        float: left;
+        padding-left: 13px;
+        box-shadow: inset -2px 0 5px -3px rgba(0,0,0,0.5);
+    }
+
+        .btnCustom .buttonIcon span {
+            padding: 7px;
+            margin-top: 7px;
+            border-radius: 100%;
+            width: 25px;
+            height: 25px;
+            margin-left: 0px;
+            font-size: 14px;
+            padding-top: 6px;
+            color: #fff;
+            box-shadow: inset 0px 0px 7px 0px rgba(0,0,0,0.5);
+        }
+
+    .btnCustom .buttonText {
+        width: 130px;
+        float: right;
+        box-shadow: inset 2px 0 5px -3px rgba(0,0,0,0.5);
+    }
+
+        .btnCustom .buttonText span {
+            width: 130px;
+            display: inline-block;
+            line-height: 40px;
+            text-transform: uppercase;
+            font-weight: 600;
+            font-size: 14px;
+            text-align: center;
+            color: #fff;
+        }
+
+.menu-button {
+    width: 30px;
+    height: 30px;
+    font-size: 16px;
+    line-height: 30px;
+    border-radius: 100%;
+    padding-top: 0;
+    box-shadow: 1px 1px 5px 0px rgba(0,0,0,0.4);
+}
+
+    .menu-button.fa-remove {
+        background: #ff0f13;
+        color: #fff;
+    }
+
+    .menu-button.fa-key {
+        background: #566dda;
+        color: #fff;
+    }

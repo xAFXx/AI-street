@@ -1,0 +1,209 @@
+<div bsModal
+     tabindex="-1"
+     role="dialog"
+     aria-labelledby="myLargeModalLabel"
+     aria-hidden="true"
+     [config]="{backdrop: 'static'}">
+
+    <div class="modal-dialog modal-lg m-0 w-80 create-app-modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 class="modal-title"><span translation="Axilla.App.CreateAssignment" source="Axilla"></span></h3>
+
+                <button type="button" class="close" [attr.aria-label]="l('Close')" (click)="close()">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+
+                <div class="templates-list" *ngIf="showAllTemplateList">
+                    <button type="button"
+                            class="btn btn-primary my-2"
+                            (click)="back()">
+                        <i class="fa fa-arrow-left"></i> {{"Back" | localize}}
+                    </button>
+
+                    <div class="row align-items-center position-relative">
+                        <div class="col primeng-datatable-container">
+                            <p-table #dataTable
+                                     [value]="primengTableHelper.records"
+                                     (onLazyLoad)="getAllQueriesTemplates($event)"
+                                     rows="{{primengTableHelper.defaultRecordsCountPerPage}}"
+                                     [paginator]="false"
+                                     [lazy]="true"
+                                     (onRowSelect)="onRowSelect($event)"
+                                     selectionMode="single"
+                                     [(selection)]="selectedTemplate"
+                                     [responsive]="primengTableHelper.isResponsive">
+                                <ng-template pTemplate="header" let-columns>
+                                    <tr>
+                                        <th style="width: 250px">
+                                            {{'Axilla.App.RemoteController.QueryTemplate.Name' | localize }}
+                                        </th>
+                                        <th>
+                                            {{'Axilla.App.RemoteController.QueryTemplate.Description' | localize}}
+                                        </th>
+                                        <th>
+                                            {{'Axilla.App.RemoteController.QueryTemplate.Target' | localize}}
+                                        </th>
+                                        <th>
+                                            {{'Axilla.App.RemoteController.QueryTemplate.Command' | localize}}
+                                        </th>
+                                        <th style="width: 150px">
+                                            {{'Axilla.App.RemoteController.QueryTemplate.Action' | localize}}
+                                        </th>
+                                        <th style="width: 50px"></th>
+                                    </tr>
+                                </ng-template>
+                                <ng-template pTemplate="body" let-columns="columns" let-record="$implicit">
+                                    <tr [pSelectableRow]="record">
+                                        <td>
+                                            {{record.name}}
+                                        </td>
+                                        <td>
+                                            {{record.description}}
+                                        </td>
+                                        <td>
+                                            {{record.target}}
+                                        </td>
+                                        <td>
+                                            {{record.command}}
+                                        </td>
+                                        <td>
+                                            {{record.action}}
+                                        </td>
+                                        <td>
+                                            <button class="fa-button ubl-trash"
+                                                    type="button"
+                                                    (click)="delete(record.id)">
+                                                <i class="fa fa-trash"></i>
+                                            </button>
+                                        </td>
+                                    </tr>
+                                </ng-template>
+                            </p-table>
+                            <div class="primeng-no-data" *ngIf="primengTableHelper.totalRecordsCount === 0 && !primengTableHelper.isLoading">
+                                <span translation="Axilla.NoData" source="Axilla"></span>
+                            </div>
+                            <div class="primeng-no-data" *ngIf="primengTableHelper.isLoading">
+                                <span translation="Axilla.LoadingData" source="Axilla"></span>
+                            </div>
+                            <div class="primeng-paging-container">
+                                <p-paginator [rows]="primengTableHelper.defaultRecordsCountPerPage"
+                                             #paginator
+                                             (onPageChange)="getAllQueriesTemplates($event)"
+                                             [totalRecords]="primengTableHelper.totalRecordsCount">
+                                </p-paginator>
+                                <span class="total-records-count">
+                                    {{'TotalRecordsCount' | localize:primengTableHelper.totalRecordsCount}}
+                                </span>
+                            </div>
+                            <div class="spinner-container" *ngIf="primengTableHelper.isLoading">
+                                <p-progressSpinner></p-progressSpinner>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="create-template-container" *ngIf="!showAllTemplateList">
+
+                    <form [formGroup]="setAssignmentModalForm">
+                        <div class="form-group">
+                            <div class="col-lg-12">
+                                <button type="button"
+                                        class="btn btn-dark m-2"
+                                        (click)="load()">
+                                  {{'Axilla.App.RemoteController.CreateAssignmentModal.LoadTemplate' | localize}}
+                                </button>
+
+                                <input type="text"
+                                           class="form-control my-2"
+                                           name="name"
+                                           placeholder="{{'Axilla.App.RemoteController.CreateAssignmentModal.NamePlaceholder' | localize}}"
+                                           formControlName="name">
+
+                                <input type="text"
+                                           class="form-control"
+                                           name="description"
+                                           placeholder="{{'Axilla.App.RemoteController.CreateAssignmentModal.DescriptionPlaceholder' | localize}}"
+                                           formControlName="description">
+
+                                <button type="button" class="btn btn-dark m-2" (click)="clear()">
+                                  {{'Clear' | localize}}
+                                </button>
+
+                                <button type="button" class="btn btn-dark m-2" (click)="saveOrUpdateTemplate()">
+                                  {{'Axilla.App.CreateAssignmentModal.SaveTemplate' | localize}}
+                                </button>
+
+                            </div>
+                        </div>
+                        <div class="form-group rcActions">
+                            <label class="col-lg-2 control-label">
+                                <span translation="Axilla.App.CreateAssignmentModal.Action"></span>:
+                            </label>
+                            <div class="col-lg-12">
+                                <p-dropdown [options]="rcActions"
+                                            formControlName="action"></p-dropdown>
+                            </div>
+                        </div>
+
+
+                        <div [ngSwitch]="action">
+                            <ng-container *ngSwitchCase="'FILE'">
+                                <ng-container *ngTemplateOutlet="fileForm"></ng-container>
+                            </ng-container>
+
+                            <ng-container *ngSwitchCase="'HTTP'">
+                                <ng-container *ngTemplateOutlet="httpForm"></ng-container>
+                            </ng-container>
+
+                            <ng-container *ngSwitchDefault>
+                                <ng-container *ngTemplateOutlet="query"></ng-container>
+                            </ng-container>
+                        </div>
+
+
+                        <ng-template #fileForm>
+                            <rc-file-action (itemSelected)="onFileActionSelected($event)"></rc-file-action>
+                        </ng-template>
+
+                        <ng-template #httpForm>
+                            <rc-http-action (formFilled)="onHttpFormFilled($event)"></rc-http-action>
+                        </ng-template>
+
+
+                        <ng-template #query>
+                            <div class="form-group">
+                                <label class="col-lg-2 control-label">
+                                    <span translation="Axilla.App.CreateAssignmentModal.Query"></span>:
+                                </label>
+                                <div class="col-lg-12">
+                                <textarea class="form-control"
+                                          rows="5"
+                                          name="query"
+                                          placeholder="{{'Axilla.App.CreateAssignmentModal.QueryPlaceholder' | localize}}"
+                                          formControlName="query">
+                            </textarea>
+                                </div>
+                            </div>
+                        </ng-template>
+                    </form>
+                </div>
+
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-dark" (click)="close()">
+                  {{'Cancel' | localize}}
+                </button>
+                <button type="submit"
+                        class="btn btn-success"
+                        [disabled]="setAssignmentModalForm.invalid"
+                        (click)="onCreateAssignmentSubmit()">
+                    <i class="fa fa-save"></i>
+                    {{'Submit' | localize}}
+                </button>
+            </div>
+        </div>
+    </div>
+</div>

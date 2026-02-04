@@ -1,0 +1,31 @@
+<div class="product-grid-item card">
+    <div class="product-grid-item-top">
+        <div>
+            <i class="pi pi-tag product-category-icon"></i>
+            <span class="product-category">App</span>
+        </div>
+    </div>
+    <div class="product-grid-item-content">
+        <!--<div class="favorite-container" (click)="addToFavorite($event, product)">
+            <i class="fa fa-heart"></i>
+        </div>-->
+
+        <div class="product-image">
+            <div class="product-image-helper"></div>
+            <app-img [img]="app.imageCSS" (openApp)="openDetails()"></app-img>
+        </div>
+        <div class="product-name">{{app.title}}</div>
+        <div class="product-description">{{app.description}}</div>
+
+        <!--<p-rating [value]="5" [readonly]="true" [cancel]="false"></p-rating>-->
+    </div>
+    <div class="product-grid-item-bottom">
+        <!--<span class="product-price">{{app.price | currency:getCurrency():'symbol-narrow':'.2-2'}}</span>-->
+        <div class="tile-view shop-actions" (click)="preventClick($event)">
+            <p-button icon="pi pi-shopping-cart"
+                      label="Install"
+                      (click)="install()"></p-button>
+
+        </div>
+    </div>
+</div>

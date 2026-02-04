@@ -1,0 +1,25 @@
+<div class="product-grid-item card">
+    <div class="product-grid-item-top">
+        <div>
+            <i class="pi pi-tag product-category-icon"></i>
+            <span class="product-category">App</span>
+        </div>
+    </div>
+    <div class="product-grid-item-content">
+        <div class="product-image">
+            <div class="product-image-helper"></div>
+            <app-img [img]="app.imageCSS" (openApp)="onEditApp()"></app-img>
+        </div>
+        <div class="product-name">{{app.title}}</div>
+        <div class="product-description">{{app.description}}</div>
+    </div>
+    <div class="product-grid-item-bottom">
+        <div class="icons-container"  (click)="preventClick($event)">
+            <i class="menu-button fa fa fa-pen cursor-pointer app-icon"
+               (click)="onEditApp()"></i>
+
+            <i class="menu-button fa fa fa-trash-alt cursor-pointer app-icon"
+               (click)="onRemoveFromTenant()"></i>
+        </div>
+    </div>
+</div>

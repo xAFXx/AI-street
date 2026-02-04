@@ -1,0 +1,559 @@
+<div class="report-wizard">
+    <!-- Steps Header -->
+    <div class="wizard-header surface-card border-round-lg shadow-1 mb-4 p-3">
+        <div class="flex align-items-center justify-content-between mb-3">
+            <h2 class="m-0 text-xl font-semibold">Create New Report</h2>
+            <p-button icon="pi pi-times" [text]="true" severity="secondary" pTooltip="Cancel"
+                (click)="onCancel()"></p-button>
+        </div>
+        <p-steps [model]="steps" [activeIndex]="activeStepIndex" [readonly]="false"
+            (activeIndexChange)="onStepClick({index: $event})"></p-steps>
+    </div>
+
+    <!-- Step Content -->
+    <div class="wizard-content">
+
+        <!-- Step 1: Template Selection -->
+        <div *ngIf="state.currentStep === 'template-selection'" class="template-selection">
+            <div class="grid">
+                <!-- Left Panel: Template List -->
+                <div class="col-12 lg:col-8">
+                    <!-- Search -->
+                    <div class="search-bar surface-card border-round-lg shadow-1 p-3 mb-4">
+                        <span class="p-input-icon-left w-full">
+                            <i class="pi pi-search"></i>
+                            <input pInputText type="text" [(ngModel)]="searchQuery" (input)="onSearch()"
+                                placeholder="Search templates... (AI-powered)" class="w-full" />
+                        </span>
+                    </div>
+
+                    <!-- Recent Templates -->
+                    <div *ngIf="state.recentTemplates.length > 0 && !searchQuery" class="recent-section mb-4">
+                        <h3 class="text-lg font-medium mb-3">
+                            <i class="pi pi-clock mr-2"></i>Recently Used
+                        </h3>
+                        <div class="grid">
+                            <div *ngFor="let template of state.recentTemplates" class="col-12 md:col-6 lg:col-4">
+                                <div class="template-card surface-card border-round-lg p-3 cursor-pointer"
+                                    [class.selected]="isSelected(template)" (click)="selectTemplate(template)">
+                                    <div class="flex align-items-center gap-3">
+                                        <div class="template-icon">
+                                            <i [class]="getTemplateIcon(template)" class="text-2xl text-primary"></i>
+                                        </div>
+                                        <div class="flex-1">
+                                            <div class="font-semibold">{{ template.name }}</div>
+                                            <div class="text-sm text-secondary">v{{ template.version }}</div>
+                                        </div>
+                                        <i *ngIf="isSelected(template)"
+                                            class="pi pi-check-circle text-primary text-xl"></i>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- All Templates -->
+                    <div class="all-templates">
+                        <h3 class="text-lg font-medium mb-3">
+                            <i class="pi pi-list mr-2"></i>All Templates
+                        </h3>
+                        <div class="grid">
+                            <div *ngFor="let template of filteredTemplates" class="col-12 md:col-6 lg:col-4">
+                                <div class="template-card surface-card border-round-lg p-3 cursor-pointer"
+                                    [class.selected]="isSelected(template)" (click)="selectTemplate(template)">
+                                    <div class="flex align-items-center gap-3 mb-2">
+                                        <div class="template-icon">
+                                            <i [class]="getTemplateIcon(template)" class="text-2xl text-primary"></i>
+                                        </div>
+                                        <div class="flex-1">
+                                            <div class="font-semibold">{{ template.name }}</div>
+                                            <p-tag [value]="'v' + template.version" severity="info"
+                                                class="text-xs"></p-tag>
+                                        </div>
+                                        <i *ngIf="isSelected(template)"
+                                            class="pi pi-check-circle text-primary text-xl"></i>
+                                    </div>
+                                    <div class="text-sm text-secondary line-clamp-2">{{ template.description }}</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div *ngIf="filteredTemplates.length === 0" class="empty-state text-center p-5">
+                            <i class="pi pi-search text-4xl text-secondary mb-3"></i>
+                            <p class="text-secondary">No templates found matching your search.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Right Panel: Selected Template Details -->
+                <div class="col-12 lg:col-4">
+                    <div class="template-details surface-card border-round-lg shadow-1 p-4 sticky" style="top: 1rem;">
+                        <div *ngIf="state.selectedTemplate; else noSelection">
+                            <div class="flex align-items-center gap-3 mb-3">
+                                <div class="template-icon-lg">
+                                    <i [class]="getTemplateIcon(state.selectedTemplate)"
+                                        class="text-4xl text-primary"></i>
+                                </div>
+                                <div>
+                                    <h3 class="m-0 font-bold">{{ state.selectedTemplate.name }}</h3>
+                                    <p-tag [value]="state.selectedTemplate.status"
+                                        [severity]="state.selectedTemplate.status === 'published' ? 'success' : 'warn'"></p-tag>
+                                </div>
+                            </div>
+
+                            <p-divider></p-divider>
+
+                            <div class="mb-3">
+                                <h4 class="text-sm font-semibold text-secondary mb-2">Description</h4>
+                                <p class="m-0">{{ state.selectedTemplate.description }}</p>
+                            </div>
+
+                            <div class="mb-3">
+                                <h4 class="text-sm font-semibold text-secondary mb-2">Structure</h4>
+                                <div class="flex gap-3">
+                                    <div class="stat-item">
+                                        <span class="text-2xl font-bold text-primary">{{
+                                            state.selectedTemplate.chapters?.length || 0 }}</span>
+                                        <span class="text-xs text-secondary block">Chapters</span>
+                                    </div>
+                                    <div class="stat-item">
+                                        <span class="text-2xl font-bold text-primary">{{
+                                            state.selectedTemplate.aiSummary?.length || 0 }}</span>
+                                        <span class="text-xs text-secondary block">Fields</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div *ngIf="state.selectedTemplate.aiSummary?.length" class="mb-3">
+                                <h4 class="text-sm font-semibold text-secondary mb-2">Required Information</h4>
+                                <ul class="list-none p-0 m-0">
+                                    <li *ngFor="let field of state.selectedTemplate.aiSummary"
+                                        class="flex align-items-center gap-2 py-1">
+                                        <i class="pi pi-check-circle text-secondary text-sm"></i>
+                                        <span class="text-sm">{{ field.label }}</span>
+                                    </li>
+                                </ul>
+                            </div>
+                        </div>
+
+                        <ng-template #noSelection>
+                            <div class="text-center py-5">
+                                <i class="pi pi-file text-5xl text-secondary mb-3"></i>
+                                <p class="text-secondary">Select a template to see details</p>
+                            </div>
+                        </ng-template>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Step 2: Requirements Collection -->
+        <div *ngIf="state.currentStep === 'requirements'" class="requirements-collection">
+            <div class="grid">
+                <!-- Left: AI Assistant + Upload -->
+                <div class="col-12 lg:col-6">
+                    <!-- AI Assistant Panel -->
+                    <div class="ai-assistant surface-card border-round-lg shadow-1 p-4 mb-4">
+                        <div class="flex align-items-center gap-3 mb-3">
+                            <p-avatar icon="pi pi-android" size="large" shape="circle"
+                                styleClass="bg-primary text-white"></p-avatar>
+                            <div>
+                                <div class="font-semibold">AI Assistant</div>
+                                <div class="text-sm text-secondary">Guiding you through requirements</div>
+                            </div>
+                        </div>
+                        <div class="ai-message surface-100 border-round p-3">
+                            <p class="m-0">{{ getLatestAiMessage() }}</p>
+                        </div>
+                    </div>
+
+                    <!-- Document Upload -->
+                    <div class="upload-section surface-card border-round-lg shadow-1 p-4">
+                        <h4 class="mt-0 mb-3">
+                            <i class="pi pi-upload mr-2"></i>Upload Documents
+                        </h4>
+                        <p-fileUpload mode="advanced" [multiple]="true" [auto]="true"
+                            accept="image/*,application/pdf,.doc,.docx,.txt,text/plain,audio/*,video/*"
+                            (onSelect)="onDocumentUpload($event)" [showUploadButton]="false" [showCancelButton]="false">
+                            <ng-template pTemplate="content">
+                                <div class="upload-zone text-center p-4">
+                                    <i class="pi pi-cloud-upload text-4xl text-primary mb-2"></i>
+                                    <p class="m-0">Drag & drop files here</p>
+                                    <p class="text-sm text-secondary">Images, PDFs, Word docs, Text files, Audio, Video
+                                    </p>
+                                </div>
+                            </ng-template>
+                        </p-fileUpload>
+
+                        <!-- Uploaded Documents List -->
+                        <div *ngIf="state.documents.length > 0" class="uploaded-docs mt-4">
+                            <h5 class="text-sm font-semibold text-secondary mb-2">Uploaded Documents</h5>
+                            <div *ngFor="let doc of state.documents"
+                                class="doc-item flex align-items-center gap-3 p-2 surface-100 border-round mb-2"
+                                [class.border-left-3]="doc.analyzing" [class.border-primary]="doc.analyzing">
+                                <!-- Document icon or analyzing spinner -->
+                                <div class="doc-status-icon" style="width: 24px; text-align: center;">
+                                    <i *ngIf="!doc.analyzing" [class]="getDocumentIcon(doc.type)" class="text-xl"></i>
+                                    <i *ngIf="doc.analyzing" class="pi pi-spin pi-spinner text-primary text-xl"></i>
+                                </div>
+                                <div class="flex-1">
+                                    <div class="font-medium text-sm">{{ doc.name }}</div>
+                                    <div class="text-xs text-secondary">
+                                        {{ doc.size }}
+                                        <span *ngIf="doc.analyzing" class="text-primary ml-2">
+                                            <i class="pi pi-sparkles"></i> AI analyzing...
+                                        </span>
+                                    </div>
+                                </div>
+                                <p-tag *ngIf="doc.analyzing" value="Processing" severity="info" icon="pi pi-sync"
+                                    styleClass="text-xs"></p-tag>
+                                <p-tag *ngIf="doc.analyzed && !doc.analyzing" value="Analyzed" severity="success"
+                                    styleClass="text-xs"></p-tag>
+                                <p-tag *ngIf="!doc.analyzed && !doc.analyzing" value="Pending" severity="warn"
+                                    styleClass="text-xs"></p-tag>
+                                <p-button icon="pi pi-times" [text]="true" severity="danger"
+                                    (click)="removeDocument(doc.id)"></p-button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Right: Requirements Progress -->
+                <div class="col-12 lg:col-6">
+                    <div class="requirements-panel surface-card border-round-lg shadow-1 p-4">
+                        <!-- Progress -->
+                        <div class="progress-section mb-4">
+                            <div class="flex justify-content-between align-items-center mb-2">
+                                <span class="font-semibold">Requirements Progress</span>
+                                <span class="text-primary font-bold">{{ state.progress.percentage }}%</span>
+                            </div>
+                            <p-progressBar [value]="state.progress.percentage" [showValue]="false"
+                                styleClass="h-1rem"></p-progressBar>
+                            <div class="text-sm text-secondary mt-1">
+                                {{ state.progress.fulfilled }} of {{ state.progress.total }} completed
+                            </div>
+                        </div>
+
+                        <p-divider></p-divider>
+
+                        <!-- Requirements Checklist -->
+                        <div class="requirements-list">
+                            <h4 class="mt-0 mb-3">Requirements Checklist</h4>
+                            <div *ngFor="let req of state.requirements; let i = index"
+                                class="req-item flex align-items-center gap-3 p-2 border-round mb-2"
+                                [class.fulfilled]="req.fulfilled"
+                                [class.current]="!req.fulfilled && (i === 0 || state.requirements[i-1]?.fulfilled)">
+                                <i [class]="req.fulfilled ? 'pi pi-check-circle text-green-500' : 'pi pi-circle text-secondary'"
+                                    class="text-xl"></i>
+                                <div class="flex-1">
+                                    <div class="font-medium" [class.text-green-600]="req.fulfilled">{{ req.label }}
+                                    </div>
+                                    <div *ngIf="req.description" class="text-xs text-secondary">{{ req.description }}
+                                    </div>
+                                    <div *ngIf="req.linkedDocuments.length > 0" class="text-xs text-primary mt-1">
+                                        <i class="pi pi-link mr-1"></i>{{ req.linkedDocuments.length }} document(s)
+                                        linked
+                                    </div>
+                                </div>
+                                <p-button *ngIf="!req.fulfilled" icon="pi pi-check" [text]="true"
+                                    pTooltip="Mark as complete" (click)="markRequirementFulfilled(req.id)"></p-button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Step 3: Review & Edit Report -->
+        <div *ngIf="state.currentStep === 'review'" class="review-step">
+            <div class="grid">
+                <!-- Left Column: Report Content -->
+                <div class="col-12 lg:col-8">
+                    <!-- Report Header -->
+                    <div class="surface-card border-round-lg shadow-1 p-4 mb-4">
+                        <div class="flex align-items-center justify-content-between mb-3">
+                            <div class="flex align-items-center gap-3">
+                                <i [class]="getTemplateIcon(state.selectedTemplate!)" class="text-3xl text-primary"></i>
+                                <div>
+                                    <h2 class="m-0 font-bold">{{ state.selectedTemplate?.name }}</h2>
+                                    <p class="m-0 text-secondary">v{{ state.selectedTemplate?.version }}</p>
+                                </div>
+                            </div>
+                            <p-tag [value]="state.progress.percentage + '% Complete'"
+                                [severity]="state.progress.percentage >= 80 ? 'success' : state.progress.percentage >= 50 ? 'warn' : 'danger'"></p-tag>
+                        </div>
+                        <p-progressBar [value]="state.progress.percentage" [showValue]="false"
+                            styleClass="h-0.5rem"></p-progressBar>
+                    </div>
+
+                    <!-- AI Summary Fields (Editable) -->
+                    <div *ngIf="state.selectedTemplate?.aiSummary?.length"
+                        class="surface-card border-round-lg shadow-1 p-4 mb-4">
+                        <div class="flex align-items-center justify-content-between mb-3">
+                            <h3 class="m-0">
+                                <i class="pi pi-sparkles mr-2 text-primary"></i>Report Summary
+                            </h3>
+                            <p-tag value="AI Generated" icon="pi pi-android" severity="info"></p-tag>
+                        </div>
+
+                        <div class="grid">
+                            <div *ngFor="let field of state.selectedTemplate?.aiSummary" class="col-12 md:col-6 mb-3">
+                                <label class="block text-sm font-semibold mb-1">{{ field.label }}</label>
+                                <input pInputText type="text" [(ngModel)]="field.value"
+                                    [placeholder]="field.placeholder" class="w-full" />
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Requirements Summary -->
+                    <div class="surface-card border-round-lg shadow-1 p-4 mb-4">
+                        <h3 class="mt-0 mb-3">
+                            <i class="pi pi-list-check mr-2 text-primary"></i>Requirements Status
+                        </h3>
+
+                        <div class="requirements-grid">
+                            <div *ngFor="let req of state.requirements"
+                                class="req-review-item flex align-items-start gap-3 p-3 mb-2 border-round"
+                                [class.surface-100]="!req.fulfilled" [class.bg-green-50]="req.fulfilled">
+                                <i [class]="req.fulfilled ? 'pi pi-check-circle text-green-500' : 'pi pi-circle text-orange-500'"
+                                    class="text-xl mt-1"></i>
+                                <div class="flex-1">
+                                    <div class="font-semibold" [class.text-green-700]="req.fulfilled">{{ req.label }}
+                                    </div>
+                                    <div *ngIf="req.description" class="text-sm text-secondary mt-1">{{ req.description
+                                        }}</div>
+
+                                    <!-- Linked Documents -->
+                                    <div *ngIf="req.linkedDocuments.length > 0" class="mt-2">
+                                        <div class="flex flex-wrap gap-2">
+                                            <p-tag *ngFor="let docId of req.linkedDocuments"
+                                                [value]="getDocumentName(docId)" icon="pi pi-file" severity="secondary"
+                                                styleClass="text-xs"></p-tag>
+                                        </div>
+                                    </div>
+                                    <div *ngIf="!req.fulfilled && req.linkedDocuments.length === 0" class="mt-2">
+                                        <span class="text-sm text-orange-600">
+                                            <i class="pi pi-exclamation-triangle mr-1"></i>No documents linked
+                                        </span>
+                                    </div>
+                                </div>
+                                <p-button *ngIf="!req.fulfilled" icon="pi pi-check" [text]="true"
+                                    pTooltip="Mark as complete" (click)="markRequirementFulfilled(req.id)"></p-button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Documents with Analysis -->
+                    <div class="surface-card border-round-lg shadow-1 p-4">
+                        <h3 class="mt-0 mb-3">
+                            <i class="pi pi-folder mr-2 text-primary"></i>Uploaded Documents ({{ state.documents.length
+                            }})
+                        </h3>
+
+                        <div *ngIf="state.documents.length === 0" class="text-center py-4">
+                            <i class="pi pi-inbox text-4xl text-secondary mb-2"></i>
+                            <p class="text-secondary">No documents uploaded</p>
+                        </div>
+
+                        <div *ngFor="let doc of state.documents"
+                            class="doc-review-item surface-50 border-round p-3 mb-3">
+                            <div class="flex align-items-start gap-3">
+                                <!-- Document Preview/Icon -->
+                                <div class="doc-preview text-center" style="min-width: 60px;">
+                                    <img *ngIf="doc.type === 'image' && doc.previewUrl" [src]="doc.previewUrl"
+                                        class="border-round" style="width: 60px; height: 60px; object-fit: cover;" />
+                                    <div *ngIf="doc.type !== 'image' || !doc.previewUrl"
+                                        class="flex align-items-center justify-content-center surface-200 border-round"
+                                        style="width: 60px; height: 60px;">
+                                        <i [class]="getDocumentIcon(doc.type)" class="text-2xl text-primary"></i>
+                                    </div>
+                                </div>
+
+                                <!-- Document Info -->
+                                <div class="flex-1">
+                                    <div class="flex align-items-center gap-2 mb-1">
+                                        <span class="font-semibold">{{ doc.name }}</span>
+                                        <p-tag *ngIf="doc.analyzed" value="Analyzed" severity="success"
+                                            styleClass="text-xs"></p-tag>
+                                        <p-tag *ngIf="!doc.analyzed" value="Pending" severity="warn"
+                                            styleClass="text-xs"></p-tag>
+                                    </div>
+                                    <div class="text-sm text-secondary mb-2">
+                                        {{ doc.size }} • {{ doc.type | titlecase }} • {{ doc.uploadedAt | date:'short'
+                                        }}
+                                    </div>
+
+                                    <!-- Analysis Result -->
+                                    <div *ngIf="doc.analysisResult"
+                                        class="analysis-result surface-100 border-round p-2 mt-2">
+                                        <div class="flex align-items-center gap-2 mb-1">
+                                            <i class="pi pi-sparkles text-primary"></i>
+                                            <span class="text-sm font-semibold">AI Analysis</span>
+                                            <p-tag [value]="doc.analysisResult.confidence + '% confidence'"
+                                                [severity]="doc.analysisResult.confidence >= 70 ? 'success' : 'warn'"
+                                                styleClass="text-xs"></p-tag>
+                                        </div>
+                                        <p class="text-sm m-0">{{ doc.analysisResult.extractedText }}</p>
+                                        <div *ngIf="doc.analysisResult.matchedRequirements.length" class="mt-2">
+                                            <span class="text-xs text-secondary">Matched requirements: </span>
+                                            <span class="text-xs text-primary">{{
+                                                doc.analysisResult.matchedRequirements.length }}</span>
+                                        </div>
+                                    </div>
+
+                                    <!-- Linked Requirements -->
+                                    <div *ngIf="doc.linkedRequirements.length > 0" class="mt-2">
+                                        <span class="text-xs text-secondary mr-2">Linked to:</span>
+                                        <p-tag *ngFor="let reqId of doc.linkedRequirements"
+                                            [value]="getRequirementLabel(reqId)" severity="info"
+                                            styleClass="text-xs mr-1"></p-tag>
+                                    </div>
+                                </div>
+
+                                <!-- Actions -->
+                                <div class="flex flex-column gap-1">
+                                    <p-button icon="pi pi-trash" [text]="true" severity="danger" pTooltip="Remove"
+                                        (click)="removeDocument(doc.id)"></p-button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Right Column: Summary & Actions -->
+                <div class="col-12 lg:col-4">
+                    <!-- Quick Stats -->
+                    <div class="surface-card border-round-lg shadow-1 p-4 mb-4">
+                        <h4 class="mt-0 mb-3">Report Overview</h4>
+
+                        <div
+                            class="stat-row flex justify-content-between align-items-center py-2 border-bottom-1 surface-border">
+                            <span class="text-secondary">Template</span>
+                            <span class="font-semibold">{{ state.selectedTemplate?.name }}</span>
+                        </div>
+                        <div
+                            class="stat-row flex justify-content-between align-items-center py-2 border-bottom-1 surface-border">
+                            <span class="text-secondary">Requirements</span>
+                            <span class="font-semibold">{{ state.progress.fulfilled }}/{{ state.progress.total }}</span>
+                        </div>
+                        <div
+                            class="stat-row flex justify-content-between align-items-center py-2 border-bottom-1 surface-border">
+                            <span class="text-secondary">Documents</span>
+                            <span class="font-semibold">{{ state.documents.length }}</span>
+                        </div>
+                        <div
+                            class="stat-row flex justify-content-between align-items-center py-2 border-bottom-1 surface-border">
+                            <span class="text-secondary">Analyzed</span>
+                            <span class="font-semibold">{{ getAnalyzedDocumentCount() }}/{{ state.documents.length
+                                }}</span>
+                        </div>
+                        <div class="stat-row flex justify-content-between align-items-center py-2">
+                            <span class="text-secondary">Completion</span>
+                            <span class="font-bold text-xl" [class.text-green-500]="state.progress.percentage >= 80"
+                                [class.text-orange-500]="state.progress.percentage >= 50 && state.progress.percentage < 80"
+                                [class.text-red-500]="state.progress.percentage < 50">
+                                {{ state.progress.percentage }}%
+                            </span>
+                        </div>
+                    </div>
+
+                    <!-- Pending AI Changes - Accept/Reject Panel -->
+                    <div *ngIf="getPendingChanges().length > 0"
+                        class="surface-card border-round-lg shadow-1 p-4 mb-4 border-left-3 border-purple-500">
+                        <h4 class="mt-0 mb-3 text-purple-600">
+                            <i class="pi pi-sparkles mr-2"></i>AI Suggestions ({{ getPendingChanges().length }})
+                        </h4>
+                        <p class="text-sm text-secondary mb-3">Review and accept or reject AI-suggested changes:</p>
+
+                        <div *ngFor="let change of getPendingChanges()"
+                            class="pending-change-item surface-50 border-round p-3 mb-2">
+                            <div class="flex align-items-start gap-2 mb-2">
+                                <i class="pi pi-file text-primary mt-1"></i>
+                                <div class="flex-1">
+                                    <div class="font-semibold text-sm">{{ change.documentName }}</div>
+                                    <div class="text-xs text-secondary">{{ change.description }}</div>
+                                </div>
+                            </div>
+                            <div class="flex gap-2 justify-content-end">
+                                <p-button label="Reject" icon="pi pi-times" [text]="true" severity="danger" size="small"
+                                    (click)="rejectChange(change.id)"></p-button>
+                                <p-button label="Accept" icon="pi pi-check" severity="success" size="small"
+                                    (click)="acceptChange(change.id)"></p-button>
+                            </div>
+                        </div>
+
+                        <div class="flex gap-2 mt-3">
+                            <p-button label="Reject All" [text]="true" severity="secondary" size="small"
+                                (click)="rejectAllChanges()"></p-button>
+                            <p-button label="Accept All" severity="primary" size="small"
+                                (click)="acceptAllChanges()"></p-button>
+                        </div>
+                    </div>
+
+                    <!-- AI Chat Card -->
+                    <div class="surface-card border-round-lg shadow-1 overflow-hidden">
+                        <div
+                            class="flex align-items-center justify-content-between px-4 py-3 border-bottom-1 surface-border">
+                            <div class="flex align-items-center gap-2">
+                                <i class="pi pi-sparkles text-primary"></i>
+                                <span class="font-semibold">AI Assistant</span>
+                            </div>
+                            <p-button icon="pi pi-expand" [text]="true" severity="secondary" size="small"
+                                pTooltip="Expand chat"></p-button>
+                        </div>
+                        <app-ai-chat context="report-wizard"
+                            [systemPrompt]="'You are an AI assistant helping create a report. The user has uploaded documents and is filling out requirements. Help them understand what information is available, what is missing, and suggest how to improve their report. Be concise and helpful.'"
+                            placeholder="Type your message..."
+                            emptyStateMessage="Ask me anything about your documents or report!">
+                        </app-ai-chat>
+                    </div>
+
+                    <!-- Warnings -->
+                    <div *ngIf="state.progress.percentage < 100"
+                        class="surface-card border-round-lg shadow-1 mt-4 p-4 border-left-3 border-orange-500">
+                        <h4 class="mt-0 mb-2 text-orange-600">
+                            <i class="pi pi-exclamation-triangle mr-2"></i>Incomplete Report
+                        </h4>
+                        <p class="text-sm m-0 text-secondary">
+                            Some requirements are not fulfilled. You can still generate the report, but it may be
+                            incomplete.
+                        </p>
+                        <ul class="text-sm mt-2 mb-0 pl-3">
+                            <li *ngFor="let req of getUnfulfilledRequirements()">{{ req.label }}</li>
+                        </ul>
+                    </div>
+
+                    <!-- All Complete Message -->
+                    <div *ngIf="state.progress.percentage === 100"
+                        class="surface-card border-round-lg shadow-1 p-4 border-left-3 border-green-500">
+                        <h4 class="mt-0 mb-2 text-green-600">
+                            <i class="pi pi-check-circle mr-2"></i>Ready to Generate
+                        </h4>
+                        <p class="text-sm m-0 text-secondary">
+                            All requirements have been fulfilled. Your report is ready to be generated!
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer Actions -->
+    <div class="wizard-footer surface-card border-round-lg shadow-1 p-3 mt-4">
+        <div class="flex justify-content-between align-items-center">
+            <p-button *ngIf="state.currentStep !== 'template-selection'" label="Back" icon="pi pi-arrow-left"
+                [outlined]="true" (click)="onBack()"></p-button>
+            <span *ngIf="state.currentStep === 'template-selection'"></span>
+
+            <div class="flex gap-2">
+                <p-button label="Cancel" [text]="true" severity="secondary" (click)="onCancel()"></p-button>
+
+                <p-button *ngIf="state.currentStep !== 'review'" label="Continue" icon="pi pi-arrow-right"
+                    iconPos="right" [disabled]="!canProceed()" (click)="onNext()"></p-button>
+
+                <p-button *ngIf="state.currentStep === 'review'" label="Start Report" icon="pi pi-check"
+                    severity="success" (click)="generateReport()"></p-button>
+            </div>
+        </div>
+    </div>
+</div>

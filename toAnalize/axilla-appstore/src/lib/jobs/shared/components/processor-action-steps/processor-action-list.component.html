@@ -1,0 +1,30 @@
+<p-dataView #dv
+            [value]="stepList"
+            [paginator]="false"
+            [rows]="15"
+            class="ped-steps-dt"
+            filterBy="name"
+            layout="list"
+            [loading]="overviewLoader">
+
+    <p-header>
+        <div class="ui-inputgroup" [formGroup]="searchForm">
+        <!--<div class="ui-inputgroup" [formGroup]="searchForm" (ctrlF)="focusSearch($event)">-->
+            <span class="ui-inputgroup-addon"><i class="pi pi-search"></i></span>
+            <input #searchInput
+                   name="search"
+                   formControlName="search"
+                   class="form-control kt-input"
+                   [placeholder]="l('SearchWithThreeDot')"
+                   (ngModelChange)="search($event)" type="text">
+        </div>
+    </p-header>
+
+    <ng-template let-step pTemplate="listItem">
+        <app-processor-action-step class="p-col-12 step-row"
+                                   [step]="step"
+                                   (showResult)="showResult(step, undefined)"
+                                   (runStep)="runStep(step)"
+                                   (editStep)="editStep(step)"></app-processor-action-step>
+    </ng-template>
+</p-dataView>

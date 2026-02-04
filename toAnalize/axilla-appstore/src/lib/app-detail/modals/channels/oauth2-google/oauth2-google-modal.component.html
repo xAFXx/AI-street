@@ -1,0 +1,78 @@
+<div tabindex="-1"
+     role="dialog"
+     aria-labelledby="myLargeModalLabel"
+     aria-hidden="true">
+    <div class="modal-dialog modal-lg m-0">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <span>{{ "Axilla.App.AppStore.App.Modal.Oauth2GoogleChannel.CreateChannelTitle" | localize }}</span>
+                </h5>
+                <button type="button" class="close" [attr.aria-label]="l('Close')" (click)="close()">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <form [formGroup]="createChannelForm" (ngSubmit)="onSubmit()">
+                    <ng-container *ngFor="let field of fields">
+                        <ng-container *ngIf="isAuthVariables(field.id) && field.value.length > 0">
+                            <div formArrayName="authVariables">
+                                <div *ngFor="let item of field.value; let n=index">
+                                    <div class="form-group">
+                                        <label class="control-label">{{ item.label | localize }}</label>
+                                        <input type="text"
+                                               class="form-control"
+                                               [name]="item.id"
+                                               placeholder="{{ item.placeholder | localize }}"
+                                               [formControlName]="item.id">
+                                    </div>
+                                </div>
+                            </div>
+                        </ng-container>
+                    </ng-container>
+
+                    <div class="form-group">
+                        <label class="control-label">{{ "Axilla.App.AppStore.App.Modal.Oauth2GoogleChannel.Email" | localize }}</label>
+                        <input type="text"
+                               class="form-control"
+                               name="email"
+                               placeholder="Enter email"
+                               formControlName="email">
+                    </div>
+
+                    <div class="form-group">
+                        <label class="control-label">{{ "Axilla.App.AppStore.App.Modal.Oauth2GoogleChannel.Certificate" | localize }}</label>
+                        <div class="input-group">
+                            <textarea class="form-control"
+                                      name="certificate"
+                                      placeholder="Enter your certificate"
+                                      formControlName="certificate"></textarea>
+                        </div>
+                    </div>
+
+                    <div class="kt-checkbox-list" *ngIf="isGatewayAvailable">
+                        <div class="form-group">
+                            <label for="Gateway" class="kt-checkbox"
+                                   style="margin-bottom: 0">
+                                <input id="Gateway" class="kt-check" type="checkbox"
+                                       name="Gateway"
+                                       formControlName="gateway">
+                                {{"Axilla.App.AppStore.App.Modal.Channel.Gateway" | localize }}
+                                <span></span>
+                            </label>
+                        </div>
+                    </div>
+
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" (click)="close()">{{ "Cancel" | localize }}</button>
+                        <button type="submit"
+                                class="btn btn-primary"
+                                [disabled]="createChannelForm.invalid">
+                            <i class="fa fa-save"></i> <span translation="Save"></span>
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>

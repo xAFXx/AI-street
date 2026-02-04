@@ -1,0 +1,58 @@
+PURCHASE ORDER
+==============
+
+PO Number: PO-2026-00847
+Order Date: January 28, 2026
+
+VENDOR INFORMATION:
+-------------------
+Acme Industrial Supplies Inc.
+1234 Manufacturing Blvd, Suite 500
+Chicago, IL 60601
+Contact: John Smith
+Email: orders@acmesupplies.com
+Phone: (312) 555-0199
+
+BILL TO:
+--------
+TechCorp Solutions LLC
+789 Innovation Drive
+San Francisco, CA 94105
+Attention: Procurement Department
+
+SHIP TO:
+--------
+TechCorp Solutions LLC - Warehouse
+456 Logistics Way
+Oakland, CA 94607
+
+ORDER DETAILS:
+--------------
+| Item # | Description                    | Qty | Unit Price | Amount    |
+|--------|--------------------------------|-----|------------|-----------|
+| 001    | Industrial Bearings (SKU-4521) | 50  | $24.99     | $1,249.50 |
+| 002    | Hydraulic Hoses 2m (HH-2000)   | 25  | $45.00     | $1,125.00 |
+| 003    | Steel Mounting Brackets        | 100 | $8.75      | $875.00   |
+| 004    | Lubricant 5L Cans (LUB-500)    | 10  | $32.00     | $320.00   |
+| 005    | Safety Goggles Class A         | 20  | $15.50     | $310.00   |
+
+                                          Subtotal:    $3,879.50
+                                          Tax (8.5%):  $329.76
+                                          Shipping:    $150.00
+                                          ---------------------
+                                          TOTAL:       $4,359.26
+
+PAYMENT TERMS: Net 30 Days
+DELIVERY DATE: February 10, 2026
+
+SPECIAL INSTRUCTIONS:
+- Deliver between 8:00 AM - 5:00 PM
+- Call warehouse manager 30 minutes before arrival
+- Fork lift required for unloading
+
+Authorized By: Sarah Johnson
+Title: Procurement Manager
+Date: January 28, 2026
+Signature: [SIGNED]
+
+This purchase order is subject to TechCorp Solutions LLC standard terms and conditions.

@@ -1,0 +1,176 @@
+<div bsModal
+     tabindex="-1"
+     role="dialog"
+     aria-labelledby="myLargeModalLabel"
+     aria-hidden="true"
+     [config]="{backdrop: 'static'}">
+
+    <div class="modal-dialog modal-lg m-0 w-80">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 class="modal-title">
+                    {{ "Axilla.Api.Execute" | localize }}
+                </h3>
+
+                <button type="button" class="close" [attr.aria-label]="l('Close')" (click)="close()">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="row" [formGroup]="executeApiModalForm">
+                    <div class="col-md-6">
+                        <div class="p-d-flex flex-column gap-2">
+                            <div class="primeng-datatable-container"
+                                 [busyIf]="primengTableHelper.isLoading">
+                                <p-table #dataTable
+                                         [value]="primengTableHelper.records"
+                                         [rows]="primengTableHelper.defaultRecordsCountPerPage"
+                                         [scrollable]="true"
+                                         [alwaysShowPaginator]="false"
+                                         [resizableColumns]="primengTableHelper.resizableColumns">
+                                    <ng-template pTemplate="caption">
+                                        <div class="table-header d-flex align-items-center justify-content-between">
+                                            <h5 class="m-0">
+                                                {{ 'Axilla.Api.Headers' | localize }}
+                                            </h5>
+
+                                            <div class="table-actions d-flex gap-2">
+                                                <button
+                                                    pButton
+                                                    type="button"
+                                                    icon="pi pi-plus"
+                                                    class="p-button-sm"
+                                                    [disabled]="isPrevHeaderIsEmpty"
+                                                    (click)="addHeader()">
+                                                    <span>{{ "Axilla.Api.AddHeader" | localize }} </span>
+                                                </button>
+
+                                            </div>
+                                        </div>
+                                    </ng-template>
+
+                                    <ng-template pTemplate="body" let-record="$implicit" let-rowIndex="rowIndex">
+                                        <tr>
+                                            <td>
+                                                <execute-api-header-item [apiCallHeader]="record"
+                                                                         [index]="getHeaderIndex(rowIndex)"
+                                                                         (itemInteraction)="onHeaderInteraction($event)"
+                                                                         (deleteItem)="deleteHeaderItem($event)">
+                                                </execute-api-header-item>
+                                            </td>
+                                        </tr>
+                                    </ng-template>
+                                </p-table>
+                                <div class="primeng-no-data" *ngIf="primengTableHelper.totalRecordsCount === 0">
+                                    <span translation="NoData"><span translation="Axilla.NoData" source="AxillaAppBase"></span></span>
+                                </div>
+
+                                <div class="primeng-paging-container">
+                                    <p-paginator [rows]="primengTableHelper.defaultRecordsCountPerPage"
+                                                 #paginator
+                                                 (onPageChange)="onPagingHeaderItem($event)"
+                                                 [totalRecords]="primengTableHelper.totalRecordsCount"
+                                                 [rowsPerPageOptions]="primengTableHelper.predefinedRecordsCountPerPage">
+                                    </p-paginator>
+                                    <span class="total-records-count">
+                                        {{'TotalRecordsCount' | localize:primengTableHelper.totalRecordsCount}}
+                                    </span>
+                                </div>
+                            </div>
+
+                            <div>
+                                <h5 class="mb-2">
+                                    {{ 'Axilla.Api.Body' | localize }}
+                                </h5>
+                                <div class="json-editor-wrapper">
+                                    <json-editor [options]="editorOptions" formControlName="body" #editor class="text-editor"></json-editor>
+                                </div>
+                            </div>
+
+                            <div class="primeng-datatable-container"
+                                 [busyIf]="dataLookupPrimengTableHelper.isLoading">
+                                <p-table #dataLookupDataTable
+                                         [value]="dataLookupPrimengTableHelper.records"
+                                         [rows]="dataLookupPrimengTableHelper.defaultRecordsCountPerPage"
+                                         [scrollable]="true"
+                                         [alwaysShowPaginator]="false"
+                                         [resizableColumns]="dataLookupPrimengTableHelper.resizableColumns">
+                                    <ng-template pTemplate="caption">
+                                        <div class="table-header d-flex align-items-center justify-content-between">
+                                            <h5 class="m-0">
+                                                {{ 'Axilla.Api.DataLookup' | localize }}
+                                            </h5>
+
+                                            <div class="table-actions d-flex gap-2">
+                                                <button
+                                                    pButton
+                                                    type="button"
+                                                    class="p-button-sm"
+                                                    (click)="addDataLookup()">
+                                                    <i class="fa fa-plus"></i>
+                                                    <span>{{ "Axilla.Api.AddLookup" | localize }} </span>
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </ng-template>
+
+                                    <ng-template pTemplate="body" let-dataLookup ="$implicit" let-rowIndex="rowIndex">
+                                        <tr style="border: 1px dotted #e4e4e4">
+                                            <td>
+                                                <execute-api-lookup-item [apiCallDataLookup]="dataLookup"
+                                                                         [index]="getLookupIndex(rowIndex)"
+                                                                         (itemInteraction)="onLookupInteraction($event)"
+                                                                         (deleteItem)="deleteLookupItem($event)">
+                                                </execute-api-lookup-item>
+                                            </td>
+                                        </tr>
+                                    </ng-template>
+                                </p-table>
+                                <div class="primeng-no-data" *ngIf="dataLookupPrimengTableHelper.totalRecordsCount === 0">
+                                    <span translation="NoData"><span translation="Axilla.NoData" source="AxillaAppBase"></span></span>
+                                </div>
+
+                                <div class="primeng-paging-container">
+                                    <p-paginator [rows]="dataLookupPrimengTableHelper.defaultRecordsCountPerPage"
+                                                 #dataLookupPaginator
+                                                 (onPageChange)="onPagingLookupItem($event)"
+                                                 [totalRecords]="dataLookupPrimengTableHelper.totalRecordsCount"
+                                                 [rowsPerPageOptions]="dataLookupPrimengTableHelper.predefinedRecordsCountPerPage">
+                                    </p-paginator>
+                                    <span class="total-records-count">
+                                        {{'TotalRecordsCount' | localize:dataLookupPrimengTableHelper.totalRecordsCount}}
+                                    </span>
+                                </div>
+
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-md-6">
+
+                        <div class="p-d-flex flex-column gap-2">
+                            <div>
+                                <h5 class="mb-2">
+                                    {{ 'Axilla.Api.Result' | localize }}
+                                </h5>
+                                <json-editor [options]="editorOptions" formControlName="result" #editor class="text-editor"></json-editor>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" (click)="close()">
+                    <span>{{"Cancel" | localize}}</span>
+                </button>
+                <button type="button"
+                        class="btn btn-success"
+                        (click)="run()"
+                        [disabled]="isRunning">
+                    <i class="fa fa-save"></i>
+                    <span>{{"Run" | localize}}</span>
+                </button>
+            </div>
+        </div>
+    </div>
+</div>

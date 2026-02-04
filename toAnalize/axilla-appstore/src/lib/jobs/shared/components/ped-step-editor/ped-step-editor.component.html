@@ -1,0 +1,70 @@
+<div class="row ped-editor-container">
+
+    <div class="col-6">
+        <ng-container *ngIf="!showErrorHandler">
+            <app-processor-action-step class="p-col-12 step-row"
+                                       [step]="step"
+                                       (stepDisable)="stepDisableHandler($event)"
+                                       (showResult)="onShowResult($event)"
+                                       (runStep)="runStep($event)"
+                                       (editStep)="editStep($event)"></app-processor-action-step>
+        </ng-container>
+
+        <ng-container *ngIf="showErrorHandler">
+            <div>
+                <div class="step-content">
+                    <div class="step-header-container">
+                        <div class="step-actions" [ngClass]="{'edit-mode': isEditMode }">
+
+                            <ng-container *ngIf="isEditMode">
+                                <i class="fa fa-arrow-left" aria-hidden="true" (click)="goBack()"></i>
+                            </ng-container>
+                        </div>
+                    </div>
+
+                    <form [formGroup]="onErrorForm">
+                        <div class="row">
+                            <div class="col-12">
+                                <div class="form-group">
+                                    <input name="email"
+                                           formControlName="email"
+                                           class="form-control kt-input"
+                                           (ngModelChange)="setErrorReceiver()"
+                                           [placeholder]="l('Axilla.App.AppStore.PED.OnErrorModal.EmailPlaceholder', 'AxillaAppBase')"
+                                           type="text" />
+                                </div>
+                            </div>
+
+                            <div class="col-12">
+                                <div class="form-group">
+                                    <button (click)="saveErrorNotificationGroup()">Save</button>
+                                </div>
+                            </div>
+
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </ng-container>
+
+            <div class="p-col-12" style="flex: 1">
+                <json-editor #editor
+                             [options]="editorOptions"
+                             [data]="stepValue"
+                             (change)="changeStepValue($event)"
+                             name="innerObject"
+                             class="text-editor"></json-editor>
+            </div>
+    </div>
+
+    <div class="col-6 p-col-12 position-relative">
+        <div class="spinner-container" *ngIf="overviewLoader">
+            <p-progressSpinner></p-progressSpinner>
+        </div>
+
+        <ng-container *ngIf="!overviewLoader">
+            <app-ped-step-result [openedValue]="resultValue"></app-ped-step-result>
+        </ng-container>
+    </div>
+
+</div>

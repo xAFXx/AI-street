@@ -1,0 +1,378 @@
+<div tabindex="-1"
+     role="dialog"
+     aria-labelledby="myLargeModalLabel"
+     aria-hidden="true">
+    <div class="modal-dialog modal-lg m-0">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <span>Create connection settings</span>
+                </h5>
+                <button type="button" class="close" [attr.aria-label]="l('Close')" (click)="close()">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div *ngIf="isPureHttp">
+                    <form [formGroup]="pureHttpModalForm" (ngSubmit)="onSubmit()">
+                        <div class="form-group">
+                            <label class="control-label">Connection string:</label>
+                            <input type="text"
+                                   class="form-control"
+                                   name="connectionString"
+                                   placeholder="Enter app title"
+                                   formControlName="connectionString">
+                        </div>
+
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" (click)="close()">Cancel</button>
+                            <button type="submit"
+                                    class="btn btn-primary"
+                                    [disabled]="pureHttpModalForm.invalid">
+                                <i class="fa fa-save"></i> <span>Save</span>
+                            </button>
+                        </div>
+                    </form>
+                </div>
+
+                <div *ngIf="isBearer">
+                    <form [formGroup]="bearerModalForm" (ngSubmit)="onSubmit()">
+                        <div class="form-group">
+                            <label class="control-label">Connection string:</label>
+                            <input type="text"
+                                   class="form-control"
+                                   name="connectionString"
+                                   placeholder="Enter app title"
+                                   formControlName="connectionString">
+                        </div>
+
+                        <div class="form-group">
+                            <label class="control-label">Token:</label>
+                            <input type="text"
+                                   class="form-control"
+                                   name="token"
+                                   placeholder="Enter app token"
+                                   formControlName="token">
+                        </div>
+
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" (click)="close()">Cancel</button>
+                            <button type="submit"
+                                    class="btn btn-primary"
+                                    [disabled]="bearerModalForm.invalid">
+                                <i class="fa fa-save"></i> <span>Save</span>
+                            </button>
+                        </div>
+                    </form>
+                </div>
+
+                <div *ngIf="isOauth2">
+                    <form [formGroup]="oauth2ModalForm" (ngSubmit)="onSubmit()">
+                        <div class="form-group">
+                            <label class="control-label">Connection string:</label>
+                            <input type="text"
+                                   class="form-control"
+                                   name="connectionString"
+                                   placeholder="Enter app title"
+                                   formControlName="connectionString">
+                        </div>
+
+                        <div class="form-group">
+                            <label class="control-label">User name:</label>
+                            <input type="text"
+                                   class="form-control"
+                                   name="userName"
+                                   placeholder="Enter app title"
+                                   formControlName="userName">
+                        </div>
+
+                        <div class="form-group">
+                            <label class="control-label">Password:</label>
+                            <div class="input-group">
+                                <input type="{{fieldTextType ? 'text' : 'password'}}"
+                                       class="form-control"
+                                       name="password"
+                                       placeholder="Enter app title"
+                                       formControlName="password" />
+                                <div class="input-group-append"
+                                     (click)="toggleFieldTextType()">
+                                    <span class="input-group-text cursor-pointer">
+                                        <i class="fa"
+                                           [ngClass]="{
+                                              'fa-eye-slash': !fieldTextType,
+                                              'fa-eye': fieldTextType
+                                            }"></i>
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="control-label">Confirm password:</label>
+                            <div class="input-group">
+                                <input type="{{fieldTextTypeSecondaryPassword ? 'text' : 'password'}}"
+                                       class="form-control"
+                                       name="confirmpassword"
+                                       placeholder="Enter app title"
+                                       formControlName="confirmpassword">
+                                <div class="input-group-append"
+                                     (click)="toggleFieldTextTypeSecondaryPassword()">
+                                    <span class="input-group-text cursor-pointer">
+                                        <i class="fa"
+                                           [ngClass]="{
+                          'fa-eye-slash': !fieldTextTypeSecondaryPassword,
+                          'fa-eye': fieldTextTypeSecondaryPassword
+                        }"></i>
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" (click)="close()">Cancel</button>
+                            <button type="submit"
+                                    class="btn btn-primary"
+                                    [disabled]="oauth2ModalForm.invalid">
+                                <i class="fa fa-save"></i> <span>Save</span>
+                            </button>
+                        </div>
+                    </form>
+                </div>
+
+                <div *ngIf="isSmtp">
+                    <form [formGroup]="smtpModalForm" (ngSubmit)="onSubmit()">
+                        <div class="form-group">
+                            <label class="control-label">Connection string:</label>
+                            <input type="text"
+                                   class="form-control"
+                                   name="connectionString"
+                                   placeholder="Enter app title"
+                                   formControlName="connectionString">
+                        </div>
+
+                        <div class="form-group">
+                            <label class="control-label">User name:</label>
+                            <input type="text"
+                                   class="form-control"
+                                   name="userName"
+                                   placeholder="Enter app title"
+                                   formControlName="userName">
+                        </div>
+
+                        <div class="form-group">
+                            <label class="control-label">Password:</label>
+                            <div class="input-group">
+                                <input type="{{fieldTextType ? 'text' : 'password'}}"
+                                       class="form-control"
+                                       name="password"
+                                       placeholder="Enter app title"
+                                       formControlName="password" />
+                                <div class="input-group-append"
+                                     (click)="toggleFieldTextType()">
+                                    <span class="input-group-text cursor-pointer">
+                                        <i class="fa"
+                                           [ngClass]="{
+                          'fa-eye-slash': !fieldTextType,
+                          'fa-eye': fieldTextType
+                        }"></i>
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="control-label">Confirm password:</label>
+                            <div class="input-group">
+                                <input type="{{fieldTextTypeSecondaryPassword ? 'text' : 'password'}}"
+                                       class="form-control"
+                                       name="confirmpassword"
+                                       placeholder="Enter app title"
+                                       formControlName="confirmpassword">
+                                <div class="input-group-append"
+                                     (click)="toggleFieldTextTypeSecondaryPassword()">
+                                    <span class="input-group-text cursor-pointer">
+                                        <i class="fa"
+                                           [ngClass]="{
+                          'fa-eye-slash': !fieldTextTypeSecondaryPassword,
+                          'fa-eye': fieldTextTypeSecondaryPassword
+                        }"></i>
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="control-label">Port:</label>
+                            <input type="text"
+                                   class="form-control"
+                                   name="port"
+                                   placeholder="Enter app title"
+                                   formControlName="port">
+                        </div>
+
+                        <div class="form-group form-check">
+                            <div>
+                                <input type="checkbox" formControlName="islEnabled" name="islEnabled" id="islEnabled" class="form-check-input" />
+                                <label for="islEnabled" class="form-check-label">Accept Terms & Conditions</label>
+                            </div>
+                        </div>
+
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" (click)="close()">Cancel</button>
+                            <button type="submit"
+                                    class="btn btn-primary"
+                                    [disabled]="smtpModalForm.invalid">
+                                <i class="fa fa-save"></i> <span>Save</span>
+                            </button>
+                        </div>
+                    </form>
+                </div>
+
+                <div *ngIf="isNTLM">
+                    <form [formGroup]="nTLMModalForm" (ngSubmit)="onSubmit()">
+                        <div class="form-group">
+                            <label class="control-label">Connection string:</label>
+                            <input type="text"
+                                   class="form-control"
+                                   name="connectionString"
+                                   placeholder="Enter app title"
+                                   formControlName="connectionString">
+                        </div>
+
+                        <div class="form-group">
+                            <label class="control-label">User name:</label>
+                            <input type="text"
+                                   class="form-control"
+                                   name="userName"
+                                   placeholder="Enter app title"
+                                   formControlName="userName">
+                        </div>
+
+                        <div class="form-group">
+                            <label class="control-label">Password:</label>
+                            <div class="input-group">
+                                <input type="{{fieldTextType ? 'text' : 'password'}}"
+                                       class="form-control"
+                                       name="password"
+                                       placeholder="Enter app title"
+                                       formControlName="password" />
+                                <div class="input-group-append"
+                                     (click)="toggleFieldTextType()">
+                                    <span class="input-group-text cursor-pointer">
+                                        <i class="fa"
+                                           [ngClass]="{
+                                              'fa-eye-slash': !fieldTextType,
+                                              'fa-eye': fieldTextType
+                                            }"></i>
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="control-label">Confirm password:</label>
+                            <div class="input-group">
+                                <input type="{{fieldTextTypeSecondaryPassword ? 'text' : 'password'}}"
+                                       class="form-control"
+                                       name="confirmpassword"
+                                       placeholder="Enter app title"
+                                       formControlName="confirmpassword">
+                                <div class="input-group-append"
+                                     (click)="toggleFieldTextTypeSecondaryPassword()">
+                                    <span class="input-group-text cursor-pointer">
+                                        <i class="fa"
+                                           [ngClass]="{
+                          'fa-eye-slash': !fieldTextTypeSecondaryPassword,
+                          'fa-eye': fieldTextTypeSecondaryPassword
+                        }"></i>
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" (click)="close()">Cancel</button>
+                            <button type="submit"
+                                    class="btn btn-primary"
+                                    [disabled]="nTLMModalForm.invalid">
+                                <i class="fa fa-save"></i> <span>Save</span>
+                            </button>
+                        </div>
+                    </form>
+                </div>
+                <div *ngIf="isIMAP">
+                    <form [formGroup]="iMAPModalForm" (ngSubmit)="onSubmit()">
+                        <div class="form-group">
+                            <label class="control-label">Connection string:</label>
+                            <input type="text"
+                                   class="form-control"
+                                   name="connectionString"
+                                   placeholder="Enter app title"
+                                   formControlName="connectionString">
+                        </div>
+
+                        <div class="form-group">
+                            <label class="control-label">User name:</label>
+                            <input type="text"
+                                   class="form-control"
+                                   name="userName"
+                                   placeholder="Enter app title"
+                                   formControlName="userName">
+                        </div>
+
+                        <div class="form-group">
+                            <label class="control-label">Password:</label>
+                            <div class="input-group">
+                                <input type="{{fieldTextType ? 'text' : 'password'}}"
+                                       class="form-control"
+                                       name="password"
+                                       placeholder="Enter app title"
+                                       formControlName="password" />
+                                <div class="input-group-append"
+                                     (click)="toggleFieldTextType()">
+                                    <span class="input-group-text cursor-pointer">
+                                        <i class="fa"
+                                           [ngClass]="{
+                                              'fa-eye-slash': !fieldTextType,
+                                              'fa-eye': fieldTextType
+                                            }"></i>
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="control-label">Confirm password:</label>
+                            <div class="input-group">
+                                <input type="{{fieldTextTypeSecondaryPassword ? 'text' : 'password'}}"
+                                       class="form-control"
+                                       name="confirmpassword"
+                                       placeholder="Enter app title"
+                                       formControlName="confirmpassword">
+                                <div class="input-group-append"
+                                     (click)="toggleFieldTextTypeSecondaryPassword()">
+                                    <span class="input-group-text cursor-pointer">
+                                        <i class="fa"
+                                           [ngClass]="{
+                          'fa-eye-slash': !fieldTextTypeSecondaryPassword,
+                          'fa-eye': fieldTextTypeSecondaryPassword
+                        }"></i>
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" (click)="close()">Cancel</button>
+                            <button type="submit"
+                                    class="btn btn-primary"
+                                    [disabled]="iMAPModalForm.invalid">
+                                <i class="fa fa-save"></i> <span>Save</span>
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

@@ -1,0 +1,136 @@
+<div class="grid m-0 h-full overflow-hidden">
+    <div class="col-12 h-full overflow-hidden p-0">
+        <div class="card h-full p-0 surface-card border-none shadow-none flex flex-column overflow-hidden">
+
+            <div class="reports-list-page h-full flex flex-column">
+                <!-- Toolbar -->
+                <p-toolbar class="border-none surface-0 mb-3">
+                    <div class="p-toolbar-group-left">
+                        <div class="flex flex-column">
+                            <h1 class="m-0 text-3xl font-bold text-primary">True North</h1>
+                            <p class="m-0 mt-1 text-sm text-secondary">Create and manage structured reports. Track
+                                progress, add content blocks, and collaborate with AI assistance to complete your
+                                documents.</p>
+                        </div>
+                    </div>
+
+                    <div class="p-toolbar-group-right">
+                        <button pButton label="Create New Report" icon="pi pi-plus" class="p-button-primary"
+                            (click)="createNewReport()"></button>
+                    </div>
+                </p-toolbar>
+
+                <!-- Table -->
+                <div class="card flex-grow-1 overflow-hidden">
+                    <p-table #dt [value]="reports" [rows]="10" [paginator]="true"
+                        [globalFilterFields]="['title', 'template', 'status']" [rowHover]="true" dataKey="id"
+                        styleClass="p-datatable-gridlines" [tableStyle]="{'min-width': '50rem'}">
+
+                        <ng-template pTemplate="caption">
+                            <div class="flex align-items-center justify-content-between">
+                                <span class="p-input-icon-left w-full md:w-20rem">
+                                    <input pInputText type="text" (input)="onGlobalFilter(dt, $event)"
+                                        placeholder="Search reports..." class="w-full" />
+                                </span>
+                            </div>
+                        </ng-template>
+
+                        <ng-template pTemplate="header">
+                            <tr>
+                                <th style="width: 35%">Report Title</th>
+                                <th style="width: 20%">Template</th>
+                                <th style="width: 12%">Status</th>
+                                <th style="width: 15%">Progress</th>
+                                <th style="width: 15%">Last Modified</th>
+                                <th style="width: 10%">Actions</th>
+                            </tr>
+                        </ng-template>
+
+                        <ng-template pTemplate="body" let-report>
+                            <tr class="cursor-pointer" (click)="viewReport(report.id)">
+                                <td>
+                                    <div class="flex flex-column gap-1">
+                                        <span class="font-bold text-color">{{ report.title }}</span>
+                                        <span class="text-xs text-secondary">ID: {{ report.id }}</span>
+                                    </div>
+                                </td>
+                                <td>
+                                    <span class="text-sm">{{ report.template }}</span>
+                                </td>
+                                <td>
+                                    <p-tag [value]="report.status"
+                                        [severity]="getStatusSeverity(report.status)"></p-tag>
+                                </td>
+                                <td>
+                                    <div class="flex flex-column gap-1">
+                                        <div class="flex align-items-center gap-2">
+                                            <div class="flex-grow-1 bg-gray-200 border-round" style="height: 8px;">
+                                                <div class="border-round h-full transition-all transition-duration-300"
+                                                    [style.width.%]="report.progress"
+                                                    [style.background-color]="getProgressColor(report.progress)"></div>
+                                            </div>
+                                            <span class="text-xs font-bold"
+                                                [style.color]="getProgressColor(report.progress)">{{
+                                                report.progress }}%</span>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td>
+                                    <span class="text-sm">{{ report.lastModified | date:'MMM d, y' }}</span>
+                                </td>
+                                <td>
+                                    <div class="flex gap-2">
+                                        <button pButton icon="pi pi-eye"
+                                            class="p-button-rounded p-button-text p-button-sm"
+                                            (click)="viewReport(report.id); $event.stopPropagation()"
+                                            pTooltip="View Report" tooltipPosition="top"></button>
+                                        <button pButton icon="pi pi-trash"
+                                            class="p-button-rounded p-button-text p-button-danger p-button-sm"
+                                            (click)="deleteReport(report.id); $event.stopPropagation()"
+                                            pTooltip="Delete Report" tooltipPosition="top"></button>
+                                    </div>
+                                </td>
+                            </tr>
+                        </ng-template>
+
+                        <ng-template pTemplate="emptymessage">
+                            <tr>
+                                <td colspan="6" class="text-center py-5">
+                                    <div class="flex flex-column align-items-center gap-3">
+                                        <i class="pi pi-inbox text-6xl text-secondary"></i>
+                                        <div>
+                                            <p class="text-xl font-bold m-0">No reports found</p>
+                                            <p class="text-secondary m-0 mt-2">Create your first report to get started
+                                            </p>
+                                        </div>
+                                        <button pButton label="Create New Report" icon="pi pi-plus"
+                                            class="p-button-primary mt-2" (click)="createNewReport()"></button>
+                                    </div>
+                                </td>
+                            </tr>
+                        </ng-template>
+                    </p-table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- New Report Modal -->
+<p-dialog header="Create New Report" [(visible)]="showNewReportModal" [modal]="true" [style]="{width: '400px'}"
+    [draggable]="false" [resizable]="false">
+    <div class="flex flex-column gap-3">
+        <div class="flex flex-column gap-2">
+            <label for="reportTitle" class="font-semibold">Report Title <span class="text-red-500">*</span></label>
+            <input pInputText id="reportTitle" [(ngModel)]="newReportTitle" placeholder="Enter report title..."
+                class="w-full" (keydown.enter)="saveNewReport()" autofocus />
+        </div>
+    </div>
+    <ng-template pTemplate="footer">
+        <div class="flex justify-content-end gap-2">
+            <button pButton label="Cancel" class="p-button-text" (click)="showNewReportModal = false"></button>
+            <button pButton label="Create Report" icon="pi pi-check" class="p-button-primary" (click)="saveNewReport()"
+                [disabled]="!newReportTitle.trim()"></button>
+        </div>
+    </ng-template>
+</p-dialog>

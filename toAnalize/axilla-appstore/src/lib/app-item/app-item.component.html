@@ -1,0 +1,46 @@
+<div class="list-group-item list-group-item-action flex-column align-items-start">
+    <div class="app-body">
+        <div class="app-list-item">
+            <div class="row">
+                <app-img [img]="app.imageCSS" (openApp)="onOpenApp()"></app-img>
+
+                <div class="app-body">
+                    <h3 class="app-title cursor-pointer" (click)="onOpenApp()">
+                        {{app.title}}
+                    </h3>
+                    <p>{{app.description}}</p>
+                    <!--<div *ngIf="app.isCancelled" class="app-disabled-info">
+                        <span translation="Axilla.App.Store.Disabled" source="AxillaAppBase"></span>
+                    </div>-->
+                    <div class="icons-container">
+                        <i class="menu-button fa fa fa-pen cursor-pointer app-icon"
+                           (click)="onEditApp()"></i>
+
+                        <ng-container *ngIf="!installation; else installationBtn">
+                            <i class="menu-button fa fa fa-trash-alt cursor-pointer app-icon"
+                               (click)="onRemoveFromTenant()"></i>
+                        </ng-container>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<ng-template #installationBtn>
+    <div class="app-action-add">
+
+        <button class="btn btn-success" (click)="onInstallApp()">
+            <i class="fa fa-plus"></i>
+            <span translation="Axilla.App.AppStore.InstallApp" source="AxillaAppBase"></span>
+        </button>
+
+        <!--<ng-container *ngIf="app.price">
+            <button class="btn btn-success" (click)="onBuyApp()">
+                <i class="fa fa-plus"></i>
+                <span translation="Axilla.App.Store.BuyApp" source="AxillaAppBase"></span>
+            </button>
+        </ng-container>-->
+
+    </div>
+</ng-template>

@@ -1,0 +1,138 @@
+<div class="grid m-0 h-full overflow-hidden">
+    <div class="col-12 h-full overflow-hidden p-0">
+        <div class="card h-full p-0 surface-card border-none shadow-none flex flex-column overflow-hidden">
+
+            <div class="report-frameworks-page h-full flex flex-column">
+                <!-- Toolbar -->
+                <p-toolbar class="border-none surface-0 mb-3">
+                    <div class="p-toolbar-group-left">
+                        <div class="flex flex-column">
+                            <h1 class="m-0 text-3xl font-bold text-primary">Report Frameworks</h1>
+                            <p class="m-0 mt-1 text-sm text-secondary">Create and manage comprehensive report templates
+                                with chapters, blocks, AI validation, and version control for audit compliance.</p>
+                        </div>
+                    </div>
+
+                    <div class="p-toolbar-group-right">
+                        <button pButton label="Create Template" icon="pi pi-plus" class="p-button-primary"
+                            (click)="createNew()"></button>
+                    </div>
+                </p-toolbar>
+
+                <!-- Table Section -->
+                <div class="flex-grow-1 overflow-hidden">
+                    <p-table #dt [value]="templates" [loading]="loading" [rows]="10" [paginator]="true"
+                        [globalFilterFields]="['name', 'description', 'version', 'status']" [rowHover]="true"
+                        dataKey="id" styleClass="p-datatable-sm" [tableStyle]="{ 'min-width': '50rem' }">
+
+                        <ng-template pTemplate="caption">
+                            <div class="flex align-items-center justify-content-between">
+                                <span class="p-input-icon-left">
+                                    <i class="pi pi-search"></i>
+                                    <input pInputText type="text" (input)="onGlobalFilter(dt, $event)"
+                                        placeholder="Search frameworks..." />
+                                </span>
+                                <span class="text-secondary text-sm">
+                                    {{ templates.length }} framework(s) total
+                                </span>
+                            </div>
+                        </ng-template>
+
+                        <ng-template pTemplate="header">
+                            <tr>
+                                <th pSortableColumn="name" style="width: 25%">
+                                    Name <p-sortIcon field="name"></p-sortIcon>
+                                </th>
+                                <th style="width: 30%">Description</th>
+                                <th pSortableColumn="version" style="width: 10%">
+                                    Version <p-sortIcon field="version"></p-sortIcon>
+                                </th>
+                                <th pSortableColumn="status" style="width: 10%">
+                                    Status <p-sortIcon field="status"></p-sortIcon>
+                                </th>
+                                <th style="width: 10%">Structure</th>
+                                <th pSortableColumn="lastModified" style="width: 10%">
+                                    Modified <p-sortIcon field="lastModified"></p-sortIcon>
+                                </th>
+                                <th style="width: 5%"></th>
+                            </tr>
+                        </ng-template>
+
+                        <ng-template pTemplate="body" let-template>
+                            <tr class="cursor-pointer" (click)="editTemplate(template)">
+                                <td>
+                                    <div class="flex align-items-center gap-2">
+                                        <i class="pi pi-book text-primary"></i>
+                                        <span class="font-medium">{{ template.name }}</span>
+                                    </div>
+                                </td>
+                                <td>
+                                    <span class="text-secondary text-sm line-clamp-2">
+                                        {{ template.description || 'No description' }}
+                                    </span>
+                                </td>
+                                <td>
+                                    <span class="font-mono text-sm">v{{ template.version }}</span>
+                                </td>
+                                <td>
+                                    <p-tag [value]="template.status" [severity]="getStatusSeverity(template.status)">
+                                    </p-tag>
+                                </td>
+                                <td>
+                                    <div class="flex flex-column gap-1 text-xs text-secondary">
+                                        <span><i class="pi pi-list mr-1"></i>{{ getChapterCount(template) }}
+                                            chapters</span>
+                                        <span><i class="pi pi-star mr-1"></i>{{ template.aiSummary?.length || 0 }} AI
+                                            fields</span>
+                                    </div>
+                                </td>
+                                <td>
+                                    <span class="text-sm text-secondary">
+                                        {{ template.lastModified | date:'shortDate' }}
+                                    </span>
+                                </td>
+                                <td>
+                                    <div class="flex gap-1" (click)="$event.stopPropagation()">
+                                        <button pButton icon="pi pi-pencil" class="p-button-text p-button-sm"
+                                            pTooltip="Edit" (click)="editTemplate(template)"></button>
+                                        <button pButton icon="pi pi-copy" class="p-button-text p-button-sm"
+                                            pTooltip="Duplicate" (click)="duplicateTemplate(template)"></button>
+                                        <button pButton icon="pi pi-check-circle"
+                                            class="p-button-text p-button-sm p-button-success"
+                                            *ngIf="template.status === 'draft'" pTooltip="Publish"
+                                            (click)="publishTemplate(template)"></button>
+                                        <button pButton icon="pi pi-times-circle"
+                                            class="p-button-text p-button-sm p-button-secondary"
+                                            *ngIf="template.status === 'published'" pTooltip="Unpublish"
+                                            (click)="unpublishTemplate(template)"></button>
+                                        <button pButton icon="pi pi-trash"
+                                            class="p-button-text p-button-sm p-button-danger" pTooltip="Delete"
+                                            (click)="confirmDelete(template)"></button>
+                                    </div>
+                                </td>
+                            </tr>
+                        </ng-template>
+
+                        <ng-template pTemplate="emptymessage">
+                            <tr>
+                                <td colspan="7">
+                                    <div class="flex flex-column align-items-center justify-content-center p-5">
+                                        <i class="pi pi-book text-5xl text-200 mb-3"></i>
+                                        <span class="text-lg font-bold text-secondary mb-2">No Report Frameworks</span>
+                                        <span class="text-sm text-400 mb-3">Create your first framework to get
+                                            started</span>
+                                        <button pButton label="Create Template" icon="pi pi-plus"
+                                            class="p-button-outlined" (click)="createNew()"></button>
+                                    </div>
+                                </td>
+                            </tr>
+                        </ng-template>
+                    </p-table>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+<p-confirmDialog></p-confirmDialog>

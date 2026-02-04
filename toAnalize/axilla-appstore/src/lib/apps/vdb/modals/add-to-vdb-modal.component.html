@@ -1,0 +1,82 @@
+<div bsModal
+     tabindex="-1"
+     role="dialog"
+     aria-labelledby="myLargeModalLabel"
+     aria-hidden="true"
+     [config]="{backdrop: 'static'}">
+
+    <div class="modal-dialog modal-lg m-0 create-job-modal w-80">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 class="modal-title">
+                    <span translation="Axilla.Apps.VDB.CreateNewVDBEntry" source="AxillaAppVDB"></span>
+                </h3>
+                <button type="button" class="close" [attr.aria-label]="l('Close')" (click)="close()">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <form [formGroup]="addForm">
+                    <div class="row">
+                        <div class="col-12">
+                            <div class="form-group">
+                                <label for="vdbName">
+                                    <span translation="Axilla.Apps.VDB.Name" source="AxillaAppVDB"></span>
+                                </label>
+                                <input name="vdbName"
+                                       formControlName="vdbName"
+                                       readonly="readonly"
+                                       class="form-control kt-input"
+                                       [placeholder]="'Axilla.Apps.VDB.VDBNamePlaceholder'  | localizeAxillaAppVDB"
+                                       type="text" />
+                            </div>
+
+                            <div class="form-group">
+                                <label for="keyName">
+                                    <span translation="Axilla.Apps.VDB.KeyName" source="AxillaAppVDB"></span>
+                                </label>
+                                <input name="keyName"
+                                       formControlName="keyName"
+                                       class="form-control kt-input"
+                                       [placeholder]="'Axilla.Apps.VDB.KeyNamePlaceholder'  | localizeAxillaAppVDB"
+                                       type="text" />
+
+                            </div>
+
+                            <div class="form-group">
+                                <label for="ttl">
+                                    <span translation="Axilla.Apps.VDB.Ttl" source="AxillaAppVDB"></span>
+                                </label>
+                                <input name="ttl"
+                                       formControlName="ttl"
+                                       class="form-control kt-input"
+                                       [placeholder]="'Axilla.Apps.VDB.TtlPlaceholder'  | localizeAxillaAppVDB"
+                                       type="number" />
+                            </div>
+
+                            <div class="form-group">
+                                <json-editor [options]="editorOptions"
+                                             [data]="openedValue"
+                                             name="innerObject"
+                                             formControlName="innerObject"
+                                             #editor class="text-editor"></json-editor>
+                            </div>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-dark" (click)="close()">
+                    {{"Cancel" | localize}}
+                </button>
+                <button type="button"
+                        (click)="create()"
+                        [disabled]="!addForm.valid"
+                        class="btn btn-success">
+                    <i class="fa fa-save"></i>
+                    <span translation="Save">{{"Save" | localize}}</span>
+                </button>
+            </div>
+        </div>
+    </div>
+</div>

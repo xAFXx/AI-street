@@ -1,0 +1,380 @@
+<div class="search-action-container">
+    <!-- Mini Sidebar (always visible) -->
+    <div class="mini-sidebar surface-100 border-right-1 surface-border">
+        <div class="flex flex-column align-items-center gap-3 py-4">
+            <button *ngFor="let item of miniSidebarItems" pButton [icon]="'pi ' + item.icon" [pTooltip]="item.tooltip"
+                tooltipPosition="right" [text]="true" severity="secondary" (click)="item.action()"
+                class="mini-sidebar-btn">
+            </button>
+        </div>
+    </div>
+
+    <!-- Sessions Sidebar -->
+    <div class="sessions-sidebar surface-card border-right-1 surface-border" *ngIf="showSessionsSidebar">
+        <div class="sidebar-header p-3 border-bottom-1 surface-border">
+            <div class="flex align-items-center justify-content-between mb-3">
+                <span class="font-bold text-lg">Sessions</span>
+                <button pButton icon="pi pi-plus" [text]="true" severity="primary" size="small" pTooltip="New Session"
+                    (click)="createNewSession()"></button>
+            </div>
+            <p-iconfield class="w-full">
+                <p-inputicon styleClass="pi pi-search"></p-inputicon>
+                <input type="text" pInputText [(ngModel)]="sessionSearch" placeholder="Search sessions..."
+                    class="w-full">
+            </p-iconfield>
+        </div>
+        <div class="sessions-list overflow-y-auto">
+            <div *ngFor="let session of filteredSessions"
+                class="session-item p-3 cursor-pointer border-bottom-1 surface-border"
+                [class.active]="session.id === activeSessionId" (click)="selectSession(session)">
+                <div class="flex align-items-center justify-content-between">
+                    <div class="flex-grow-1 overflow-hidden">
+                        <div class="font-medium text-overflow-ellipsis white-space-nowrap overflow-hidden">{{
+                            session.name }}</div>
+                        <div class="text-sm text-500">{{ session.messageCount }} messages</div>
+                    </div>
+                    <button pButton icon="pi pi-ellipsis-v" [text]="true" severity="secondary" size="small"
+                        (click)="$event.stopPropagation()"></button>
+                </div>
+            </div>
+            <div *ngIf="filteredSessions.length === 0" class="p-4 text-center text-500">
+                <i class="pi pi-inbox text-3xl mb-2 block"></i>
+                <span>No sessions found</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Workspace -->
+    <div class="workspace-container flex-grow-1 overflow-hidden">
+        <!-- Panel Toolbar -->
+        <div
+            class="panel-toolbar flex align-items-center justify-content-between px-3 py-2 border-bottom-1 surface-border surface-50">
+            <div class="flex align-items-center gap-2">
+                <button *ngFor="let panel of panels" pButton [icon]="'pi ' + panel.icon" [label]="panel.label"
+                    [severity]="panel.visible ? 'primary' : 'secondary'" [outlined]="!panel.visible" size="small"
+                    (click)="togglePanel(panel.id)" pTooltip="Toggle panel">
+                </button>
+            </div>
+        </div>
+
+        <!-- Dynamic Panels Container Wrapper -->
+        <div class="panels-wrapper flex justify-content-center w-full"
+            style="height: calc(100% - 115px); margin-top: 5px;">
+            <div class="panels-container flex h-full" [style.width]="panelsMaxWidth">
+
+                <!-- Panel A: AI Chat -->
+                <div class="panel chat-panel flex flex-column surface-card border-right-1 surface-border"
+                    *ngIf="panels[0].visible && !panels[0].isDetached"
+                    [style.flex]="'1 1 ' + (100 / visiblePanels.length) + '%'">
+                    <div
+                        class="panel-header flex align-items-center justify-content-between px-3 py-2 surface-100 border-bottom-1 surface-border">
+                        <div class="flex align-items-center gap-2">
+                            <i class="pi pi-comments text-primary"></i>
+                            <span class="font-semibold">AI Chat</span>
+                        </div>
+                        <div class="flex gap-1">
+                            <button pButton icon="pi pi-window-maximize" [text]="true" severity="secondary" size="small"
+                                pTooltip="Maximize" (click)="maximizePanel('chat')"></button>
+                            <button pButton icon="pi pi-external-link" [text]="true" severity="secondary" size="small"
+                                pTooltip="Detach" (click)="detachPanel('chat')"></button>
+                            <button pButton icon="pi pi-times" [text]="true" severity="secondary" size="small"
+                                pTooltip="Close" (click)="closePanel('chat')"
+                                [disabled]="!canClosePanel('chat')"></button>
+                        </div>
+                    </div>
+                    <div class="panel-content flex-grow-1 overflow-hidden">
+                        <app-ai-chat #chatComponent context="search-action-chat" [showInputArea]="false"
+                            emptyStateMessage="Ask AI anything about your data"
+                            systemPrompt="You are Rocky, an AI assistant for enterprise search. Help users find information, answer questions about their data, and provide insights."
+                            (apiKeyNeeded)="onApiKeyNeeded()">
+                        </app-ai-chat>
+                    </div>
+                </div>
+
+                <!-- Panel B: Search Results -->
+                <div class="panel results-panel flex flex-column surface-card border-right-1 surface-border"
+                    *ngIf="panels[1].visible && !panels[1].isDetached"
+                    [style.flex]="'1 1 ' + (100 / visiblePanels.length) + '%'">
+                    <div
+                        class="panel-header flex align-items-center justify-content-between px-3 py-2 surface-100 border-bottom-1 surface-border">
+                        <div class="flex align-items-center gap-2">
+                            <i class="pi pi-search text-primary"></i>
+                            <span class="font-semibold">Search Results</span>
+                            <p-tag *ngIf="searchResults.length > 0" [value]="searchResults.length + ''"
+                                severity="secondary"></p-tag>
+                        </div>
+                        <div class="flex gap-1">
+                            <button pButton icon="pi pi-filter" [text]="true" severity="secondary" size="small"
+                                pTooltip="Filter"></button>
+                            <button pButton icon="pi pi-window-maximize" [text]="true" severity="secondary" size="small"
+                                pTooltip="Maximize" (click)="maximizePanel('results')"></button>
+                            <button pButton icon="pi pi-external-link" [text]="true" severity="secondary" size="small"
+                                pTooltip="Detach" (click)="detachPanel('results')"></button>
+                            <button pButton icon="pi pi-times" [text]="true" severity="secondary" size="small"
+                                pTooltip="Close" (click)="closePanel('results')"
+                                [disabled]="!canClosePanel('results')"></button>
+                        </div>
+                    </div>
+                    <div class="panel-content flex-grow-1 overflow-y-auto">
+                        <div *ngFor="let result of searchResults"
+                            class="result-item p-3 border-bottom-1 surface-border cursor-pointer"
+                            [class.selected]="selectedResult?.id === result.id" (click)="selectSearchResult(result)">
+                            <div class="flex align-items-start gap-3">
+                                <div class="result-icon flex-shrink-0">
+                                    <i class="pi {{ result.icon }} text-xl text-primary"></i>
+                                </div>
+                                <div class="flex-grow-1">
+                                    <div class="font-medium mb-1">{{ result.title }}</div>
+                                    <div class="text-sm text-500">{{ result.subtitle }}</div>
+                                </div>
+                                <p-tag [value]="result.type" severity="info" styleClass="text-xs"></p-tag>
+                            </div>
+                        </div>
+                        <div *ngIf="searchResults.length === 0" class="empty-state text-center py-5">
+                            <i class="pi pi-search text-5xl text-300 mb-3 block"></i>
+                            <p class="text-500 m-0">No results yet. Try searching!</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Panel C: Preview -->
+                <div class="panel preview-panel flex flex-column surface-card"
+                    *ngIf="panels[2].visible && !panels[2].isDetached"
+                    [style.flex]="'1 1 ' + (100 / visiblePanels.length) + '%'">
+                    <div
+                        class="panel-header flex align-items-center justify-content-between px-3 py-2 surface-100 border-bottom-1 surface-border">
+                        <div class="flex align-items-center gap-2">
+                            <i class="pi pi-eye text-primary"></i>
+                            <span class="font-semibold">Preview</span>
+                        </div>
+                        <div class="flex gap-1">
+                            <button pButton icon="pi pi-external-link" [text]="true" severity="secondary" size="small"
+                                pTooltip="Open in new tab"></button>
+                            <button pButton icon="pi pi-window-maximize" [text]="true" severity="secondary" size="small"
+                                pTooltip="Maximize" (click)="maximizePanel('preview')"></button>
+                            <button pButton icon="pi pi-external-link" [text]="true" severity="secondary" size="small"
+                                pTooltip="Detach" (click)="detachPanel('preview')"></button>
+                            <button pButton icon="pi pi-times" [text]="true" severity="secondary" size="small"
+                                pTooltip="Close" (click)="closePanel('preview')"></button>
+                        </div>
+                    </div>
+                    <div class="panel-content flex-grow-1 overflow-y-auto p-3">
+                        <div *ngIf="selectedResult" class="preview-content">
+                            <!-- Work Item Preview -->
+                            <ng-container *ngIf="selectedResult.type === 'work-item'">
+                                <div class="mb-4">
+                                    <h3 class="mt-0 mb-2">{{ selectedResult.title }}</h3>
+                                    <p-tag [value]="selectedResult.metadata['status']"
+                                        [severity]="selectedResult.metadata['status'] === 'Active' ? 'warn' : 'success'"></p-tag>
+                                </div>
+                                <div class="surface-100 border-round p-3 mb-3">
+                                    <div class="grid">
+                                        <div class="col-6">
+                                            <span class="text-500 text-sm">Assigned To</span>
+                                            <div class="font-medium">{{ selectedResult.metadata['assignee'] }}</div>
+                                        </div>
+                                        <div class="col-6">
+                                            <span class="text-500 text-sm">ID</span>
+                                            <div class="font-medium">{{ selectedResult.subtitle }}</div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <button pButton label="View in Azure DevOps" icon="pi pi-external-link"
+                                    severity="secondary" size="small"></button>
+                            </ng-container>
+
+                            <!-- Document Preview -->
+                            <ng-container *ngIf="selectedResult.type === 'document'">
+                                <div class="text-center py-4">
+                                    <i class="pi pi-file-pdf text-6xl text-red-500 mb-3"></i>
+                                    <h3 class="m-0">{{ selectedResult.title }}</h3>
+                                    <p class="text-500">{{ selectedResult.metadata['modified'] }}</p>
+                                    <button pButton label="Open Document" icon="pi pi-external-link"></button>
+                                </div>
+                            </ng-container>
+
+                            <!-- Email Preview -->
+                            <ng-container *ngIf="selectedResult.type === 'email'">
+                                <div class="email-preview">
+                                    <h3 class="mt-0 mb-2">{{ selectedResult.title }}</h3>
+                                    <div class="text-500 mb-3">{{ selectedResult.subtitle }}</div>
+                                    <p-divider></p-divider>
+                                    <div class="text-sm text-500">
+                                        <p>This is a preview of the email content. The full email would be loaded from
+                                            the server.</p>
+                                    </div>
+                                </div>
+                            </ng-container>
+
+                            <!-- Image Preview -->
+                            <ng-container *ngIf="selectedResult.type === 'image'">
+                                <div class="text-center">
+                                    <div class="surface-200 border-round p-4 mb-3">
+                                        <i class="pi pi-image text-6xl text-primary"></i>
+                                    </div>
+                                    <h4 class="m-0">{{ selectedResult.title }}</h4>
+                                    <p class="text-500 text-sm">{{ selectedResult.metadata['size'] }}</p>
+                                </div>
+                            </ng-container>
+                        </div>
+                        <div *ngIf="!selectedResult" class="empty-state text-center py-5">
+                            <i class="pi pi-eye text-5xl text-300 mb-3 block"></i>
+                            <p class="text-500 m-0">Select an item to preview</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Floating Search Bar -->
+        <div class="floating-search-bar">
+            <div class="search-pill">
+                <button pButton icon="pi pi-plus" [text]="true" severity="secondary" class="add-btn"
+                    pTooltip="Add attachment"></button>
+                <input type="text" [(ngModel)]="searchQuery" placeholder="Ask or search anything..."
+                    class="search-input" (keydown.enter)="performSearch()">
+                <div class="search-actions">
+                    <button pButton icon="pi pi-microphone" [text]="true" severity="secondary"
+                        pTooltip="Voice input"></button>
+                    <button pButton label="Search" severity="secondary" [outlined]="true" size="small"
+                        [loading]="isSearching" (click)="performSearch()"></button>
+                    <button pButton label="Ask AI" severity="primary" size="small" (click)="sendChatMessage()"></button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Detached Panel Dialogs -->
+<!-- Chat Panel Dialog -->
+<p-dialog [(visible)]="panels[0].isDetached" [header]="panels[0].label" [modal]="false" [draggable]="true"
+    [resizable]="true" [maximizable]="true" [style]="{width: '600px', height: '500px'}" [position]="'center'"
+    (onHide)="reattachPanel('chat')">
+    <div class="dialog-panel-content">
+        <!-- Chat Messages -->
+        <div class="chat-messages overflow-y-auto" style="height: calc(100% - 60px);">
+            <div *ngFor="let msg of chatMessages" class="message-row mb-3" [class.user-row]="msg.role === 'user'">
+                <div *ngIf="msg.role === 'user'" class="flex justify-content-end">
+                    <div class="user-bubble">{{ msg.content }}</div>
+                </div>
+                <div *ngIf="msg.role === 'assistant'" class="assistant-message">
+                    <div class="flex align-items-center gap-2 mb-2">
+                        <p-avatar label="R" shape="circle" styleClass="bg-primary text-white"></p-avatar>
+                        <span class="font-medium">Rocky</span>
+                    </div>
+                    <div class="message-content">{{ msg.content }}</div>
+                </div>
+            </div>
+            <div *ngIf="chatMessages.length === 0" class="empty-state text-center py-5">
+                <i class="pi pi-comments text-5xl text-300 mb-3 block"></i>
+                <p class="text-500 m-0">Ask AI anything about your data</p>
+            </div>
+        </div>
+        <div class="chat-input-area pt-3 border-top-1 surface-border">
+            <div class="p-inputgroup">
+                <input type="text" pInputText [(ngModel)]="chatInput" placeholder="Ask @Rocky anything..."
+                    (keydown.enter)="sendChatMessage()">
+                <button pButton icon="pi pi-send" [loading]="isChatLoading" (click)="sendChatMessage()"></button>
+            </div>
+        </div>
+    </div>
+</p-dialog>
+
+<!-- Search Results Dialog -->
+<p-dialog [(visible)]="panels[1].isDetached" [header]="panels[1].label" [modal]="false" [draggable]="true"
+    [resizable]="true" [maximizable]="true" [style]="{width: '500px', height: '400px'}" [position]="'center'"
+    (onHide)="reattachPanel('results')">
+    <div class="dialog-panel-content overflow-y-auto h-full">
+        <div *ngFor="let result of searchResults" class="result-item p-3 border-bottom-1 surface-border cursor-pointer"
+            [class.selected]="selectedResult?.id === result.id" (click)="selectSearchResult(result)">
+            <div class="flex align-items-start gap-3">
+                <div class="result-icon flex-shrink-0">
+                    <i class="pi {{ result.icon }} text-xl text-primary"></i>
+                </div>
+                <div class="flex-grow-1">
+                    <div class="font-medium mb-1">{{ result.title }}</div>
+                    <div class="text-sm text-500">{{ result.subtitle }}</div>
+                </div>
+                <p-tag [value]="result.type" severity="info" styleClass="text-xs"></p-tag>
+            </div>
+        </div>
+        <div *ngIf="searchResults.length === 0" class="empty-state text-center py-5">
+            <i class="pi pi-search text-5xl text-300 mb-3 block"></i>
+            <p class="text-500 m-0">No results yet. Try searching!</p>
+        </div>
+    </div>
+</p-dialog>
+
+<!-- Preview Dialog -->
+<p-dialog [(visible)]="panels[2].isDetached" [header]="panels[2].label" [modal]="false" [draggable]="true"
+    [resizable]="true" [maximizable]="true" [style]="{width: '600px', height: '500px'}" [position]="'center'"
+    (onHide)="reattachPanel('preview')">
+    <div class="dialog-panel-content overflow-y-auto h-full p-3">
+        <div *ngIf="selectedResult" class="preview-content">
+            <!-- Work Item Preview -->
+            <ng-container *ngIf="selectedResult.type === 'work-item'">
+                <div class="mb-4">
+                    <h3 class="mt-0 mb-2">{{ selectedResult.title }}</h3>
+                    <p-tag [value]="selectedResult.metadata['status']"
+                        [severity]="selectedResult.metadata['status'] === 'Active' ? 'warn' : 'success'"></p-tag>
+                </div>
+                <div class="surface-100 border-round p-3 mb-3">
+                    <div class="grid">
+                        <div class="col-6">
+                            <span class="text-500 text-sm">Assigned To</span>
+                            <div class="font-medium">{{ selectedResult.metadata['assignee'] }}</div>
+                        </div>
+                        <div class="col-6">
+                            <span class="text-500 text-sm">ID</span>
+                            <div class="font-medium">{{ selectedResult.subtitle }}</div>
+                        </div>
+                    </div>
+                </div>
+                <button pButton label="View in Azure DevOps" icon="pi pi-external-link" severity="secondary"
+                    size="small"></button>
+            </ng-container>
+
+            <!-- Document Preview -->
+            <ng-container *ngIf="selectedResult.type === 'document'">
+                <div class="text-center py-4">
+                    <i class="pi pi-file-pdf text-6xl text-red-500 mb-3"></i>
+                    <h3 class="m-0">{{ selectedResult.title }}</h3>
+                    <p class="text-500">{{ selectedResult.metadata['modified'] }}</p>
+                    <button pButton label="Open Document" icon="pi pi-external-link"></button>
+                </div>
+            </ng-container>
+
+            <!-- Email Preview -->
+            <ng-container *ngIf="selectedResult.type === 'email'">
+                <div class="email-preview">
+                    <h3 class="mt-0 mb-2">{{ selectedResult.title }}</h3>
+                    <div class="text-500 mb-3">{{ selectedResult.subtitle }}</div>
+                    <p-divider></p-divider>
+                    <div class="text-sm text-500">
+                        <p>This is a preview of the email content.</p>
+                    </div>
+                </div>
+            </ng-container>
+
+            <!-- Image Preview -->
+            <ng-container *ngIf="selectedResult.type === 'image'">
+                <div class="text-center">
+                    <div class="surface-200 border-round p-4 mb-3">
+                        <i class="pi pi-image text-6xl text-primary"></i>
+                    </div>
+                    <h4 class="m-0">{{ selectedResult.title }}</h4>
+                    <p class="text-500 text-sm">{{ selectedResult.metadata['size'] }}</p>
+                </div>
+            </ng-container>
+        </div>
+        <div *ngIf="!selectedResult" class="empty-state text-center py-5">
+            <i class="pi pi-eye text-5xl text-300 mb-3 block"></i>
+            <p class="text-500 m-0">Select an item to preview</p>
+        </div>
+    </div>
+</p-dialog>
+
+<!-- API Key Configuration Dialog -->
+<app-onboarding-dialog *ngIf="showApiKeyDialog()" [forceShow]="true" (apiKeySaved)="onApiKeySaved()"
+    (dialogClosed)="onApiKeyDialogClosed()">
+</app-onboarding-dialog>

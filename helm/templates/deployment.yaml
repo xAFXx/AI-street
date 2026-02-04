@@ -1,0 +1,89 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "arvenza.fullname" . }}
+  labels:
+    {{- include "arvenza.labels" . | nindent 4 }}
+spec:
+{{- if not .Values.autoscaling.enabled }}
+  replicas: {{ .Values.replicaCount }}
+{{- end }}
+  selector:
+    matchLabels:
+      {{- include "arvenza.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+    {{- with .Values.podAnnotations }}
+      annotations:
+        {{- toYaml . | nindent 8 }}
+    {{- end }}
+      labels:
+        {{- include "arvenza.selectorLabels" . | nindent 8 }}
+    spec:
+      {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      serviceAccountName: {{ include "arvenza.serviceAccountName" . }}
+      securityContext:
+        {{- toYaml .Values.podSecurityContext | nindent 8 }}
+      containers:
+        - name: {{ .Chart.Name }}
+          env:
+          
+          {{- if .Values.metaApplicationName }}
+          - name: ApplicationName
+            value: {{ .Values.metaApplicationName }}
+          {{- end }}
+          {{- if .Values.metaEnvironmentDescription }}
+          - name: MetaEnvironmentDescription
+            value: {{ .Values.metaEnvironmentDescription }}
+          {{- end }}
+          {{- if .Values.metaEnvironmentName }}
+          - name: MetaEnvironmentName
+            value: {{ .Values.metaEnvironmentName }}
+          {{- end }}
+          {{- if .Values.apihosturl }}
+          - name: ApiUrl
+            value: "{{ .Values.apihosturl }}"
+          {{- end }}
+          {{- if .Values.apiclienturl }}
+          - name: UiUrl
+            value: "{{ .Values.apiclienturl }}"
+          {{- end }}
+          securityContext:
+            {{- toYaml .Values.securityContext | nindent 12 }}
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          ports:
+            - name: {{ .Values.service.name }}
+              containerPort: {{ .Values.service.targetPort }}
+              protocol: TCP
+          livenessProbe:
+            httpGet:
+              path: /healthCheck.txt
+              port: {{ .Values.service.name }}
+          readinessProbe:
+            httpGet:
+              path: /healthCheck.txt
+              port: {{ .Values.service.name }}
+          resources:
+            {{- toYaml .Values.resources | nindent 12 }}
+      {{- with .Values.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      affinity:
+        podAntiAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+          - labelSelector:
+              matchExpressions:
+              - key: app.kubernetes.io/instance
+                operator: In
+                values:
+                - {{ .Release.Name }}
+            topologyKey: "kubernetes.io/hostname"
+      {{- with .Values.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
