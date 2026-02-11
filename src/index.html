@@ -1,16 +1,460 @@
 <!doctype html>
-<html lang="en">
+<html lang="en" dir="ltr">
 
-<head>
+<head prefix="og: http://ogp.me/ns#">
   <meta charset="utf-8">
-  <title>APPRX True North</title>
+  <title>{{applicationName}}</title>
   <base href="/">
+
+  <meta http-equiv="cache-control" content="no-cache, must-revalidate, post-check=0, pre-check=0">
+  <meta http-equiv="expires" content="0">
+  <meta http-equiv="pragma" content="no-cache">
+
+  <meta property="og:title" content="{{MetaEnvironmentName}}" />
+  <meta property="og:image" content="" />
+  <meta property="og:description" content="{{MetaEnvironmentDescription}}" />
+  <meta property="og:url" content="">
+
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <link rel="icon" type="image/x-icon" href="favicon.ico">
+  <meta name="author" content="">
+  <meta name="description" content="">
+  <link rel="icon" sizes="16x19" type="image/png" href="favicon.png">
+
+  <style>
+    /* ── Pre-bootstrap loading screen ── */
+    .preboot-loading {
+      position: fixed;
+      inset: 0;
+      z-index: 99999;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: linear-gradient(145deg, #0a0a1a 0%, #111133 50%, #1a1a3e 100%);
+      font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+      color: #e0e0f0;
+      overflow: hidden;
+    }
+
+    /* Subtle animated gradient overlay */
+    .preboot-loading::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(ellipse at 30% 20%, rgba(99, 102, 241, 0.12) 0%, transparent 60%),
+        radial-gradient(ellipse at 70% 80%, rgba(139, 92, 246, 0.08) 0%, transparent 50%);
+      animation: preboot-glow 6s ease-in-out infinite alternate;
+    }
+
+    @keyframes preboot-glow {
+      0% {
+        opacity: 0.6;
+      }
+
+      100% {
+        opacity: 1;
+      }
+    }
+
+    .preboot-card {
+      position: relative;
+      width: 420px;
+      max-width: 90vw;
+      padding: 40px 36px;
+      border-radius: 20px;
+      background: rgba(255, 255, 255, 0.04);
+      backdrop-filter: blur(24px);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      box-shadow: 0 8px 40px rgba(0, 0, 0, 0.4),
+        0 0 0 1px rgba(255, 255, 255, 0.03) inset;
+    }
+
+    /* Logo area */
+    .preboot-logo {
+      text-align: center;
+      margin-bottom: 28px;
+    }
+
+    .preboot-logo img {
+      max-height: 48px;
+      max-width: 200px;
+      object-fit: contain;
+      filter: drop-shadow(0 2px 8px rgba(0, 0, 0, 0.3));
+    }
+
+    .preboot-logo-text {
+      font-size: 22px;
+      font-weight: 600;
+      letter-spacing: 0.5px;
+      background: linear-gradient(135deg, #a5b4fc, #818cf8);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    /* Welcome greeting */
+    .preboot-greeting {
+      text-align: center;
+      font-size: 13px;
+      color: rgba(255, 255, 255, 0.45);
+      margin-bottom: 24px;
+      min-height: 18px;
+    }
+
+    /* Step list */
+    .preboot-steps {
+      list-style: none;
+      padding: 0;
+      margin: 0 0 8px 0;
+    }
+
+    .preboot-step {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 10px 0;
+      font-size: 14px;
+      color: rgba(255, 255, 255, 0.35);
+      transition: color 0.3s ease;
+    }
+
+    .preboot-step.active {
+      color: rgba(255, 255, 255, 0.9);
+    }
+
+    .preboot-step.done {
+      color: rgba(255, 255, 255, 0.55);
+    }
+
+    .preboot-step.error {
+      color: #f87171;
+    }
+
+    /* Step icons */
+    .preboot-step-icon {
+      width: 22px;
+      height: 22px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      border-radius: 50%;
+    }
+
+    .preboot-step.active .preboot-step-icon {
+      background: rgba(99, 102, 241, 0.2);
+    }
+
+    .preboot-step.done .preboot-step-icon {
+      background: rgba(52, 211, 153, 0.2);
+      color: #34d399;
+    }
+
+    .preboot-step.error .preboot-step-icon {
+      background: rgba(248, 113, 113, 0.2);
+      color: #f87171;
+    }
+
+    /* Spinner for active step */
+    .preboot-spinner {
+      width: 14px;
+      height: 14px;
+      border: 2px solid rgba(99, 102, 241, 0.3);
+      border-top-color: #818cf8;
+      border-radius: 50%;
+      animation: preboot-spin 0.8s linear infinite;
+    }
+
+    @keyframes preboot-spin {
+      to {
+        transform: rotate(360deg);
+      }
+    }
+
+    /* ── Maintenance screen (hidden by default) ── */
+    .preboot-maintenance {
+      display: none;
+      position: fixed;
+      inset: 0;
+      z-index: 100000;
+      align-items: center;
+      justify-content: center;
+      background: linear-gradient(145deg, #0a0a1a 0%, #1a0a1a 50%, #1a1a3e 100%);
+      font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+      color: #e0e0f0;
+    }
+
+    .preboot-maintenance.visible {
+      display: flex;
+    }
+
+    .preboot-maintenance::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(ellipse at 50% 30%, rgba(248, 113, 113, 0.08) 0%, transparent 60%);
+    }
+
+    .maintenance-card {
+      position: relative;
+      width: 460px;
+      max-width: 90vw;
+      padding: 44px 40px;
+      border-radius: 20px;
+      background: rgba(255, 255, 255, 0.04);
+      backdrop-filter: blur(24px);
+      border: 1px solid rgba(248, 113, 113, 0.15);
+      box-shadow: 0 8px 40px rgba(0, 0, 0, 0.5);
+      text-align: center;
+    }
+
+    .maintenance-icon {
+      font-size: 48px;
+      margin-bottom: 20px;
+      filter: drop-shadow(0 4px 12px rgba(248, 113, 113, 0.3));
+    }
+
+    .maintenance-title {
+      font-size: 20px;
+      font-weight: 600;
+      margin-bottom: 12px;
+      color: #f0f0ff;
+    }
+
+    .maintenance-message {
+      font-size: 14px;
+      color: rgba(255, 255, 255, 0.55);
+      line-height: 1.6;
+      margin-bottom: 28px;
+    }
+
+    .maintenance-message .maintenance-error-detail {
+      display: block;
+      margin-top: 8px;
+      font-size: 12px;
+      color: rgba(248, 113, 113, 0.7);
+      font-family: 'Consolas', 'Courier New', monospace;
+    }
+
+    .maintenance-greeting {
+      font-size: 13px;
+      color: rgba(255, 255, 255, 0.4);
+      margin-bottom: 24px;
+    }
+
+    .maintenance-retry {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 12px 28px;
+      border: 1px solid rgba(99, 102, 241, 0.4);
+      border-radius: 10px;
+      background: rgba(99, 102, 241, 0.15);
+      color: #a5b4fc;
+      font-size: 14px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .maintenance-retry:hover {
+      background: rgba(99, 102, 241, 0.25);
+      border-color: rgba(99, 102, 241, 0.6);
+      transform: translateY(-1px);
+    }
+
+    .maintenance-retry:active {
+      transform: translateY(0);
+    }
+
+    .maintenance-logo {
+      margin-bottom: 24px;
+    }
+
+    .maintenance-logo img {
+      max-height: 48px;
+      max-width: 200px;
+      object-fit: contain;
+      filter: drop-shadow(0 2px 8px rgba(0, 0, 0, 0.3));
+    }
+  </style>
+
+  <script>
+    /**
+     * Pre-bootstrap loading screen controller.
+     * Runs BEFORE any bundled JS — uses only vanilla DOM APIs.
+     */
+    (function () {
+      var LS_LOGO_KEY = 'apprx_cached_logo';
+      var LS_USER_KEY = 'ai-street-manager-user_info';
+
+      // ── Populate cached logo ──
+      function initLogo() {
+        var cachedLogo = null;
+        try { cachedLogo = localStorage.getItem(LS_LOGO_KEY); } catch (e) { /* ignore */ }
+
+        var logoEl = document.getElementById('preboot-logo-area');
+        if (logoEl) {
+          if (cachedLogo) {
+            logoEl.innerHTML = '<img src="' + cachedLogo + '" alt="Logo">';
+          }
+          // else: already shows text fallback from HTML
+        }
+      }
+
+      // ── Populate cached username ──
+      function initGreeting() {
+        var userName = '';
+        try {
+          var raw = localStorage.getItem(LS_USER_KEY);
+          if (raw) {
+            var user = JSON.parse(raw);
+            userName = user.name || user.userName || user.surname || '';
+          }
+        } catch (e) { /* ignore */ }
+
+        var greetEl = document.getElementById('preboot-greeting');
+        if (greetEl && userName) {
+          greetEl.textContent = 'Welcome back, ' + userName;
+        }
+      }
+
+      // ── Expose global helpers for AppPreBootstrap / main.ts ──
+      window.__prebootLoading = {
+        /** Mark a step as active, done, or error. status: 'active' | 'done' | 'error' */
+        setStep: function (stepId, status) {
+          var el = document.getElementById('preboot-step-' + stepId);
+          if (!el) return;
+          el.className = 'preboot-step ' + status;
+          var iconEl = el.querySelector('.preboot-step-icon');
+          if (!iconEl) return;
+          if (status === 'active') {
+            iconEl.innerHTML = '<div class="preboot-spinner"></div>';
+          } else if (status === 'done') {
+            iconEl.innerHTML = '✓';
+          } else if (status === 'error') {
+            iconEl.innerHTML = '✗';
+          }
+        },
+
+        /** Show the maintenance screen and hide the loading screen */
+        showMaintenance: function (errorMessage) {
+          // Hide loading
+          var loading = document.getElementById('preboot-loading');
+          if (loading) loading.style.display = 'none';
+
+          // Populate maintenance screen
+          var maint = document.getElementById('preboot-maintenance');
+          if (!maint) return;
+
+          // Logo
+          var cachedLogo = null;
+          try { cachedLogo = localStorage.getItem(LS_LOGO_KEY); } catch (e) { }
+          var logoArea = document.getElementById('maintenance-logo-area');
+          if (logoArea && cachedLogo) {
+            logoArea.innerHTML = '<img src="' + cachedLogo + '" alt="Logo">';
+          }
+
+          // Greeting
+          var userName = '';
+          try {
+            var raw = localStorage.getItem(LS_USER_KEY);
+            if (raw) {
+              var user = JSON.parse(raw);
+              userName = user.name || user.userName || user.surname || '';
+            }
+          } catch (e) { }
+
+          var greetEl = document.getElementById('maintenance-greeting');
+          if (greetEl && userName) {
+            greetEl.textContent = 'Hi ' + userName + ', we\'re sorry for the inconvenience.';
+          }
+
+          // Error detail
+          if (errorMessage) {
+            var detailEl = document.getElementById('maintenance-error-detail');
+            if (detailEl) detailEl.textContent = errorMessage;
+          }
+
+          maint.classList.add('visible');
+        },
+
+        /** Remove the loading screen entirely (called after Angular bootstraps) */
+        destroy: function () {
+          var loading = document.getElementById('preboot-loading');
+          if (loading) loading.remove();
+          var maint = document.getElementById('preboot-maintenance');
+          if (maint) maint.remove();
+        }
+      };
+
+      // Run on DOMContentLoaded (or immediately if already loaded)
+      if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', function () { initLogo(); initGreeting(); });
+      } else {
+        initLogo();
+        initGreeting();
+      }
+    })();
+  </script>
 </head>
 
 <body>
-  <app-root></app-root>
+  <!-- ── Loading Screen (inside app-root — Angular replaces on bootstrap) ── -->
+  <app-root>
+    <div class="preboot-loading" id="preboot-loading">
+      <div class="preboot-card">
+
+        <div class="preboot-logo" id="preboot-logo-area">
+          <div class="preboot-logo-text">Loading&hellip;</div>
+        </div>
+
+        <div class="preboot-greeting" id="preboot-greeting"></div>
+
+        <ul class="preboot-steps">
+          <li class="preboot-step active" id="preboot-step-config">
+            <span class="preboot-step-icon">
+              <div class="preboot-spinner"></div>
+            </span>
+            <span>Loading configuration</span>
+          </li>
+          <li class="preboot-step" id="preboot-step-tenant">
+            <span class="preboot-step-icon"></span>
+            <span>Resolving tenant</span>
+          </li>
+          <li class="preboot-step" id="preboot-step-user">
+            <span class="preboot-step-icon"></span>
+            <span>Loading user session</span>
+          </li>
+          <li class="preboot-step" id="preboot-step-angular">
+            <span class="preboot-step-icon"></span>
+            <span>Starting application</span>
+          </li>
+        </ul>
+
+      </div>
+    </div>
+  </app-root>
+
+  <!-- ── Maintenance Screen (outside app-root so Angular can't clobber it) ── -->
+  <div class="preboot-maintenance" id="preboot-maintenance">
+    <div class="maintenance-card">
+      <div class="maintenance-logo" id="maintenance-logo-area">
+        <div class="preboot-logo-text">Service Unavailable</div>
+      </div>
+      <div class="maintenance-icon">⚠️</div>
+      <div class="maintenance-title">Taking a Short Break</div>
+      <div class="maintenance-greeting" id="maintenance-greeting"></div>
+      <div class="maintenance-message">
+        We're having a little trouble connecting right now. Sit tight — things usually sort themselves out quickly.
+        <span class="maintenance-error-detail" id="maintenance-error-detail"></span>
+      </div>
+      <button class="maintenance-retry" onclick="location.reload()">
+        ↻ Try Again
+      </button>
+    </div>
+  </div>
+
 </body>
 
 </html>
