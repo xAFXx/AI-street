@@ -5,7 +5,7 @@
 replicaCount: 2
 
 image:
-  repository: ublion/arvenza
+  repository: ublion/nxtgenai
   pullPolicy: IfNotPresent
   # Overrides the image tag whose default is the chart appVersion.
   tag: "TagVersionToBeReplaced"
