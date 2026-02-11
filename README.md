@@ -1,59 +1,55 @@
-# AiStreetManager
+# APPRX 2.0 — AI Street
 
-This project was generated using [Angular CLI](https://github.com/angular/angular-cli) version 21.1.0.
+**AI Street** is the next-generation enterprise platform by APPRX that brings AI-powered automation, compliance reporting, and intelligent data management into a single, unified workspace.
 
-## Development server
+## What It Does
 
-To start a local development server, run:
+| Capability | Description |
+|------------|-------------|
+| **App Nexus** | A modular marketplace where organisations install only the tools they need |
+| **True North** | AI-assisted compliance reporting — frameworks, audit standards, and guided report wizards |
+| **AI Street Hub** | Manage AI models, datasets, and processing pipelines from one dashboard |
+| **Enterprise Search** | Natural-language search across all connected data sources with AI chat |
+| **Document Management** | Upload, extract, and classify documents using AI vision |
+| **VDB Manager** | Inspect and manage vector database collections powering semantic search |
 
-```bash
-ng serve
-```
+## Key Highlights
 
-Once the server is running, open your browser and navigate to `http://localhost:4200/`. The application will automatically reload whenever you modify any of the source files.
+- **Multi-tenant SaaS** — each customer gets an isolated, branded workspace
+- **AI-first** — OpenAI GPT-4 Vision, streaming chat, and SignalR real-time updates built in
+- **Modular** — apps are installed per-tenant; only active features load
+- **Enterprise-grade** — role-based access, audit trails, Kubernetes deployment via Helm
 
-## Code scaffolding
+## Tech Stack
 
-Angular CLI includes powerful code scaffolding tools. To generate a new component, run:
+| Layer | Technology |
+|-------|-----------|
+| Frontend | Angular 21, PrimeNG v21, Less |
+| Backend | ASP.NET ABP Framework (multi-tenant) |
+| AI | OpenAI API (GPT-4 Vision, streaming) |
+| Real-time | SignalR |
+| Deployment | Docker + Kubernetes (Helm) |
 
-```bash
-ng generate component component-name
-```
+## Documentation
 
-For a complete list of available schematics (such as `components`, `directives`, or `pipes`), run:
+| Document | Description |
+|----------|-------------|
+| [Developer Guide](docs/DEVELOPER_GUIDE.md) | Setup, build configs, proxy, deployment, and code generation |
+| [Architecture Overview](docs/00-architecture.md) | Tech stack, project structure, routing, state management |
+| [Documentation Index](docs/INDEX.md) | Feature-level context docs for all modules |
 
-```bash
-ng generate --help
-```
-
-## Building
-
-To build the project run:
-
-```bash
-ng build
-```
-
-This will compile your project and store the build artifacts in the `dist/` directory. By default, the production build optimizes your application for performance and speed.
-
-## Running unit tests
-
-To execute unit tests with the [Vitest](https://vitest.dev/) test runner, use the following command:
-
-```bash
-ng test
-```
-
-## Running end-to-end tests
-
-For end-to-end (e2e) testing, run:
+## Quick Start
 
 ```bash
-ng e2e
+# Install dependencies
+npm install
+
+# Start the development server
+npm run dev-apprx
 ```
 
-Angular CLI does not come with an end-to-end testing framework by default. You can choose one that suits your needs.
+See the [Developer Guide](docs/DEVELOPER_GUIDE.md) for full setup instructions, build configurations, and deployment details.
 
-## Additional Resources
+## License
 
-For more information on using the Angular CLI, including detailed command references, visit the [Angular CLI Overview and Command Reference](https://angular.dev/tools/cli) page.
+Proprietary — © APPRX. All rights reserved.

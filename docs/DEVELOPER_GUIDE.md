@@ -195,8 +195,6 @@ src/app/
 │   ├── helpers/                   XmlHttpRequestHelper, SubdomainTenancyNameFinder
 │   └── services/                  Shared services
 │
-├── docs/                          ─── Agent context docs (12 files)
-│
 ├── app.config.ts                  Angular providers (PrimeNG, HTTP, router)
 ├── app.routes.ts                  All routes (lazy-loaded)
 ├── app.ts                         Root component
