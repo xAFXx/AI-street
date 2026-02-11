@@ -1,0 +1,441 @@
+<!-- API Key Configuration Dialog -->
+<app-onboarding-dialog [forceShow]="showApiKeyDialog()" (apiKeySaved)="onApiKeySaved()"></app-onboarding-dialog>
+
+<div class="tax-management">
+    <!-- Header -->
+    <div class="page-header">
+        <div class="header-left">
+            <h1>Tax Validation</h1>
+            <span class="subtitle">AI-assisted GLA assignment workflow</span>
+        </div>
+        <div class="header-right">
+            <div class="view-toggle">
+                <button pButton [icon]="viewMode() === 'validation' ? 'pi pi-list' : 'pi pi-th-large'" [text]="true"
+                    (click)="toggleViewMode()"
+                    [pTooltip]="viewMode() === 'validation' ? 'Switch to List View' : 'Switch to Validation Mode'">
+                </button>
+            </div>
+            <div class="stats">
+                <span class="stat queue">
+                    <i class="pi pi-inbox"></i>
+                    {{ currentQueueIndex() }} / {{ filteredTaxes().length }}
+                </span>
+                <span class="stat pending">
+                    <i class="pi pi-clock"></i>
+                    {{ pendingCount() }} pending
+                </span>
+            </div>
+        </div>
+    </div>
+
+    <!-- VALIDATION MODE: Card-based AI workflow -->
+    @if (viewMode() === 'validation') {
+    <div class="validation-view">
+        @if (selectedTax()) {
+        <div class="validation-container">
+            <!-- Left: PDF Preview -->
+            <div class="pdf-preview-card">
+                <div class="card-header">
+                    <h3><i class="pi pi-file-pdf"></i> Original Document</h3>
+                </div>
+                <div class="card-body pdf-body">
+                    @if (isLoadingPdf()) {
+                    <div class="loading-state">
+                        <p-progressSpinner strokeWidth="3" animationDuration="1s"></p-progressSpinner>
+                        <span>Loading document...</span>
+                    </div>
+                    } @else if (pdfUrl()) {
+                    <object [data]="pdfUrl()" type="application/pdf" class="pdf-viewer">
+                        <p>PDF preview not available.
+                            <a [href]="pdfUrl()" target="_blank">Open in new tab</a>
+                        </p>
+                    </object>
+                    } @else {
+                    <div class="empty-state">
+                        <i class="pi pi-file-pdf"></i>
+                        <span>No document available</span>
+                    </div>
+                    }
+                </div>
+            </div>
+
+            <!-- Right: AI Proposal Card -->
+            <div class="proposal-card">
+                <div class="card-header">
+                    <h3><i class="pi pi-sparkles"></i> AI Proposal</h3>
+                    <span class="invoice-badge">{{ selectedTax()!.invoiceNumber || 'N/A' }}</span>
+                </div>
+                <div class="card-body">
+                    <!-- Invoice Summary -->
+                    <div class="invoice-summary">
+                        <div class="summary-row">
+                            <span class="label">Document</span>
+                            <span class="value">{{ selectedTax()!.documentName || '-' }}</span>
+                        </div>
+                        <div class="summary-row">
+                            <span class="label">Tax Type</span>
+                            <span class="value highlight">{{ selectedTax()!.vatReasone || selectedTax()!.vat || '-'
+                                }}</span>
+                        </div>
+                        <div class="summary-row amount-row">
+                            <span class="label">Amount</span>
+                            <span class="value amount">{{ formatCurrency(selectedTax()!.taxAmount || 0) }}</span>
+                        </div>
+                    </div>
+
+                    <div class="proposal-divider"></div>
+
+                    <!-- AI Proposal Display -->
+                    @if (isLoadingProposal()) {
+                    <div class="proposal-loading">
+                        <div class="ai-thinking">
+                            <i class="pi pi-sparkles spinning"></i>
+                            <span>AI is analyzing document...</span>
+                        </div>
+                        <p-progressSpinner strokeWidth="3" animationDuration="0.8s"></p-progressSpinner>
+                    </div>
+                    } @else if (aiProposal()) {
+                    <div class="ai-result">
+                        <div class="proposed-gla">
+                            <span class="proposal-label">Proposed GLA Category</span>
+                            <div class="gla-card">
+                                <div class="gla-main">
+                                    <span class="gla-code">{{ aiProposal()!.suggestedMapping?.glaCode || 'N/A' }}</span>
+                                    <span class="gla-desc">{{ aiProposal()!.suggestedMapping?.glaDescription ||
+                                        'Unknown' }}</span>
+                                </div>
+                                <span class="period-label">{{ aiProposal()!.suggestedMapping?.periodName }}</span>
+                            </div>
+                        </div>
+
+                        <div class="confidence-section">
+                            <div class="confidence-header">
+                                <span>Confidence</span>
+                                <span class="confidence-value" [class]="getConfidenceColor(aiProposal()!.confidence)">
+                                    {{ aiProposal()!.confidence }}%
+                                </span>
+                            </div>
+                            <div class="confidence-bar">
+                                <div class="confidence-fill"
+                                    [ngStyle]="getConfidenceBarStyle(aiProposal()!.confidence)"></div>
+                            </div>
+                        </div>
+
+                        <div class="reasoning">
+                            <i class="pi pi-info-circle"></i>
+                            <span>{{ aiProposal()!.reasoning }}</span>
+                        </div>
+                    </div>
+                    } @else if (selectedTax()!.bookingPeriodReference) {
+                    <!-- Already assigned -->
+                    <div class="already-assigned">
+                        <i class="pi pi-check-circle"></i>
+                        <span>Already assigned to:</span>
+                        <strong>{{ selectedTax()!.periodMappingHumanReadble }}</strong>
+                        <button pButton label="Re-analyze with AI" icon="pi pi-sparkles" [text]="true"
+                            [loading]="isLoadingProposal()" (click)="loadAiProposal(selectedTax()!)"></button>
+                    </div>
+                    } @else {
+                    <div class="no-proposal">
+                        <i class="pi pi-exclamation-circle"></i>
+                        <span>Unable to generate AI proposal</span>
+                        <button pButton label="Select Manually" icon="pi pi-list" [text]="true"
+                            (click)="openChangeDialog()"></button>
+                    </div>
+                    }
+
+                    <!-- Manual Selection Dropdown (when change is clicked) -->
+                    @if (showChangeOptions()) {
+                    <div class="manual-select">
+                        <p-select [options]="glaPeriodMappings()" [(ngModel)]="selectedGlaMapping" optionLabel="name"
+                            optionValue="id" [filter]="true" filterBy="glaCode,glaDescription,name"
+                            placeholder="Select GLA Period Mapping" styleClass="gla-dropdown-full" [showClear]="true">
+                            <ng-template pTemplate="item" let-mapping>
+                                <div class="gla-option">
+                                    <span class="gla-code">{{ mapping.glaCode }}</span>
+                                    <span class="gla-desc">{{ mapping.glaDescription }}</span>
+                                    <span class="period-name">{{ mapping.periodName }}</span>
+                                </div>
+                            </ng-template>
+                        </p-select>
+                        <button pButton label="Save Selection" icon="pi pi-check" [loading]="isSaving()"
+                            [disabled]="!selectedGlaMapping()" (click)="saveManualSelection()"></button>
+                    </div>
+                    }
+                </div>
+
+                <!-- Quick Actions - Large Touch Targets -->
+                <div class="quick-actions">
+                    @if (!showChangeOptions()) {
+                    <button class="action-btn accept" (click)="acceptProposal()"
+                        [disabled]="!aiProposal()?.mappingId || isSaving()" [class.loading]="isSaving()">
+                        <i class="pi pi-check"></i>
+                        <span>Accept</span>
+                    </button>
+                    <button class="action-btn change" (click)="openChangeDialog()" [disabled]="isLoadingProposal()">
+                        <i class="pi pi-pencil"></i>
+                        <span>Change</span>
+                    </button>
+                    <button class="action-btn skip" (click)="skipToNext()" [disabled]="!hasNextTax()">
+                        <i class="pi pi-forward"></i>
+                        <span>Skip</span>
+                    </button>
+                    } @else {
+                    <button class="action-btn cancel" (click)="showChangeOptions.set(false)">
+                        <i class="pi pi-times"></i>
+                        <span>Cancel</span>
+                    </button>
+                    }
+                </div>
+
+                <!-- Navigation -->
+                <div class="card-navigation">
+                    <button pButton icon="pi pi-chevron-left" label="Previous" [text]="true" [disabled]="!hasPrevTax()"
+                        (click)="selectPrevTax()"></button>
+                    <button pButton icon="pi pi-chevron-right" iconPos="right" label="Next" [text]="true"
+                        [disabled]="!hasNextTax()" (click)="selectNextTax()"></button>
+                </div>
+            </div>
+        </div>
+        } @else if (isLoadingTaxes()) {
+        <div class="loading-state centered">
+            <p-progressSpinner strokeWidth="3" animationDuration="1s"></p-progressSpinner>
+            <span>Loading tax items...</span>
+        </div>
+        } @else {
+        <div class="empty-state centered">
+            <i class="pi pi-check-circle"></i>
+            <span>All items have been processed!</span>
+        </div>
+        }
+
+        <!-- AI Activity Log Panel (Collapsible) -->
+        @if (showLogPanel()) {
+        <div class="log-panel">
+            <div class="log-header" (click)="showLogPanel.set(!showLogPanel())">
+                <h4><i class="pi pi-terminal"></i> AI Activity Log</h4>
+                <div class="log-actions">
+                    <button pButton icon="pi pi-trash" [text]="true" pTooltip="Clear logs"
+                        (click)="clearLogs(); $event.stopPropagation()"></button>
+                    <button pButton icon="pi pi-chevron-down" [text]="true"></button>
+                </div>
+            </div>
+            <div class="log-content">
+                @if (aiActivityLog().length === 0) {
+                <span class="log-empty">No activity yet. Select a document to see AI analysis.</span>
+                } @else {
+                @for (log of aiActivityLog(); track $index) {
+                <div class="log-entry">{{ log }}</div>
+                }
+                }
+            </div>
+        </div>
+        }
+    </div>
+    }
+
+    <!-- LIST MODE: Traditional three-panel layout -->
+    @if (viewMode() === 'list') {
+    <div class="filters-bar">
+        <div class="filter-group">
+            <p-select [options]="statusOptions" [(ngModel)]="statusFilter"
+                (ngModelChange)="onStatusFilterChange($event)" placeholder="Filter by status"
+                styleClass="status-filter">
+            </p-select>
+        </div>
+        <div class="search-group">
+            <span class="p-input-icon-left">
+                <i class="pi pi-search"></i>
+                <input type="text" pInputText [(ngModel)]="searchText" placeholder="Search invoices..."
+                    (keyup.enter)="applySearch()">
+            </span>
+            <button pButton icon="pi pi-search" [text]="true" (click)="applySearch()" pTooltip="Search"></button>
+        </div>
+    </div>
+
+    <div class="main-content">
+        <!-- Left Panel: Tax List -->
+        <div class="panel tax-list-panel">
+            <div class="panel-header">
+                <h3>Tax Items</h3>
+                <span class="count">{{ filteredTaxes().length }} / {{ totalCount() }}</span>
+            </div>
+
+            <div class="panel-content">
+                @if (isLoadingTaxes()) {
+                <div class="loading-state">
+                    <p-progressSpinner strokeWidth="3" animationDuration="1s"></p-progressSpinner>
+                    <span>Loading taxes...</span>
+                </div>
+                } @else if (filteredTaxes().length === 0) {
+                <div class="empty-state">
+                    <i class="pi pi-inbox"></i>
+                    <span>No tax items found</span>
+                </div>
+                } @else {
+                <div class="tax-items">
+                    @for (tax of filteredTaxes(); track trackByTaxId($index, tax)) {
+                    <div class="tax-item" [class.selected]="tax.id === selectedTaxId()"
+                        [class.validated]="tax.status === 'validated'" [class.pending]="tax.status === 'pending'"
+                        (click)="selectTax(tax)">
+                        <div class="tax-item-header">
+                            <span class="invoice-number">{{ tax.invoiceNumber || 'No invoice #' }}</span>
+                            <p-tag [value]="tax.status" [severity]="getStatusSeverity(tax.status)">
+                            </p-tag>
+                        </div>
+                        <div class="tax-item-body">
+                            <span class="supplier">{{ tax.documentName || 'Unknown document' }}</span>
+                            <span class="amount">€ {{ tax.taxAmount || 0 }}</span>
+                        </div>
+                        <div class="tax-item-footer">
+                            <span class="date">{{ formatDate(tax.creationTime) }}</span>
+                            @if (tax.periodMappingHumanReadble) {
+                            <span class="gla-code">{{ tax.periodMappingHumanReadble }}</span>
+                            }
+                        </div>
+                    </div>
+                    }
+                </div>
+
+                @if (taxes().length < totalCount()) { <div class="load-more">
+                    <button pButton label="Load More" [text]="true" icon="pi pi-chevron-down" (click)="loadMore()">
+                    </button>
+            </div>
+            }
+            }
+        </div>
+    </div>
+
+    <!-- Center Panel: Tax Details & GLA Assignment -->
+    <div class="panel details-panel">
+        @if (selectedTax()) {
+        <div class="panel-header">
+            <h3>Tax Details</h3>
+            <div class="nav-buttons">
+                <button pButton icon="pi pi-chevron-left" [text]="true" [disabled]="!hasPrevTax()"
+                    (click)="selectPrevTax()" pTooltip="Previous"></button>
+                <button pButton icon="pi pi-chevron-right" [text]="true" [disabled]="!hasNextTax()"
+                    (click)="selectNextTax()" pTooltip="Next"></button>
+            </div>
+        </div>
+
+        <div class="panel-content">
+            <!-- Tax Info -->
+            <div class="info-section">
+                <div class="info-grid">
+                    <div class="info-item">
+                        <label>Invoice Number</label>
+                        <span>{{ selectedTax()!.invoiceNumber || '-' }}</span>
+                    </div>
+                    <div class="info-item">
+                        <label>Document Type</label>
+                        <span>{{ selectedTax()!.documentType?.name || '-' }}</span>
+                    </div>
+                    <div class="info-item">
+                        <label>Document</label>
+                        <span>{{ selectedTax()!.documentName || '-' }}</span>
+                    </div>
+                    <div class="info-item">
+                        <label>Invoice Amount</label>
+                        <span class="amount-value">€ {{ selectedTax()!.invoiceAmount || 0 }}</span>
+                    </div>
+                    <div class="info-item">
+                        <label>Tax Amount</label>
+                        <span class="tax-value">€ {{ selectedTax()!.taxAmount || 0 }}</span>
+                    </div>
+                    <div class="info-item">
+                        <label>Tax %</label>
+                        <span>{{ selectedTax()!.taxPercentage || 0 }}%</span>
+                    </div>
+                </div>
+            </div>
+
+            <p-divider></p-divider>
+
+            <!-- GLA Assignment Section -->
+            <div class="gla-section">
+                <h4>GLA Assignment</h4>
+
+                @if (isLoadingMappings()) {
+                <p-progressSpinner strokeWidth="3" animationDuration="1s"></p-progressSpinner>
+                } @else {
+                <div class="gla-selector">
+                    <p-select [options]="glaPeriodMappings()" [(ngModel)]="selectedGlaMapping"
+                        (ngModelChange)="onGlaMappingChange($event)" optionLabel="name" optionValue="id" [filter]="true"
+                        filterBy="glaCode,glaDescription,name" placeholder="Select GLA Period Mapping"
+                        styleClass="gla-dropdown" [showClear]="true">
+                        <ng-template pTemplate="item" let-mapping>
+                            <div class="gla-option">
+                                <span class="gla-code">{{ mapping.glaCode }}</span>
+                                <span class="gla-desc">{{ mapping.glaDescription }}</span>
+                                <span class="period-name">{{ mapping.periodName }}</span>
+                            </div>
+                        </ng-template>
+                    </p-select>
+
+                    <button pButton label="Save Assignment" icon="pi pi-save" [loading]="isSaving()"
+                        [disabled]="!selectedGlaMapping() || selectedGlaMapping() === selectedTax()!.bookingPeriodReference"
+                        (click)="saveGlaAssignment()">
+                    </button>
+                </div>
+
+                @if (selectedTax()!.periodMappingHumanReadble) {
+                <div class="current-gla">
+                    <label>Current Assignment:</label>
+                    <span class="gla-badge">
+                        {{ selectedTax()!.periodMappingHumanReadble }}
+                    </span>
+                </div>
+                }
+                }
+            </div>
+
+            <p-divider></p-divider>
+
+            <!-- Action Buttons -->
+            <div class="action-section">
+                <button pButton label="Validate" icon="pi pi-check" severity="success" [loading]="isValidating()"
+                    [disabled]="selectedTax()!.status === 'validated'" (click)="validateCurrentTax()">
+                </button>
+                <button pButton label="Skip" icon="pi pi-forward" [text]="true" [disabled]="!hasNextTax()"
+                    (click)="skipToNext()">
+                </button>
+            </div>
+        </div>
+        } @else {
+        <div class="empty-state">
+            <i class="pi pi-file"></i>
+            <span>Select a tax item to view details</span>
+        </div>
+        }
+    </div>
+
+    <!-- Right Panel: PDF Preview -->
+    <div class="panel pdf-panel">
+        <div class="panel-header">
+            <h3>Original Document</h3>
+        </div>
+
+        <div class="panel-content pdf-content">
+            @if (isLoadingPdf()) {
+            <div class="loading-state">
+                <p-progressSpinner strokeWidth="3" animationDuration="1s"></p-progressSpinner>
+                <span>Loading document...</span>
+            </div>
+            } @else if (pdfUrl()) {
+            <object [data]="pdfUrl()" type="application/pdf" class="pdf-viewer">
+                <p>PDF preview not available.
+                    <a [href]="pdfUrl()" target="_blank">Open in new tab</a>
+                </p>
+            </object>
+            } @else {
+            <div class="empty-state">
+                <i class="pi pi-file-pdf"></i>
+                <span>No document selected</span>
+            </div>
+            }
+        </div>
+    </div>
+</div>
+}
+</div>

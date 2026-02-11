@@ -16,6 +16,17 @@ export const authInterceptor: HttpInterceptorFn = (req: HttpRequest<unknown>, ne
         return next(req);
     }
 
+    // Skip adding token for external public APIs (to avoid CORS issues)
+    const externalApis = [
+        'api.pdok.nl',           // Dutch BAG/address API
+        'geo.leefbaarometer.nl', // Dutch livability API
+        'api.openai.com'         // OpenAI API (handles its own auth)
+    ];
+    const isExternalApi = externalApis.some(domain => req.url.includes(domain));
+    if (isExternalApi) {
+        return next(req);
+    }
+
     const token = storageService.load<string>(AUTH_TOKEN_KEY);
 
     if (token) {

@@ -13,3 +13,55 @@
     justify-content: center;
     align-items: center;
 }
+
+// =============================================
+// Rounded Search Input Style (PrimeNG InputGroup)
+// =============================================
+// Use: Apply .search-rounded to p-iconfield for clean rounded search look
+// Example:
+//   <p-iconfield class="search-rounded">
+//     <p-inputicon styleClass="pi pi-search"></p-inputicon>
+//     <input pInputText placeholder="Search" />
+//   </p-iconfield>
+// =============================================
+
+.search-rounded {
+    // Make it display as flex for proper alignment
+    display: inline-flex !important;
+    align-items: center;
+
+    // Icon styling - soft gray color
+    .p-inputicon {
+        color: var(--text-color-secondary);
+        opacity: 0.6;
+    }
+
+    // Input styling - rounded with thin visible border
+    .p-inputtext {
+        border-radius: 2rem !important;
+        border: 1px solid rgba(0, 0, 0, 0.15);
+        background: var(--surface-card);
+        height: 2.5rem;
+        min-width: 200px;
+        transition: border-color 0.2s, box-shadow 0.2s;
+
+        &::placeholder {
+            color: var(--text-color-secondary);
+            opacity: 0.6;
+        }
+
+        &:focus {
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 2px rgba(var(--primary-color-rgb), 0.1);
+        }
+    }
+
+    // Full width variant
+    &.w-full {
+        width: 100%;
+
+        .p-inputtext {
+            width: 100%;
+        }
+    }
+}

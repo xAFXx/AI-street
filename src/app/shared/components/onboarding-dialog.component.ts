@@ -1,4 +1,4 @@
-import { Component, OnInit, inject, signal, Output, EventEmitter, Input } from '@angular/core';
+import { Component, OnInit, OnChanges, SimpleChanges, inject, signal, Output, EventEmitter, Input } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { DialogModule } from 'primeng/dialog';
@@ -7,7 +7,7 @@ import { PasswordModule } from 'primeng/password';
 import { DividerModule } from 'primeng/divider';
 import { InputTextModule } from 'primeng/inputtext';
 import { UserManagementService } from '../../core/services/user-management.service';
-import { setApiKey, hasApiKey } from '../../features/template-editor/ai-providers/ai-config';
+import { setApiKey, hasApiKey } from '../../features/app-store/apps/true-north/template-editor/ai-providers/ai-config';
 
 @Component({
     selector: 'app-onboarding-dialog',
@@ -208,7 +208,7 @@ import { setApiKey, hasApiKey } from '../../features/template-editor/ai-provider
         }
     `]
 })
-export class OnboardingDialogComponent implements OnInit {
+export class OnboardingDialogComponent implements OnInit, OnChanges {
     private userService = inject(UserManagementService);
 
     @Input() forceShow = false;
@@ -225,6 +225,13 @@ export class OnboardingDialogComponent implements OnInit {
             this.visible = true;
         } else {
             this.checkApiKeyNeeded();
+        }
+    }
+
+    ngOnChanges(changes: SimpleChanges): void {
+        // React to forceShow changes dynamically (after initial load)
+        if (changes['forceShow'] && changes['forceShow'].currentValue === true) {
+            this.visible = true;
         }
     }
 

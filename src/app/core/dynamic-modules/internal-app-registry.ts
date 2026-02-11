@@ -15,7 +15,7 @@ export const INTERNAL_APPS: AppManifest[] = [
         icon: 'pi pi-file-edit',
         type: 'internal',
         componentName: 'DocumentManagementComponent',
-        loader: () => import('../../features/document-management/document-management.component'),
+        loader: () => import('../../features/app-store/apps/document-management/document-management.component'),
         route: 'doc-analyzer',
         title: 'Document Analyzer'
     },
@@ -27,7 +27,7 @@ export const INTERNAL_APPS: AppManifest[] = [
         icon: 'pi pi-file-pdf',
         type: 'internal',
         componentName: 'ReportWizardComponent',
-        loader: () => import('../../features/report-wizard/report-wizard.component'),
+        loader: () => import('../../features/app-store/apps/true-north/report-wizard/report-wizard.component'),
         route: 'report-generator',
         title: 'Report Generator'
     },
@@ -39,7 +39,7 @@ export const INTERNAL_APPS: AppManifest[] = [
         icon: 'pi pi-code',
         type: 'internal',
         componentName: 'SchemaEditorComponent',
-        loader: () => import('../../features/schema-editor/schema-editor.component'),
+        loader: () => import('../../features/app-store/apps/true-north/schema-editor/schema-editor.component'),
         route: 'schema-editor',
         title: 'Schema Editor'
     },
@@ -51,7 +51,7 @@ export const INTERNAL_APPS: AppManifest[] = [
         icon: 'pi pi-search',
         type: 'internal',
         componentName: 'SearchActionComponent',
-        loader: () => import('../../features/search-action/search-action.component'),
+        loader: () => import('../../features/app-store/apps/search-action/search-action.component'),
         route: 'ai-search',
         title: 'AI Search'
     },
@@ -63,7 +63,7 @@ export const INTERNAL_APPS: AppManifest[] = [
         icon: 'pi pi-bolt',
         type: 'internal',
         componentName: 'ModelArena',
-        loader: () => import('../../features/model-arena/model-arena'),
+        loader: () => import('../../features/app-store/apps/ai-street/model-arena/model-arena'),
         route: 'model-arena',
         title: 'Model Arena'
     },
@@ -75,9 +75,21 @@ export const INTERNAL_APPS: AppManifest[] = [
         icon: 'pi pi-database',
         type: 'internal',
         componentName: 'VdbAppComponent',
-        loader: () => import('../../features/vdb-app/vdb-app.component'),
+        loader: () => import('../../features/app-store/apps/vdb-manager/vdb-app.component'),
         route: 'vdb-manager',
         title: 'VDB Manager'
+    },
+    {
+        id: 'ai-street',
+        name: 'AI Street',
+        description: 'Unified AI-powered data management and analytics hub with Model Arena, Test Evaluation, and Dashboard.',
+        version: '1.0.0',
+        icon: 'pi pi-sparkles',
+        type: 'internal',
+        componentName: 'AiStreetComponent',
+        loader: () => import('../../features/app-store/apps/ai-street/ai-street.component'),
+        route: 'ai-street',
+        title: 'AI Street'
     }
 ];
 

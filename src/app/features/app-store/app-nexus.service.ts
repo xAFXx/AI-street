@@ -347,6 +347,7 @@ export class AppNexusService {
             { id: 'ai', name: 'AI & ML', icon: 'pi pi-microchip-ai', appCount: 2 },
             { id: 'reports', name: 'Reporting', icon: 'pi pi-chart-bar', appCount: 1 },
             { id: 'automation', name: 'Automation', icon: 'pi pi-bolt', appCount: 2 },
+            { id: 'finance', name: 'Finance', icon: 'pi pi-wallet', appCount: 1 },
             { id: 'custom', name: 'Custom Apps', icon: 'pi pi-box', appCount: 0 }
         ];
     }
@@ -607,6 +608,110 @@ steps:
                     { label: 'Report Frameworks', icon: 'pi pi-book', routerLink: '/report-frameworks' },
                     { label: 'Audit Standards', icon: 'pi pi-th-large', routerLink: '/audit-standards' }
                 ]
+            },
+            {
+                id: 'tax-management',
+                name: 'Tax Management',
+                description: 'Manage taxes and assign invoices to GLA period mappings. View original PDF documents side-by-side with extracted data for validation.',
+                iconUrl: 'pi pi-receipt',
+                type: 'static',
+                category: 'finance',
+                author: 'APPRX Team',
+                tags: ['tax', 'gla', 'invoice', 'finance', 'accounting', 'validation'],
+                currentVersion: { version: '1.0.0', releaseDate: new Date('2024-02-04') },
+                pricing: { type: 'free', amount: 0, currency: 'EUR' },
+                parameters: [],
+                settings: [
+                    {
+                        key: 'defaultView', label: 'Default View', type: 'select', value: 'pending', options: [
+                            { label: 'Pending Items', value: 'pending' },
+                            { label: 'All Items', value: 'all' }
+                        ]
+                    },
+                    { key: 'autoNavigate', label: 'Auto-navigate after validation', type: 'toggle', value: true }
+                ],
+                usesApiConnection: true,
+                apiConnection: {
+                    id: 'plattform-api',
+                    name: 'Plattform API',
+                    baseUrl: '/api/services/app',
+                    authType: 'bearer',
+                    isActive: true
+                },
+                processDefinitions: [],
+                installStatus: AppInstallStatus.Available,
+                startScreen: '/tax-management',
+                isFeatured: true,
+                hasManageScreen: false
+            },
+            {
+                id: 'region-lookup',
+                name: 'Region Lookup',
+                description: 'Look up address and livability data by address, postcode, or street name. Integration with BAG (Basisregistratie Adressen en Gebouwen) and Leefbaarometer API.',
+                iconUrl: 'pi pi-map-marker',
+                type: 'static',
+                category: 'data',
+                author: 'APPRX Team',
+                tags: ['adres', 'bag', 'leefbaarheid', 'nederland', 'lookup', 'geo'],
+                currentVersion: { version: '1.0.0', releaseDate: new Date('2024-02-05') },
+                pricing: { type: 'free', amount: 0, currency: 'EUR' },
+                parameters: [],
+                settings: [],
+                usesApiConnection: false,  // Uses public PDOK API, no auth needed
+                processDefinitions: [],
+                installStatus: AppInstallStatus.Available,
+                startScreen: '/region-lookup',
+                isFeatured: true,
+                hasManageScreen: false,
+                menuPlacement: MenuPlacement.InstalledApps
+            },
+            {
+                id: 'ai-street',
+                name: 'AI Street',
+                description: 'Unified AI-powered data management and analytics hub with Model Arena, Test Evaluation, and Dashboard.',
+                iconUrl: 'pi pi-sparkles',
+                type: 'static',
+                category: 'ai',
+                author: 'APPRX Team',
+                tags: ['ai', 'data', 'models', 'analytics', 'dashboard'],
+                currentVersion: { version: '1.0.0', releaseDate: new Date('2024-02-05') },
+                pricing: { type: 'free', amount: 0, currency: 'EUR' },
+                parameters: [],
+                settings: [],
+                usesApiConnection: false,
+                processDefinitions: [],
+                installStatus: AppInstallStatus.Available,
+                startScreen: '/ai-street',
+                isFeatured: true,
+                hasManageScreen: false,
+                menuPlacement: MenuPlacement.None,  // Menu items are injected separately
+                menuItems: [
+                    { label: 'Data Management', icon: 'pi pi-database', routerLink: '/input' },
+                    { label: 'Model Arena', icon: 'pi pi-microchip', routerLink: '/arena' },
+                    { label: 'Test Evaluation Center', icon: 'pi pi-cog', routerLink: '/processes' },
+                    { label: 'Dashboard', icon: 'pi pi-chart-bar', routerLink: '/dashboard' }
+                ]
+            },
+            {
+                id: 'ai-search',
+                name: 'Search & Action',
+                description: 'AI-powered search and query tool for your documents. Search, analyze, and take actions on your document collection.',
+                iconUrl: 'pi pi-search',
+                type: 'static',
+                category: 'ai',
+                author: 'APPRX Team',
+                tags: ['search', 'ai', 'query', 'documents', 'rag'],
+                currentVersion: { version: '1.0.0', releaseDate: new Date('2024-02-05') },
+                pricing: { type: 'free', amount: 0, currency: 'EUR' },
+                parameters: [],
+                settings: [],
+                usesApiConnection: false,
+                processDefinitions: [],
+                installStatus: AppInstallStatus.Available,
+                startScreen: '/search',
+                isFeatured: true,
+                hasManageScreen: false,
+                menuPlacement: MenuPlacement.InstalledApps
             }
         ];
     }

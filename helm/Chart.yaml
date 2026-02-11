@@ -1,14 +1,14 @@
 annotations:
   catalog.cattle.io/certified: rancher
   catalog.cattle.io/deploys-on-os: linux
-  catalog.cattle.io/display-name: Apprx frontend
+  catalog.cattle.io/display-name: Next Gen AI
   catalog.cattle.io/permits-os: linux,windows
   catalog.cattle.io/rancher-version: '> 2.6.0-0'
   catalog.cattle.io/type: application
 
 
 apiVersion: v2
-name: arvenza
+name: nxtgenai
 description: A Helm chart for Kubernetes
 
 # A chart can be either an 'application' or a 'library' chart.

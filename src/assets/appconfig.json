@@ -1,7 +1,7 @@
 {
-  "remoteServiceBaseUrl": "https://dev_{TENANCY_NAME}_connectapi.plattform.nl",
-  "appBaseUrl": "https://dev_{TENANCY_NAME}.plattform.nl",
-  "applicationName": "AI Street",
+  "remoteServiceBaseUrl": "https://dev_{TENANCY_NAME}-connectapi.apprx.eu",
+  "appBaseUrl": "https://nxt-dev_{TENANCY_NAME}.apprx.eu",
+  "applicationName": "Apprx 2.0",
   "localeMappings": {
     "angular": [
       {

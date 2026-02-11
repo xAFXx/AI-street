@@ -45,6 +45,11 @@
                 "glob": "**/*",
                 "input": "node_modules/jsoneditor/dist/img",
                 "output": "/img"
+              },
+              {
+                "glob": "pdf.worker.min.mjs",
+                "input": "node_modules/pdfjs-dist/build",
+                "output": "/workers"
               }
             ],
             "styles": [
@@ -75,13 +80,35 @@
                 },
                 {
                   "type": "anyComponentStyle",
-                  "maximumWarning": "8kB",
-                  "maximumError": "16kB"
+                  "maximumWarning": "16kB",
+                  "maximumError": "32kB"
                 }
               ],
               "outputHashing": "all"
             },
             "development": {
+              "optimization": false,
+              "extractLicenses": false,
+              "sourceMap": true
+            },
+            "plattform": {
+              "fileReplacements": [
+                {
+                  "replace": "src/environments/environment.ts",
+                  "with": "src/environments/environment.plattform.ts"
+                }
+              ],
+              "optimization": false,
+              "extractLicenses": false,
+              "sourceMap": true
+            },
+            "apprx": {
+              "fileReplacements": [
+                {
+                  "replace": "src/environments/environment.ts",
+                  "with": "src/environments/environment.apprx.ts"
+                }
+              ],
               "optimization": false,
               "extractLicenses": false,
               "sourceMap": true
@@ -100,6 +127,12 @@
             },
             "development": {
               "buildTarget": "ai-street-manager:build:development"
+            },
+            "plattform": {
+              "buildTarget": "ai-street-manager:build:plattform"
+            },
+            "apprx": {
+              "buildTarget": "ai-street-manager:build:apprx"
             }
           },
           "defaultConfiguration": "development"

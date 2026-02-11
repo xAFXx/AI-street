@@ -23,10 +23,7 @@ export class HomeRedirectComponent implements OnInit {
     ngOnInit(): void {
         const user = this.userService.getCurrentUser();
 
-        if (user.role === 'admin') {
-            this.router.navigate(['/dashboard'], { replaceUrl: true });
-        } else {
-            this.router.navigate(['/results'], { replaceUrl: true });
-        }
+        // Default page is App Nexus for all users
+        this.router.navigate(['/app-nexus'], { replaceUrl: true });
     }
 }

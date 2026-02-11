@@ -37,7 +37,7 @@ const CustomTheme = definePreset(Aura, {
  * At this point, AppPreBootstrap.run() has already completed and AppConsts is populated
  */
 function getApiBaseUrl(): string {
-  return AppConsts.remoteServiceBaseUrl || 'https://demo-connectapi.plattform.nl';
+  return AppConsts.remoteServiceBaseUrl;
 }
 
 export const appConfig: ApplicationConfig = {

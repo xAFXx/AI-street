@@ -1,0 +1,357 @@
+:host {
+    display: block;
+    height: 100%;
+}
+
+.ai-management {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    gap: 1.5rem;
+    padding: 1.5rem;
+    background: linear-gradient(135deg, #f8f9fe 0%, #f0f4ff 100%);
+    min-height: 100%;
+}
+
+// ==================== Header ====================
+
+.nexus-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding-bottom: 1rem;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+
+    .header-left {
+        h1 {
+            margin: 0;
+            font-size: 1.75rem;
+            font-weight: 700;
+            color: var(--primary-color, #6366f1);
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+
+            i {
+                font-size: 1.5rem;
+            }
+        }
+
+        .subtitle {
+            color: #6b7280;
+            font-size: 0.9rem;
+            margin-top: 0.25rem;
+            display: block;
+        }
+    }
+
+    .header-actions {
+        display: flex;
+        gap: 0.75rem;
+        align-items: center;
+
+        .search-rounded input {
+            width: 220px;
+            border-radius: 8px;
+        }
+    }
+}
+
+// ==================== Table ====================
+
+:host ::ng-deep .agents-table {
+    flex: 1;
+    min-height: 0;
+    border-radius: 12px;
+    overflow: hidden;
+    border: 1px solid var(--surface-border);
+
+    .p-datatable-header {
+        padding: 0;
+    }
+
+    // Header gradient
+    .p-datatable-thead>tr>th {
+        background: linear-gradient(135deg, var(--surface-ground) 0%, var(--surface-card) 100%);
+        font-weight: 700;
+        font-size: 0.8rem;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        color: var(--text-color-secondary);
+        border-bottom: 2px solid var(--primary-color);
+        padding: 0.75rem 1rem;
+    }
+
+    // Body rows
+    .p-datatable-tbody>tr {
+        transition: background-color 0.2s ease, transform 0.15s ease;
+
+        >td {
+            padding: 0.6rem 1rem;
+            border-bottom: 1px solid color-mix(in srgb, var(--surface-border) 50%, transparent);
+            vertical-align: middle;
+        }
+
+        // Striped rows
+        &:nth-child(even)>td {
+            background: color-mix(in srgb, var(--surface-ground) 40%, transparent);
+        }
+
+        // Hover glow
+        &:hover>td {
+            background: color-mix(in srgb, var(--primary-color) 6%, var(--surface-card));
+        }
+    }
+
+    // Paginator
+    .p-paginator {
+        border-top: 1px solid var(--surface-border);
+        border-radius: 0 0 12px 12px;
+        padding: 0.5rem;
+    }
+}
+
+// ==================== Agent Identity (Name + Avatar) ====================
+
+.agent-identity {
+    display: flex;
+    align-items: center;
+    gap: 0.65rem;
+}
+
+.agent-avatar {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    border-radius: 8px;
+    font-weight: 700;
+    font-size: 0.85rem;
+    color: #fff;
+    flex-shrink: 0;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+
+    &.avatar-color-0 {
+        background: linear-gradient(135deg, #6366f1, #818cf8);
+    }
+
+    &.avatar-color-1 {
+        background: linear-gradient(135deg, #06b6d4, #22d3ee);
+    }
+
+    &.avatar-color-2 {
+        background: linear-gradient(135deg, #f59e0b, #fbbf24);
+    }
+
+    &.avatar-color-3 {
+        background: linear-gradient(135deg, #ec4899, #f472b6);
+    }
+
+    &.avatar-color-4 {
+        background: linear-gradient(135deg, #10b981, #34d399);
+    }
+}
+
+.agent-name {
+    font-weight: 600;
+    color: var(--text-color);
+    font-size: 0.9rem;
+}
+
+.agent-description {
+    color: var(--text-color-secondary);
+    font-size: 0.825rem;
+    line-height: 1.4;
+    cursor: default;
+}
+
+// ==================== Source Badge & Token Chip ====================
+
+.source-badge {
+    display: inline-block;
+    padding: 0.2rem 0.55rem;
+    border-radius: 6px;
+    background: color-mix(in srgb, var(--primary-color) 10%, transparent);
+    color: var(--primary-color);
+    font-family: 'Cascadia Code', 'Fira Code', monospace;
+    font-size: 0.78rem;
+    font-weight: 500;
+    border: 1px solid color-mix(in srgb, var(--primary-color) 20%, transparent);
+}
+
+.token-chip {
+    display: inline-block;
+    padding: 0.15rem 0.5rem;
+    border-radius: 20px;
+    background: color-mix(in srgb, var(--surface-border) 60%, transparent);
+    color: var(--text-color);
+    font-family: 'Cascadia Code', 'Fira Code', monospace;
+    font-size: 0.78rem;
+    font-weight: 500;
+}
+
+.dim {
+    color: var(--text-color-secondary);
+    opacity: 0.5;
+}
+
+// ==================== Action Buttons ====================
+
+.action-buttons {
+    display: inline-flex;
+    gap: 0.15rem;
+    padding: 0.15rem;
+    border-radius: 8px;
+    background: color-mix(in srgb, var(--surface-ground) 60%, transparent);
+}
+
+// ==================== Dialog Form ====================
+
+.form-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 1.25rem;
+    padding: 0.5rem 0;
+}
+
+.form-field {
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+    flex: 1;
+
+    label {
+        font-weight: 600;
+        font-size: 0.875rem;
+        color: var(--text-color);
+    }
+
+    .hint {
+        font-size: 0.75rem;
+        color: var(--text-color-secondary);
+        margin-bottom: 0.25rem;
+    }
+}
+
+.form-row {
+    display: flex;
+    gap: 1rem;
+
+    &.toggles {
+        gap: 2rem;
+        margin-top: 0.5rem;
+    }
+}
+
+.toggle-field {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+
+    label {
+        font-weight: 500;
+        font-size: 0.875rem;
+        cursor: pointer;
+    }
+}
+
+// ==================== Dialog Tabs ====================
+
+:host ::ng-deep .ai-agent-dialog {
+    .p-tabs {
+        .p-tablist {
+            margin-bottom: 0.5rem;
+        }
+
+        .p-tab {
+            gap: 0.4rem;
+
+            i {
+                font-size: 0.85rem;
+            }
+        }
+    }
+
+    // Smooth maximize / minimize transition
+    transition: all 0.3s ease;
+}
+
+// ==================== Maximized Dialog ====================
+
+:host ::ng-deep .ai-agent-dialog.p-dialog-maximized {
+    .p-dialog-content {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        overflow-y: auto;
+    }
+
+    // Hide tab bar — all sections shown as continuous form
+    .p-tablist {
+        display: none !important;
+    }
+
+    // Show ALL tab panels stacked
+    .p-tabpanels {
+        flex: 1;
+        overflow-y: auto;
+    }
+
+    .p-tabpanel {
+        display: block !important;
+        opacity: 1 !important;
+
+        // Visual divider between sections
+        &:not(:first-child) {
+            margin-top: 1.5rem;
+            padding-top: 1.5rem;
+            border-top: 1px solid var(--surface-border);
+        }
+
+        // Section labels from tab titles
+        &:not(:first-child)::before {
+            display: block;
+            font-weight: 700;
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: var(--primary-color);
+            margin-bottom: 0.75rem;
+        }
+
+        &:nth-child(1)::before {
+            content: '';
+        }
+
+        // General — no label needed, it's first
+        &:nth-child(2)::before {
+            content: 'Instructions';
+        }
+
+        &:nth-child(3)::before {
+            content: 'Connection';
+        }
+    }
+
+    .form-grid {
+        flex: 1;
+    }
+
+    // Expand textareas in maximized view
+    textarea {
+        min-height: 180px;
+    }
+}
+
+// ==================== Responsive ====================
+
+@media (max-width: 768px) {
+    .ai-management {
+        padding: 1rem;
+    }
+
+    .form-row {
+        flex-direction: column;
+    }
+}

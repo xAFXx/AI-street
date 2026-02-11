@@ -2,6 +2,7 @@ import { Injectable, inject, InjectionToken } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable, of, BehaviorSubject } from 'rxjs';
 import { tap, catchError, map } from 'rxjs/operators';
+import { environment } from '../../../environments/environment';
 
 export interface AppConfig {
     remoteServiceBaseUrl: string;
@@ -45,11 +46,11 @@ export class AppConfigService {
     }
 
     /**
-     * Load the app configuration from assets/appconfig.json
-     * This should be called during app initialization
+     * Load the app configuration from the environment-specific appconfig file.
+     * The file name comes from environment.appConfig (e.g. appconfig-apprx.json).
      */
     loadConfig(): Observable<AppConfig> {
-        return this.http.get<AppConfig>('/assets/appconfig.json').pipe(
+        return this.http.get<AppConfig>(`/assets/${environment.appConfig}`).pipe(
             tap((config) => {
                 this._config = config;
                 this.configSubject.next(config);
@@ -58,9 +59,9 @@ export class AppConfigService {
                 console.error('Failed to load app configuration:', error);
                 // Return a default config if loading fails
                 const defaultConfig: AppConfig = {
-                    remoteServiceBaseUrl: 'https://dev_demo-connectapi.plattform.nl',
-                    appBaseUrl: 'https://dev_demo.plattform.nl',
-                    applicationName: 'APPRX True North',
+                    remoteServiceBaseUrl: '',
+                    appBaseUrl: '',
+                    applicationName: 'Apprx 2.0',
                     localeMappings: { angular: [], moment: [], recaptcha: [] }
                 };
                 this._config = defaultConfig;
@@ -84,7 +85,7 @@ export class AppConfigService {
 
     /**
      * Extract tenancy name from the current hostname
-     * Expected format: dev_TENANCYNAME.apprx.eu or TENANCYNAME.apprx.eu
+     * Expected format: dev_TENANCYNAME.domain or TENANCYNAME.domain
      */
     extractTenancyFromHostname(): string {
         const hostname = window.location.hostname;
@@ -96,7 +97,7 @@ export class AppConfigService {
         }
 
         // Try to extract from hostname pattern: dev_TENANT.domain or TENANT.domain
-        // Supports plattform.nl, apprx.eu, and ai-street.eu
+        // Supports all configured domains
         const patterns = [
             /^dev_([^.]+)\.(plattform\.nl|apprx\.eu|ai-street\.eu)$/,  // dev_tenant.domain
             /^([^.]+)\.(plattform\.nl|apprx\.eu|ai-street\.eu)$/,       // tenant.domain

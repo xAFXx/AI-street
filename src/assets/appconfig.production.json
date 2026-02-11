@@ -1,7 +1,7 @@
 {
-  "remoteServiceBaseUrl": "https://{TENANCY_NAME}_connectapi.ai-street.eu",
-  "appBaseUrl": "https://{TENANCY_NAME}.ai-street.eu",
-  "applicationName": "AI Street",
+  "remoteServiceBaseUrl": "{{connectapi}}",
+  "appBaseUrl": "{{ui}}",
+  "applicationName": "{{applicationName}}",
   "localeMappings": {
     "angular": [
       {

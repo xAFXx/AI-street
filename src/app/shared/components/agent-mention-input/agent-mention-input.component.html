@@ -1,0 +1,40 @@
+<div class="mention-editor-wrapper">
+    <!-- Contenteditable Editor -->
+    <div class="mention-editor" #editor contenteditable="true" [attr.data-placeholder]="placeholder"
+        [class.is-empty]="isEmpty()" (input)="onEditorInput()" (keydown)="onEditorKeydown($event)"
+        (blur)="onEditorBlur()"></div>
+
+    <!-- Agent Dropdown -->
+    @if (showDropdown()) {
+    <div class="mention-dropdown">
+        @if (filteredAgents().length > 0) {
+        <div class="dropdown-header">
+            <i class="pi pi-at"></i>
+            <span>Mention an agent</span>
+        </div>
+        <div class="dropdown-list">
+            @for (agent of filteredAgents(); track agent.id; let i = $index) {
+            <div class="agent-item" [class.active]="i === highlightIndex()" (mouseenter)="highlightIndex.set(i)"
+                (mousedown)="$event.preventDefault()" (click)="selectAgent(agent)">
+                <div class="agent-avatar" [ngClass]="getAvatarColorClass(agent)">
+                    {{ getAvatarInitials(agent) }}
+                </div>
+                <div class="agent-info">
+                    <span class="agent-name">{{ agent.name }}</span>
+                    <span class="agent-desc">{{ agent.description }}</span>
+                </div>
+                @if (agent.source) {
+                <span class="agent-source">{{ agent.source }}</span>
+                }
+            </div>
+            }
+        </div>
+        } @else {
+        <div class="dropdown-empty">
+            <i class="pi pi-info-circle"></i>
+            <span>No agents found</span>
+        </div>
+        }
+    </div>
+    }
+</div>

@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { AI_CONFIG, hasApiKey, setApiKey } from '../../features/template-editor/ai-providers/ai-config';
+import { AI_CONFIG, hasApiKey, setApiKey } from '../../features/app-store/apps/true-north/template-editor/ai-providers/ai-config';
 
 export interface AIConnectionTestResult {
     provider: string;

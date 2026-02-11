@@ -6,6 +6,32 @@
         <p-menu [model]="items" styleClass="w-full border-none opacity-90"></p-menu>
     </div>
     <div class="p-3 mt-auto border-top-1 surface-border">
+        <!-- AI Provider Status -->
+        @if (aiStatus.hasActiveProvider()) {
+        <div class="ai-status-panel mb-2 p-2 border-round"
+            style="background: linear-gradient(135deg, rgba(99, 102, 241, 0.1), rgba(139, 92, 246, 0.1)); border: 1px solid rgba(139, 92, 246, 0.3);">
+            <div class="flex align-items-center gap-2 mb-1">
+                <i [class]="aiStatus.activeProvider()?.icon || 'pi pi-microchip'" style="color: #8b5cf6;"></i>
+                <span class="font-semibold text-sm" style="color: #a78bfa;">{{ aiStatus.activeProvider()?.displayName
+                    }}</span>
+            </div>
+            @if (aiStatus.activeProvider()?.rateLimits) {
+            <div class="flex gap-2 text-xs" style="color: #94a3b8;">
+                <span pTooltip="Remaining requests per minute">
+                    <i class="pi pi-bolt" style="font-size: 10px;"></i>
+                    {{ aiStatus.activeProvider()?.rateLimits?.remainingRequests }}/{{
+                    aiStatus.activeProvider()?.rateLimits?.requestsPerMinute }} req
+                </span>
+            </div>
+            }
+            <div class="flex gap-2 text-xs mt-1" style="color: #64748b;">
+                <span pTooltip="AI calls this session">
+                    <i class="pi pi-chart-line" style="font-size: 10px;"></i>
+                    {{ aiStatus.activeProvider()?.sessionUsage?.requests || 0 }} calls
+                </span>
+            </div>
+        </div>
+        }
         <!-- Clear Data Button (Admin only, for testing) -->
         <div class="mb-2" *ngIf="currentUser?.role === 'admin'">
             <button pButton label="Clear Data" icon="pi pi-trash"

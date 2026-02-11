@@ -1,0 +1,271 @@
+<div class="region-lookup-container">
+    <!-- Header -->
+    <div class="page-header">
+        <h1>
+            <i class="pi pi-map-marker"></i>
+            Regio Opzoeken
+        </h1>
+        <p class="subtitle">Zoek adresinformatie en leefbaarheidsscores</p>
+    </div>
+
+    <!-- Search Section -->
+    <p-card class="search-card">
+        <div class="search-container">
+            <span class="p-float-label search-input-wrapper">
+                <p-autoComplete [(ngModel)]="selectedSuggestion" [suggestions]="suggestions()"
+                    [optionLabel]="autocompleteField" [minLength]="2" [delay]="300" [showEmptyMessage]="true"
+                    [emptyMessage]="isSearching() ? 'Zoeken...' : 'Geen resultaten'" [forceSelection]="false"
+                    placeholder="Zoek adres of postcode..." inputId="address-search" styleClass="search-autocomplete"
+                    (completeMethod)="onSearch($event)" (onSelect)="onSelectAddress($event)">
+                    <ng-template let-item pTemplate="item">
+                        <div class="suggestion-item">
+                            <i class="pi pi-map-marker"></i>
+                            <span>{{ item.weergavenaam }}</span>
+                        </div>
+                    </ng-template>
+                </p-autoComplete>
+                <label for="address-search">Adres of postcode</label>
+            </span>
+
+            @if (hasResult()) {
+            <p-button icon="pi pi-times" severity="secondary" [text]="true" (onClick)="clearSelection()"
+                pTooltip="Wissen" tooltipPosition="top">
+            </p-button>
+            }
+        </div>
+
+        @if (isSearching()) {
+        <p-progressBar mode="indeterminate" [style]="{'height': '3px'}" />
+        }
+    </p-card>
+
+    <!-- Error Message -->
+    @if (errorMessage()) {
+    <div class="error-message">
+        <i class="pi pi-exclamation-triangle"></i>
+        {{ errorMessage() }}
+    </div>
+    }
+
+    <!-- Results Section -->
+    @if (hasResult() || isLoadingAddress()) {
+    <div class="results-grid">
+        <!-- BAG Information Card -->
+        <p-card class="info-card bag-card">
+            <ng-template pTemplate="header">
+                <div class="card-header">
+                    <i class="pi pi-building"></i>
+                    <span>BAG Adresgegevens</span>
+                </div>
+            </ng-template>
+
+            @if (isLoadingAddress()) {
+            <div class="loading-state">
+                <p-progressSpinner [style]="{width: '40px', height: '40px'}" />
+                <span>Laden...</span>
+            </div>
+            } @else if (selectedAddress(); as address) {
+            <div class="address-details">
+                <div class="detail-row highlight">
+                    <label>Adres</label>
+                    <span class="value">
+                        {{ address.straatnaam }} {{ address.huisnummer }}{{ address.huisletter || '' }}{{
+                        address.huisnummertoevoeging ? '-' + address.huisnummertoevoeging : '' }}
+                    </span>
+                </div>
+
+                <div class="detail-row">
+                    <label>Postcode</label>
+                    <span class="value">{{ address.postcode }}</span>
+                </div>
+
+                <div class="detail-row">
+                    <label>Woonplaats</label>
+                    <span class="value">{{ address.woonplaatsnaam }}</span>
+                </div>
+
+                <div class="detail-row">
+                    <label>Gemeente</label>
+                    <span class="value">{{ address.gemeentenaam }}</span>
+                </div>
+
+                <div class="detail-row">
+                    <label>Provincie</label>
+                    <span class="value">{{ address.provincienaam }}</span>
+                </div>
+
+                <p-divider />
+
+                @if (address.bouwjaar) {
+                <div class="detail-row">
+                    <label>Bouwjaar</label>
+                    <span class="value">{{ address.bouwjaar }}</span>
+                </div>
+                }
+
+                @if (address.oppervlakte) {
+                <div class="detail-row">
+                    <label>Oppervlakte</label>
+                    <span class="value">{{ address.oppervlakte }} m²</span>
+                </div>
+                }
+
+                @if (address.gebruiksdoel?.length) {
+                <div class="detail-row">
+                    <label>Gebruiksdoel</label>
+                    <span class="value">{{ address.gebruiksdoel?.join(', ') }}</span>
+                </div>
+                }
+
+                @if (address.status) {
+                <div class="detail-row">
+                    <label>Status</label>
+                    <span class="value">{{ address.status }}</span>
+                </div>
+                }
+
+                <div class="map-button">
+                    <p-button label="Bekijk op kaart" icon="pi pi-map" severity="info" [outlined]="true"
+                        (onClick)="openInMaps()">
+                    </p-button>
+                </div>
+            </div>
+            }
+        </p-card>
+
+        <!-- Leefbaarometer Card -->
+        <p-card class="info-card leefbaarheid-card">
+            <ng-template pTemplate="header">
+                <div class="card-header">
+                    <i class="pi pi-chart-bar"></i>
+                    <span>Leefbaarometer</span>
+                </div>
+            </ng-template>
+
+            @if (isLoadingLeefbaarheid()) {
+            <div class="loading-state">
+                <p-progressSpinner [style]="{width: '40px', height: '40px'}" />
+                <span>Leefbaarheidsscores laden...</span>
+            </div>
+            } @else if (leefbaarheid(); as lbm) {
+            <div class="leefbaarheid-details">
+                <!-- Overall Score -->
+                <div class="overall-score">
+                    <div class="score-label">Totaalscore</div>
+                    <div class="score-value" [class]="getDimensionColor(lbm.score)">
+                        {{ lbm.score > 0 ? '+' : '' }}{{ lbm.score }}
+                    </div>
+                    <p-tag [value]="lbm.scoreLabel" [severity]="getScoreSeverity(lbm.score)">
+                    </p-tag>
+                </div>
+
+                <p-divider />
+
+                <!-- Dimension Scores -->
+                <div class="dimensions">
+                    <div class="dimension-row">
+                        <div class="dimension-label">
+                            <i class="pi pi-building"></i>
+                            <span>Fysieke Omgeving</span>
+                        </div>
+                        <div class="dimension-bar">
+                            <p-progressBar [value]="toPercentage(lbm.dimensions.fysiek)" [showValue]="false"
+                                [style]="{height: '8px'}">
+                            </p-progressBar>
+                        </div>
+                        <span class="dimension-score" [class]="getDimensionColor(lbm.dimensions.fysiek)">
+                            {{ lbm.dimensions.fysiek > 0 ? '+' : '' }}{{ lbm.dimensions.fysiek }}
+                        </span>
+                    </div>
+
+                    <div class="dimension-row">
+                        <div class="dimension-label">
+                            <i class="pi pi-home"></i>
+                            <span>Woningvoorraad</span>
+                        </div>
+                        <div class="dimension-bar">
+                            <p-progressBar [value]="toPercentage(lbm.dimensions.woningvoorraad)" [showValue]="false"
+                                [style]="{height: '8px'}">
+                            </p-progressBar>
+                        </div>
+                        <span class="dimension-score" [class]="getDimensionColor(lbm.dimensions.woningvoorraad)">
+                            {{ lbm.dimensions.woningvoorraad > 0 ? '+' : '' }}{{ lbm.dimensions.woningvoorraad }}
+                        </span>
+                    </div>
+
+                    <div class="dimension-row">
+                        <div class="dimension-label">
+                            <i class="pi pi-shopping-cart"></i>
+                            <span>Voorzieningen</span>
+                        </div>
+                        <div class="dimension-bar">
+                            <p-progressBar [value]="toPercentage(lbm.dimensions.voorzieningen)" [showValue]="false"
+                                [style]="{height: '8px'}">
+                            </p-progressBar>
+                        </div>
+                        <span class="dimension-score" [class]="getDimensionColor(lbm.dimensions.voorzieningen)">
+                            {{ lbm.dimensions.voorzieningen > 0 ? '+' : '' }}{{ lbm.dimensions.voorzieningen }}
+                        </span>
+                    </div>
+
+                    <div class="dimension-row">
+                        <div class="dimension-label">
+                            <i class="pi pi-users"></i>
+                            <span>Sociale Samenhang</span>
+                        </div>
+                        <div class="dimension-bar">
+                            <p-progressBar [value]="toPercentage(lbm.dimensions.sociaal)" [showValue]="false"
+                                [style]="{height: '8px'}">
+                            </p-progressBar>
+                        </div>
+                        <span class="dimension-score" [class]="getDimensionColor(lbm.dimensions.sociaal)">
+                            {{ lbm.dimensions.sociaal > 0 ? '+' : '' }}{{ lbm.dimensions.sociaal }}
+                        </span>
+                    </div>
+
+                    <div class="dimension-row">
+                        <div class="dimension-label">
+                            <i class="pi pi-shield"></i>
+                            <span>Veiligheid</span>
+                        </div>
+                        <div class="dimension-bar">
+                            <p-progressBar [value]="toPercentage(lbm.dimensions.veiligheid)" [showValue]="false"
+                                [style]="{height: '8px'}">
+                            </p-progressBar>
+                        </div>
+                        <span class="dimension-score" [class]="getDimensionColor(lbm.dimensions.veiligheid)">
+                            {{ lbm.dimensions.veiligheid > 0 ? '+' : '' }}{{ lbm.dimensions.veiligheid }}
+                        </span>
+                    </div>
+                </div>
+
+                <div class="measurement-info">
+                    <i class="pi pi-info-circle"></i>
+                    <span>Meting {{ lbm.year }} | Scores van -50 tot +50</span>
+                </div>
+            </div>
+            } @else if (!isLoadingAddress()) {
+            <div class="no-data">
+                <i class="pi pi-info-circle"></i>
+                <span>Geen leefbaarheidsgegevens beschikbaar voor deze locatie</span>
+            </div>
+            }
+        </p-card>
+    </div>
+    }
+
+    <!-- Empty State -->
+    @if (!hasResult() && !isLoadingAddress() && !errorMessage()) {
+    <div class="empty-state">
+        <i class="pi pi-map-marker"></i>
+        <h3>Zoek een adres</h3>
+        <p>Voer een straatnaam met huisnummer of postcode in om adres- en leefbaarheidsgegevens te bekijken.</p>
+        <div class="example-searches">
+            <span class="example-label">Voorbeelden:</span>
+            <code>Kalverstraat 10 Amsterdam</code>
+            <code>1012 NZ</code>
+            <code>Dam 1</code>
+        </div>
+    </div>
+    }
+</div>

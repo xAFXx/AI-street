@@ -1,0 +1,564 @@
+<div class="vdb-browser">
+    <p-toast />
+    <p-confirmDialog />
+
+    <!-- Header Bar -->
+    <div class="browser-header">
+        <div class="header-left">
+            <i class="pi pi-server"></i>
+            <h1>Virtual Database Manager</h1>
+            <p-tag value="VDB" severity="info" />
+        </div>
+        <div class="header-actions">
+            <p-button icon="pi pi-refresh" [text]="true" [rounded]="true" (onClick)="refreshAll()"
+                pTooltip="Refresh All" />
+        </div>
+    </div>
+
+    <!-- Main Split Panel: 3 Panels -->
+    <p-splitter [style]="{'height': 'calc(100vh - 140px)'}" styleClass="browser-splitter" [panelSizes]="[20, 45, 35]"
+        [minSizes]="[15, 30, 20]">
+        <!-- Left Panel: Tables List -->
+        <ng-template pTemplate>
+            <div class="tables-panel">
+                <div class="panel-header">
+                    <span class="panel-title">
+                        <i class="pi pi-database"></i>
+                        Tables
+                    </span>
+                    <div class="panel-actions">
+                        <p-button icon="pi pi-plus" [text]="true" [rounded]="true" size="small" pTooltip="New Table"
+                            (onClick)="openNewTableDialog()" />
+                        <span class="panel-count">{{ (tables() || []).length }}</span>
+                    </div>
+                </div>
+
+                <div class="panel-search">
+                    <p-iconfield class="search-rounded w-full">
+                        <p-inputicon styleClass="pi pi-search"></p-inputicon>
+                        <input type="text" pInputText placeholder="Search" [(ngModel)]="tableFilter" class="w-full" />
+                    </p-iconfield>
+                </div>
+
+                <div class="tables-list">
+                    @if (isLoadingTables()) {
+                    @for (i of [1,2,3,4,5]; track i) {
+                    <div class="table-item skeleton">
+                        <p-skeleton width="60%" height="1rem" />
+                    </div>
+                    }
+                    } @else if ((filteredTables() || []).length === 0) {
+                    <div class="empty-list">
+                        <i class="pi pi-inbox"></i>
+                        <span>No tables found</span>
+                    </div>
+                    } @else {
+                    @for (table of (filteredTables() || []); track table.name) {
+                    <div class="table-item" [class.selected]="selectedTable()?.name === table.name"
+                        (click)="selectTable(table)">
+                        <div class="table-info">
+                            <i class="pi pi-table"></i>
+                            <span class="table-name">{{ table.name }}</span>
+                        </div>
+                        <p-button icon="pi pi-trash" [text]="true" [rounded]="true" severity="danger" size="small"
+                            pTooltip="Delete" (onClick)="confirmDeleteTable(table, $event)" />
+                    </div>
+                    }
+                    }
+                </div>
+            </div>
+        </ng-template>
+
+        <!-- Right Panel: Keys & Values -->
+        <ng-template pTemplate>
+            <div class="content-panel">
+                @if (!selectedTable()) {
+                <div class="no-selection">
+                    <div class="no-selection-icon">
+                        <i class="pi pi-arrow-left"></i>
+                    </div>
+                    <h3>Select a table</h3>
+                    <p>Choose a table from the left panel to view its keys</p>
+                </div>
+                } @else {
+                <!-- Keys Header -->
+                <div class="panel-header">
+                    <span class="panel-title">
+                        <i class="pi pi-key"></i>
+                        {{ selectedTableName() }}
+                    </span>
+                    <div class="panel-actions">
+                        <span class="key-count">{{ totalKeys() }} keys</span>
+                        <!-- View Mode Toggle -->
+                        <p-selectbutton [options]="viewModeOptions" [ngModel]="tableViewMode()"
+                            (ngModelChange)="onViewModeChange($event)" optionLabel="label" optionValue="value"
+                            size="small" styleClass="view-mode-toggle" />
+                        <p-button icon="pi pi-refresh" [text]="true" [rounded]="true" size="small"
+                            (onClick)="loadRows(selectedTableName())" pTooltip="Refresh" />
+                        <p-button label="Add Key" icon="pi pi-plus" size="small" (onClick)="openAddDialog()" />
+                    </div>
+                </div>
+
+                <!-- Column Selector (only for Skim view) -->
+                @if (tableViewMode() === 'skim' && allSkimColumns().length > 0) {
+                <div class="skim-toolbar">
+                    <p-multiselect [options]="allSkimColumns()" [ngModel]="selectedSkimColumns()"
+                        (ngModelChange)="onSkimColumnChange($event)" optionLabel="header" placeholder="Select columns"
+                        display="chip" [showHeader]="false" [filter]="true" filterPlaceholder="Search columns"
+                        styleClass="w-full" />
+                </div>
+                }
+
+                <div class="panel-search">
+                    <p-iconfield class="search-rounded w-full">
+                        <p-inputicon styleClass="pi pi-search"></p-inputicon>
+                        <input type="text" pInputText placeholder="Search" [(ngModel)]="keyFilter" class="w-full" />
+                    </p-iconfield>
+                </div>
+
+
+                <!-- Keys List -->
+                <div class="keys-content">
+                    @if (isLoadingRows()) {
+                    <div class="loading-rows">
+                        <p-progressSpinner strokeWidth="4" [style]="{width: '40px', height: '40px'}" />
+                        <span>Loading keys...</span>
+                    </div>
+                    } @else if ((filteredRows() || []).length === 0) {
+                    <div class="empty-keys">
+                        <i class="pi pi-key"></i>
+                        <span>No keys in this table</span>
+                        <p-button label="Add First Key" icon="pi pi-plus" (onClick)="openAddDialog()" />
+                    </div>
+                    } @else {
+                    <!-- Table View (Classic Key-Value) -->
+                    @if (tableViewMode() === 'table') {
+                    <p-table [value]="filteredRows() || []" [paginator]="true" [rows]="15"
+                        [showCurrentPageReport]="true" [rowsPerPageOptions]="[15, 30, 50]"
+                        styleClass="p-datatable-sm p-datatable-striped" selectionMode="single"
+                        [selection]="selectedRow()" (selectionChange)="onRowSelect($event)" dataKey="key"
+                        [scrollable]="true" scrollHeight="flex">
+                        <ng-template pTemplate="header">
+                            <tr>
+                                <th style="width: 30%">Key</th>
+                                <th>Value</th>
+                                <th style="width: 100px" pFrozenColumn alignFrozen="right">Actions</th>
+                            </tr>
+                        </ng-template>
+                        <ng-template pTemplate="body" let-row let-rowIndex="rowIndex">
+                            <tr [pSelectableRow]="row" [pSelectableRowIndex]="rowIndex">
+                                <td>
+                                    <div class="key-cell">
+                                        <i class="pi pi-key"></i>
+                                        <code class="key-text">{{ row.key }}</code>
+                                    </div>
+                                </td>
+                                <td>
+                                    <div class="value-cell">
+                                        <code
+                                            class="value-preview">{{ formatValue(row.value) | slice:0:80 }}{{ formatValue(row.value).length > 80 ? '...' : '' }}</code>
+                                    </div>
+                                </td>
+                                <td pFrozenColumn alignFrozen="right">
+                                    <div class="row-actions">
+                                        <p-button icon="pi pi-pencil" [text]="true" [rounded]="true" size="small"
+                                            pTooltip="Edit" (onClick)="openEditDialog(row)" />
+                                        <p-button icon="pi pi-copy" [text]="true" [rounded]="true" size="small"
+                                            pTooltip="Copy Value" (onClick)="copyToClipboard(formatValue(row.value))" />
+                                        <p-button icon="pi pi-trash" [text]="true" [rounded]="true" size="small"
+                                            severity="danger" pTooltip="Delete"
+                                            (onClick)="confirmDeleteRow(row, $event)" />
+                                    </div>
+                                </td>
+                            </tr>
+                        </ng-template>
+                    </p-table>
+                    }
+                    <!-- Skim View (Dynamic Columns with Row Expansion) -->
+                    @else {
+                    <p-table [value]="filteredRows() || []" [paginator]="true" [rows]="15"
+                        [showCurrentPageReport]="true" [rowsPerPageOptions]="[15, 30, 50]"
+                        styleClass="p-datatable-sm p-datatable-striped" selectionMode="single"
+                        [selection]="selectedRow()" (selectionChange)="onRowSelect($event)" dataKey="key"
+                        [expandedRowKeys]="expandedRows">
+                        <ng-template pTemplate="header">
+                            <tr>
+                                <th style="width: 40px"></th>
+                                <th style="width: 150px">Key</th>
+                                @for (col of selectedSkimColumns(); track col.field) {
+                                <th>{{ col.header }}</th>
+                                }
+                                <th style="width: 100px" pFrozenColumn alignFrozen="right">Actions</th>
+                            </tr>
+                        </ng-template>
+                        <ng-template pTemplate="body" let-row let-rowIndex="rowIndex" let-expanded="expanded">
+                            <tr [pSelectableRow]="row" [pSelectableRowIndex]="rowIndex">
+                                <td>
+                                    @if (hasNestedObjects(row)) {
+                                    <p-button type="button" [pRowToggler]="row" [text]="true" [rounded]="true"
+                                        size="small" [icon]="expanded ? 'pi pi-chevron-down' : 'pi pi-chevron-right'" />
+                                    }
+                                </td>
+                                <td>
+                                    <code class="key-text">{{ row.key }}</code>
+                                </td>
+                                @for (col of selectedSkimColumns(); track col.field) {
+                                <td>
+                                    <span class="skim-cell-value">{{ formatSkimValue(getSkimColumnValue(row, col.field))
+                                        | slice:0:50 }}</span>
+                                </td>
+                                }
+                                <td pFrozenColumn alignFrozen="right">
+                                    <div class="row-actions">
+                                        <p-button icon="pi pi-pencil" [text]="true" [rounded]="true" size="small"
+                                            pTooltip="Edit" (onClick)="openEditDialog(row)" />
+                                        <p-button icon="pi pi-trash" [text]="true" [rounded]="true" size="small"
+                                            severity="danger" pTooltip="Delete"
+                                            (onClick)="confirmDeleteRow(row, $event)" />
+                                    </div>
+                                </td>
+                            </tr>
+                        </ng-template>
+                        <!-- Row Expansion Template for Nested Objects -->
+                        <ng-template pTemplate="expandedrow" let-row>
+                            <tr class="row-expansion">
+                                <td [attr.colspan]="selectedSkimColumns().length + 3">
+                                    <div class="nested-content p-3">
+                                        @for (prop of getNestedProperties(row); track prop.key) {
+                                        <div class="nested-property-section mb-3">
+                                            <div class="property-label mb-2">
+                                                <strong>{{ prop.key }}</strong>
+                                            </div>
+                                            <!-- Array of objects: show as multi-row table -->
+                                            @if (isArrayOfObjects(prop.value)) {
+                                            <p-table [value]="prop.value"
+                                                styleClass="p-datatable-sm p-datatable-striped">
+                                                <ng-template pTemplate="header">
+                            <tr>
+                                @for (col of getArrayTableColumns(prop.value); track col) {
+                                <th>{{ col }}</th>
+                                }
+                            </tr>
+                        </ng-template>
+                        <ng-template pTemplate="body" let-item>
+                            <tr>
+                                @for (col of getArrayTableColumns(prop.value); track col) {
+                                <td>{{ formatCellValue(item[col]) }}</td>
+                                }
+                            </tr>
+                        </ng-template>
+                    </p-table>
+                    }
+                    <!-- Plain object: horizontal table with keys as headers, values in single row -->
+                    @else if (isNonArrayObject(prop.value)) {
+                    <p-table [value]="[prop.value]" styleClass="p-datatable-sm p-datatable-striped">
+                        <ng-template pTemplate="header">
+                            <tr>
+                                @for (key of getArrayTableColumns([prop.value]); track key) {
+                                <th>{{ key }}</th>
+                                }
+                            </tr>
+                        </ng-template>
+                        <ng-template pTemplate="body" let-obj>
+                            <tr>
+                                @for (key of getArrayTableColumns([prop.value]); track key) {
+                                <td>{{ formatCellValue(obj[key]) }}</td>
+                                }
+                            </tr>
+                        </ng-template>
+                    </p-table>
+                    }
+                    <!-- Primitive or array of primitives: show as formatted text -->
+                    @else {
+                    <code class="nested-value">{{ formatCellValue(prop.value) }}</code>
+                    }
+                </div>
+                }
+                @empty {
+                <div class="text-center text-secondary">No nested properties</div>
+                }
+            </div>
+            </td>
+            </tr>
+        </ng-template>
+        </p-table>
+        }
+        }
+</div>
+}
+</div>
+</ng-template>
+
+<!-- Third Panel: Preview -->
+<ng-template pTemplate>
+    <div class="preview-panel">
+        @if (!selectedRow()) {
+        <div class="no-selection">
+            <div class="no-selection-icon">
+                <i class="pi pi-eye"></i>
+            </div>
+            <h3>No selection</h3>
+            <p>Select a row to preview its value</p>
+        </div>
+        } @else {
+        <div class="value-preview-panel full-height">
+            <div class="preview-header">
+                <span class="preview-title">
+                    <i class="pi pi-eye"></i>
+                    {{ selectedRow()?.key }}
+                </span>
+                <div class="preview-actions">
+                    <p-button icon="pi pi-copy" [text]="true" size="small" pTooltip="Copy"
+                        (onClick)="copyToClipboard(formatValue(selectedRow()?.value))" />
+                    <p-button icon="pi pi-pencil" [text]="true" size="small" pTooltip="Edit"
+                        (onClick)="openEditDialog(selectedRow()!)" />
+                </div>
+            </div>
+
+            <!-- View Mode Toggle -->
+            <div class="view-mode-tabs">
+                <div class="view-mode-strip">
+                    <button pButton [text]="true" size="small" icon="pi pi-th-large" label="Friendly"
+                        [class.active]="valueViewMode() === 'friendly'"
+                        (click)="valueViewMode.set('friendly')"></button>
+                    <button pButton [text]="true" size="small" icon="pi pi-table" label="Technical"
+                        [class.active]="valueViewMode() === 'technical'"
+                        (click)="valueViewMode.set('technical')"></button>
+                    <button pButton [text]="true" size="small" icon="pi pi-code" label="Raw"
+                        [class.active]="valueViewMode() === 'code'" (click)="valueViewMode.set('code')"></button>
+                </div>
+            </div>
+
+            <div class="preview-content">
+                <!-- FRIENDLY VIEW: Card-based with formatted values -->
+                @if (valueViewMode() === 'friendly') {
+                <div class="friendly-view">
+                    @if (isObjectValue(getParsedValue(selectedRow()?.value))) {
+                    <div class="field-cards grid">
+                        @for (key of getObjectKeys(getParsedValue(selectedRow()?.value)); track key) {
+                        <div class="col-12 md:col-6 lg:col-4">
+                            <div class="field-card p-3 surface-card border-round h-full"
+                                [class.copyable]="isSimpleValue(getPropertyValue(getParsedValue(selectedRow()?.value), key))"
+                                (click)="isSimpleValue(getPropertyValue(getParsedValue(selectedRow()?.value), key)) ? copyToClipboard(String(getPropertyValue(getParsedValue(selectedRow()?.value), key))) : null"
+                                [pTooltip]="isSimpleValue(getPropertyValue(getParsedValue(selectedRow()?.value), key)) ? 'Click to copy' : ''"
+                                tooltipPosition="top">
+                                <!-- Field Header -->
+                                <div class="flex justify-content-between align-items-start mb-2">
+                                    <span class="field-label">{{ key }}</span>
+                                    <i *ngIf="isSimpleValue(getPropertyValue(getParsedValue(selectedRow()?.value), key))"
+                                        class="pi pi-copy text-300 text-xs copy-icon"></i>
+                                </div>
+                                <!-- Field Value -->
+                                <div class="field-value">
+                                    @if (isSimpleValue(getPropertyValue(getParsedValue(selectedRow()?.value), key))) {
+                                    <span class="friendly-value font-medium">{{
+                                        formatFriendlyValue(getPropertyValue(getParsedValue(selectedRow()?.value), key))
+                                        }}</span>
+                                    } @else if (isArrayValue(getPropertyValue(getParsedValue(selectedRow()?.value),
+                                    key))) {
+                                    <div class="complex-value-summary">
+                                        <i class="pi pi-list"></i>
+                                        <span>{{ getArrayLength(getPropertyValue(getParsedValue(selectedRow()?.value),
+                                            key))
+                                            }} items</span>
+                                    </div>
+                                    <div class="array-preview">
+                                        @for (item of
+                                        getArrayPreviewItems(getPropertyValue(getParsedValue(selectedRow()?.value),
+                                        key),
+                                        3); track $index) {
+                                        <div class="array-item">
+                                            @if (isSimpleValue(item)) {
+                                            <code>{{ item }}</code>
+                                            } @else {
+                                            <code>{{ formatValue(item) | slice:0:60 }}{{ formatValue(item).length > 60 ? '...' : '' }}</code>
+                                            }
+                                        </div>
+                                        }
+                                        @if (getArrayLength(getPropertyValue(getParsedValue(selectedRow()?.value), key))
+                                        >
+                                        3) {
+                                        <div class="array-more">+{{
+                                            getArrayLength(getPropertyValue(getParsedValue(selectedRow()?.value), key))
+                                            - 3
+                                            }} more</div>
+                                        }
+                                    </div>
+                                    } @else if (isObjectValue(getPropertyValue(getParsedValue(selectedRow()?.value),
+                                    key)))
+                                    {
+                                    <div class="complex-value-summary">
+                                        <i class="pi pi-box"></i>
+                                        <span>{{ getObjectKeys(getPropertyValue(getParsedValue(selectedRow()?.value),
+                                            key)).length }} properties</span>
+                                    </div>
+                                    <div class="object-keys-preview">
+                                        @for (subKey of
+                                        getObjectKeys(getPropertyValue(getParsedValue(selectedRow()?.value),
+                                        key)).slice(0, 4); track subKey) {
+                                        <p-tag [value]="subKey" severity="secondary" styleClass="text-xs mr-1 mb-1" />
+                                        }
+                                        @if (getObjectKeys(getPropertyValue(getParsedValue(selectedRow()?.value),
+                                        key)).length > 4) {
+                                        <p-tag
+                                            [value]="'+' + (getObjectKeys(getPropertyValue(getParsedValue(selectedRow()?.value), key)).length - 4)"
+                                            severity="info" styleClass="text-xs" />
+                                        }
+                                    </div>
+                                    }
+                                </div>
+                            </div>
+                        </div>
+                        }
+                    </div>
+                    } @else {
+                    <!-- Non-object value (primitive or array at root) -->
+                    <div class="single-value-card">
+                        <div class="field-label">Value</div>
+                        <div class="field-value">
+                            <span class="friendly-value">{{ formatFriendlyValue(getParsedValue(selectedRow()?.value))
+                                }}</span>
+                        </div>
+                    </div>
+                    }
+                </div>
+                }
+
+                <!-- TECHNICAL VIEW: Table with property details -->
+                @else if (valueViewMode() === 'technical') {
+                <div class="technical-view">
+                    <div class="overflow-auto surface-card border-round">
+                        <table class="w-full text-sm">
+                            <thead>
+                                <tr class="surface-100">
+                                    <th class="text-left p-3 font-semibold text-600">Property</th>
+                                    <th class="text-left p-3 font-semibold text-600">Type</th>
+                                    <th class="text-left p-3 font-semibold text-600" style="width: 80px">Size</th>
+                                    <th class="text-left p-3 font-semibold text-600">Value</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @if (isObjectValue(getParsedValue(selectedRow()?.value))) {
+                                @for (key of getObjectKeys(getParsedValue(selectedRow()?.value)); track key; let odd =
+                                $odd) {
+                                <tr [class.surface-50]="odd">
+                                    <td class="p-3 font-mono text-xs">{{ key }}</td>
+                                    <td class="p-3 text-xs text-500">
+                                        {{ getTechnicalDetails(getPropertyValue(getParsedValue(selectedRow()?.value),
+                                        key)).type }}
+                                    </td>
+                                    <td class="p-3 font-mono text-xs text-500">{{
+                                        getTechnicalDetails(getPropertyValue(getParsedValue(selectedRow()?.value),
+                                        key)).size }}</td>
+                                    <td class="p-3 font-mono text-xs">
+                                        {{ getTechnicalDetails(getPropertyValue(getParsedValue(selectedRow()?.value),
+                                        key)).preview }}
+                                    </td>
+                                </tr>
+                                }
+                                } @else {
+                                <tr>
+                                    <td class="p-3 font-mono text-xs">(root)</td>
+                                    <td class="p-3 text-xs text-500">
+                                        {{ getTechnicalDetails(getParsedValue(selectedRow()?.value)).type }}
+                                    </td>
+                                    <td class="p-3 font-mono text-xs text-500">{{
+                                        getTechnicalDetails(getParsedValue(selectedRow()?.value)).size }}</td>
+                                    <td class="p-3 font-mono text-xs">
+                                        {{ getTechnicalDetails(getParsedValue(selectedRow()?.value)).preview }}
+                                    </td>
+                                </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                }
+
+                <!-- RAW VIEW: Pretty-printed JSON -->
+                @else {
+                <div class="raw-view p-3">
+                    <pre class="surface-card border-round p-3 text-sm overflow-auto"
+                        style="line-height: 1.6; tab-size: 2;">{{ formatValue(getParsedValue(selectedRow()?.value)) }}</pre>
+                </div>
+                }
+            </div>
+        </div>
+        }
+    </div>
+</ng-template>
+</p-splitter>
+</div>
+
+<!-- Add Key Dialog -->
+<p-dialog header="Add New Key" [(visible)]="showAddDialog" [modal]="true" [style]="{width: '900px', height: '600px'}"
+    [maximizable]="true" [draggable]="true" [resizable]="true">
+    <div class="edit-form">
+        <div class="form-field">
+            <label>Key</label>
+            <input type="text" pInputText [(ngModel)]="editKey" placeholder="my-key" class="w-full" />
+        </div>
+        <div class="form-field flex-1">
+            <label>Value (JSON)</label>
+            <div class="json-editor-wrapper large">
+                <json-editor #addJsonEditor [options]="jsonEditorOptions" [data]="editData"
+                    (change)="onJsonChange($event)" />
+            </div>
+        </div>
+        <div class="form-field">
+            <label>TTL (days)</label>
+            <p-inputNumber [(ngModel)]="editTtl" [min]="1" [max]="365" [showButtons]="true" />
+        </div>
+    </div>
+    <ng-template pTemplate="footer">
+        <p-button label="Cancel" [text]="true" (onClick)="showAddDialog = false" />
+        <p-button label="Add Key" icon="pi pi-plus" (onClick)="saveRow()" [disabled]="!editKey.trim()"
+            [loading]="isSaving()" />
+    </ng-template>
+</p-dialog>
+
+<!-- Edit Key Dialog -->
+<p-dialog [header]="'Edit: ' + editKey" [(visible)]="showEditDialog" [modal]="true"
+    [style]="{width: '900px', height: '650px'}" [maximizable]="true" [draggable]="true" [resizable]="true">
+    <div class="edit-form">
+        <div class="form-field">
+            <label>Key</label>
+            <input type="text" pInputText [(ngModel)]="editKey" class="w-full" [disabled]="true" />
+        </div>
+        <div class="form-field flex-1">
+            <label>Value</label>
+            <div class="json-editor-wrapper large">
+                <json-editor #editJsonEditor [options]="jsonEditorOptions" [data]="editData"
+                    (change)="onJsonChange($event)" />
+            </div>
+        </div>
+        <div class="form-field">
+            <label>Extend TTL (days)</label>
+            <p-inputNumber [(ngModel)]="editTtl" [min]="1" [max]="365" [showButtons]="true" />
+        </div>
+    </div>
+    <ng-template pTemplate="footer">
+        <p-button label="Cancel" [text]="true" (onClick)="showEditDialog = false" />
+        <p-button label="Save Changes" icon="pi pi-check" (onClick)="saveRow()" [loading]="isSaving()" />
+    </ng-template>
+</p-dialog>
+
+<!-- New Table Dialog -->
+<p-dialog header="Create New Table" [(visible)]="showNewTableDialog" [modal]="true" [style]="{width: '400px'}"
+    [draggable]="false" [resizable]="false">
+    <div class="edit-form">
+        <div class="form-field">
+            <label>Table Name</label>
+            <input type="text" pInputText [(ngModel)]="newTableName" class="w-full" placeholder="Enter table name..."
+                (keyup.enter)="createTable()" />
+            <small class="text-secondary mt-2 block">
+                Use lowercase letters, numbers, and underscores. Example: my_data_table
+            </small>
+        </div>
+    </div>
+    <ng-template pTemplate="footer">
+        <p-button label="Cancel" [text]="true" (onClick)="showNewTableDialog = false" />
+        <p-button label="Create" icon="pi pi-plus" (onClick)="createTable()" [disabled]="!newTableName.trim()"
+            [loading]="isCreatingTable()" />
+    </ng-template>
+</p-dialog>

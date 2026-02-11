@@ -9,12 +9,12 @@ import { AppConfig } from '../core/store';
 export const apprxConfig: AppConfig = {
     // ==================== Identity ====================
     appId: 'apprx',
-    appName: 'APPRX True North',
+    appName: 'APPRX 2.0',
     appVersion: '1.0.0',
 
     // ==================== API ====================
     api: {
-        baseUrl: 'https://dev_{TENANCY_NAME}_connectapi.apprx.eu',
+        baseUrl: '', // Resolved at runtime from AppConsts.remoteServiceBaseUrl
         version: 'v1',
         timeout: 30000,
         retry: {

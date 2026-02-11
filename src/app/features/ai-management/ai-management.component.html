@@ -1,0 +1,238 @@
+<div class="ai-management">
+    <!-- Header -->
+    <div class="nexus-header">
+        <div class="header-left">
+            <h1><i class="pi pi-microchip-ai"></i> AI Management</h1>
+            <span class="subtitle">Configure and manage AI agents for enterprise search</span>
+        </div>
+        <div class="header-actions">
+            <p-iconfield class="search-rounded">
+                <p-inputicon styleClass="pi pi-search"></p-inputicon>
+                <input type="text" pInputText placeholder="Search" [ngModel]="searchFilter()"
+                    (ngModelChange)="onSearch($event)" />
+            </p-iconfield>
+            <p-button icon="pi pi-sync" [rounded]="true" [text]="true" (onClick)="loadAgents()" pTooltip="Refresh"
+                [loading]="loading()" />
+            <p-button label="Reset All" icon="pi pi-refresh" severity="warn" [outlined]="true"
+                (onClick)="confirmResetAll($event)" pTooltip="Reset all agent models" />
+            <p-button label="Create Agent" icon="pi pi-plus" severity="primary" (onClick)="openCreateDialog()" />
+        </div>
+    </div>
+
+    <!-- Agents Table -->
+    <p-table [value]="agents()" [paginator]="true" [rows]="rows()" [totalRecords]="totalCount()" [lazy]="true"
+        (onLazyLoad)="onPageChange($event)" [first]="first()" [loading]="loading()" [rowsPerPageOptions]="[10, 25, 50]"
+        [showCurrentPageReport]="true" currentPageReportTemplate="Showing {first} to {last} of {totalRecords} agents"
+        styleClass="p-datatable-sm agents-table" [scrollable]="true" scrollHeight="flex" [rowHover]="true">
+
+        <!-- Name -->
+        <ng-template pTemplate="header">
+            <tr>
+                <th pSortableColumn="name" style="min-width: 160px">
+                    Name <p-sortIcon field="name" />
+                </th>
+                <th style="min-width: 250px">Description</th>
+                <th pSortableColumn="source" style="min-width: 120px">
+                    Source <p-sortIcon field="source" />
+                </th>
+                <th style="width: 110px; text-align: center">Max Tokens</th>
+                <th style="width: 100px; text-align: center">Enabled</th>
+                <th style="width: 130px; text-align: center">Function Calling</th>
+                <th style="width: 180px; text-align: center">Actions</th>
+            </tr>
+        </ng-template>
+
+        <ng-template pTemplate="body" let-agent let-i="rowIndex">
+            <tr>
+                <td>
+                    <div class="agent-identity">
+                        <span class="agent-avatar" [class]="'avatar-color-' + (i % 5)">
+                            {{ agent.name?.charAt(0)?.toUpperCase() }}
+                        </span>
+                        <span class="agent-name">{{ agent.name }}</span>
+                    </div>
+                </td>
+                <td>
+                    <span class="agent-description" [pTooltip]="agent.description" tooltipPosition="top">
+                        {{ truncateText(agent.description) }}
+                    </span>
+                </td>
+                <td>
+                    <span class="source-badge" *ngIf="agent.source">{{ agent.source }}</span>
+                    <span *ngIf="!agent.source" class="dim">—</span>
+                </td>
+                <td style="text-align: center">
+                    <span class="token-chip" *ngIf="agent.maxTokens">{{ agent.maxTokens | number }}</span>
+                    <span *ngIf="!agent.maxTokens" class="dim">—</span>
+                </td>
+                <td style="text-align: center">
+                    <p-tag [value]="agent.enabled ? 'Active' : 'Inactive'"
+                        [severity]="agent.enabled ? 'success' : 'danger'" [rounded]="true" />
+                </td>
+                <td style="text-align: center">
+                    <p-tag [value]="agent.allowFunctionCalling ? 'Enabled' : 'Disabled'"
+                        [severity]="agent.allowFunctionCalling ? 'info' : 'secondary'" [rounded]="true" />
+                </td>
+                <td style="text-align: center">
+                    <div class="action-buttons">
+                        <p-button icon="pi pi-pencil" [rounded]="true" [text]="true" pTooltip="Edit"
+                            (onClick)="openEditDialog(agent)" />
+                        <p-button icon="pi pi-refresh" [rounded]="true" [text]="true" severity="warn" pTooltip="Reset"
+                            (onClick)="confirmReset(agent, $event)" />
+                        <p-button icon="pi pi-trash" [rounded]="true" [text]="true" severity="danger" pTooltip="Delete"
+                            (onClick)="confirmDelete(agent, $event)" />
+                    </div>
+                </td>
+            </tr>
+        </ng-template>
+
+        <ng-template pTemplate="emptymessage">
+            <tr>
+                <td colspan="7" style="text-align: center; padding: 2rem">
+                    <i class="pi pi-inbox" style="font-size: 2rem; color: var(--text-color-secondary)"></i>
+                    <p style="margin-top: 0.5rem; color: var(--text-color-secondary)">No AI agents found</p>
+                </td>
+            </tr>
+        </ng-template>
+    </p-table>
+</div>
+
+<!-- Create / Edit Dialog -->
+<p-dialog [(visible)]="showDialog" [header]="dialogTitle()" [modal]="true" [maximizable]="true"
+    [style]="{ width: '680px' }" [draggable]="false" [resizable]="false" styleClass="ai-agent-dialog">
+
+    <p-tabs [value]="activeTabIndex()" (valueChange)="activeTabIndex.set($any($event))">
+        <p-tablist>
+            <p-tab [value]="0"><i class="pi pi-info-circle"></i> General</p-tab>
+            <p-tab [value]="1"><i class="pi pi-file-edit"></i> Instructions</p-tab>
+            <p-tab [value]="2"><i class="pi pi-link"></i> Connection</p-tab>
+        </p-tablist>
+
+        <p-tabpanels>
+            <!-- General Tab -->
+            <p-tabpanel [value]="0">
+                <div class="form-grid" [formGroup]="agentForm">
+                    <div class="form-field">
+                        <label for="agent-name">Name *</label>
+                        <input pInputText id="agent-name" formControlName="name" placeholder="Agent name" />
+                        <small class="p-error"
+                            *ngIf="agentForm.get('name')?.touched && agentForm.get('name')?.hasError('required')">
+                            Name is required
+                        </small>
+                    </div>
+
+                    <div class="form-field">
+                        <label for="agent-description">Description *</label>
+                        <textarea pTextarea id="agent-description" formControlName="description"
+                            placeholder="Brief description of the agent's purpose" rows="3"></textarea>
+                        <small class="p-error"
+                            *ngIf="agentForm.get('description')?.touched && agentForm.get('description')?.hasError('required')">
+                            Description is required
+                        </small>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-field">
+                            <label for="agent-avatar">Avatar</label>
+                            <input pInputText id="agent-avatar" formControlName="avatar"
+                                placeholder="Avatar URL or identifier" />
+                        </div>
+                        <div class="form-field">
+                            <label for="agent-language">Main Language</label>
+                            <input pInputText id="agent-language" formControlName="mainLanguage"
+                                placeholder="e.g. en, de, fr" />
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-field">
+                            <label for="agent-maxTokens">Max Tokens</label>
+                            <p-inputNumber id="agent-maxTokens" formControlName="maxTokens" placeholder="e.g. 4096"
+                                [min]="0" [max]="128000" />
+                        </div>
+                        <div class="form-field">
+                            <label for="agent-content">Content</label>
+                            <input pInputText id="agent-content" formControlName="content" placeholder="Content type" />
+                        </div>
+                    </div>
+
+                    <div class="form-row toggles">
+                        <div class="toggle-field">
+                            <p-checkbox formControlName="enabled" [binary]="true" inputId="agent-enabled" />
+                            <label for="agent-enabled">Enabled</label>
+                        </div>
+                        <div class="toggle-field">
+                            <p-checkbox formControlName="allowFunctionCalling" [binary]="true"
+                                inputId="agent-fnCalling" />
+                            <label for="agent-fnCalling">Allow Function Calling</label>
+                        </div>
+                    </div>
+                </div>
+            </p-tabpanel>
+
+            <!-- Instructions Tab -->
+            <p-tabpanel [value]="1">
+                <div class="form-grid" [formGroup]="agentForm">
+                    <div class="form-field">
+                        <label for="agent-internalInstruction">Internal Instruction *</label>
+                        <small class="hint">System prompt that guides the agent's behavior (not visible to
+                            users)</small>
+                        <textarea pTextarea id="agent-internalInstruction" formControlName="internalInstruction"
+                            rows="8" placeholder="You are a helpful assistant that..."></textarea>
+                        <small class="p-error"
+                            *ngIf="agentForm.get('internalInstruction')?.touched && agentForm.get('internalInstruction')?.hasError('required')">
+                            Internal instruction is required
+                        </small>
+                    </div>
+
+                    <div class="form-field">
+                        <label for="agent-externalInstruction">External Instruction</label>
+                        <small class="hint">Visible to users as guidance or initial greeting</small>
+                        <textarea pTextarea id="agent-externalInstruction" formControlName="externalInstruction"
+                            rows="4" placeholder="Hello! I can help you with..."></textarea>
+                    </div>
+                </div>
+            </p-tabpanel>
+
+            <!-- Connection Tab -->
+            <p-tabpanel [value]="2">
+                <div class="form-grid" [formGroup]="agentForm">
+                    <div class="form-field">
+                        <label for="agent-source">Source</label>
+                        <input pInputText id="agent-source" formControlName="source"
+                            placeholder="Source endpoint or identifier" />
+                    </div>
+
+                    <div class="form-field">
+                        <label for="agent-destination">Destination</label>
+                        <input pInputText id="agent-destination" formControlName="destination"
+                            placeholder="Destination endpoint" />
+                    </div>
+
+                    <div class="form-field">
+                        <label for="agent-path">Path</label>
+                        <input pInputText id="agent-path" formControlName="path" placeholder="API path" />
+                    </div>
+
+                    <div class="form-field">
+                        <label for="agent-authentication">Authentication</label>
+                        <input pInputText id="agent-authentication" formControlName="authentication"
+                            placeholder="Auth method or key" />
+                    </div>
+                </div>
+            </p-tabpanel>
+        </p-tabpanels>
+    </p-tabs>
+
+    <ng-template pTemplate="footer">
+        <p-button label="Cancel" severity="secondary" (onClick)="showDialog.set(false)" />
+        <p-button [label]="isEditMode() ? 'Save' : 'Create'" icon="pi pi-check" (onClick)="saveAgent()"
+            [loading]="saving()" [disabled]="agentForm.invalid" />
+    </ng-template>
+</p-dialog>
+
+<!-- Confirm Dialog -->
+<p-confirmDialog />
+
+<!-- Toast -->
+<p-toast />

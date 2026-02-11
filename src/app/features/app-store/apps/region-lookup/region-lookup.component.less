@@ -1,0 +1,333 @@
+.region-lookup-container {
+    padding: 2rem;
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+// Header
+.page-header {
+    margin-bottom: 2rem;
+    
+    h1 {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        font-size: 1.75rem;
+        font-weight: 600;
+        color: var(--text-color);
+        margin: 0 0 0.5rem 0;
+        
+        i {
+            color: var(--primary-color);
+            font-size: 1.5rem;
+        }
+    }
+    
+    .subtitle {
+        color: var(--text-color-secondary);
+        margin: 0;
+        font-size: 1rem;
+    }
+}
+
+// Search Card
+.search-card {
+    margin-bottom: 1.5rem;
+    
+    :deep(.p-card-body) {
+        padding: 1.5rem;
+    }
+    
+    .search-container {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+    }
+    
+    .search-input-wrapper {
+        flex: 1;
+    }
+    
+    .search-autocomplete {
+        width: 100%;
+        
+        :deep(.p-autocomplete-input) {
+            width: 100%;
+            font-size: 1.1rem;
+            padding: 0.75rem 1rem;
+        }
+    }
+    
+    .suggestion-item {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 0.25rem 0;
+        
+        i {
+            color: var(--primary-color);
+        }
+    }
+}
+
+// Error Message
+.error-message {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 1rem;
+    background: var(--red-50);
+    color: var(--red-600);
+    border-radius: 8px;
+    margin-bottom: 1.5rem;
+    
+    i {
+        font-size: 1.25rem;
+    }
+}
+
+// Results Grid
+.results-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1.5rem;
+    
+    @media (max-width: 992px) {
+        grid-template-columns: 1fr;
+    }
+}
+
+// Info Cards
+.info-card {
+    :deep(.p-card-header) {
+        padding: 0;
+    }
+    
+    :deep(.p-card-body) {
+        padding: 1.5rem;
+    }
+    
+    .card-header {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        padding: 1rem 1.5rem;
+        background: var(--surface-50);
+        border-bottom: 1px solid var(--surface-200);
+        
+        i {
+            color: var(--primary-color);
+            font-size: 1.25rem;
+        }
+        
+        span {
+            font-weight: 600;
+            font-size: 1.1rem;
+        }
+    }
+    
+    .loading-state {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 1rem;
+        padding: 2rem;
+        color: var(--text-color-secondary);
+    }
+    
+    .no-data {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 1rem;
+        background: var(--surface-50);
+        border-radius: 8px;
+        color: var(--text-color-secondary);
+    }
+}
+
+// BAG Card
+.address-details {
+    .detail-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 0.5rem 0;
+        
+        &.highlight {
+            background: var(--primary-50);
+            padding: 0.75rem;
+            margin: -0.5rem -0.5rem 0.5rem -0.5rem;
+            border-radius: 6px;
+            
+            label {
+                color: var(--primary-700);
+            }
+            
+            .value {
+                font-weight: 600;
+                color: var(--primary-900);
+            }
+        }
+        
+        label {
+            color: var(--text-color-secondary);
+            font-size: 0.9rem;
+        }
+        
+        .value {
+            color: var(--text-color);
+            font-weight: 500;
+        }
+    }
+    
+    .map-button {
+        margin-top: 1rem;
+        text-align: center;
+    }
+}
+
+// Leefbaarheid Card
+.leefbaarheid-details {
+    .overall-score {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        padding: 1rem;
+        background: var(--surface-50);
+        border-radius: 8px;
+        
+        .score-label {
+            color: var(--text-color-secondary);
+            font-size: 0.9rem;
+        }
+        
+        .score-value {
+            font-size: 2rem;
+            font-weight: 700;
+            margin-left: auto;
+        }
+    }
+    
+    .dimensions {
+        display: flex;
+        flex-direction: column;
+        gap: 1rem;
+    }
+    
+    .dimension-row {
+        display: grid;
+        grid-template-columns: 160px 1fr 50px;
+        align-items: center;
+        gap: 1rem;
+        
+        .dimension-label {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            color: var(--text-color-secondary);
+            font-size: 0.9rem;
+            
+            i {
+                width: 20px;
+                text-align: center;
+            }
+        }
+        
+        .dimension-bar {
+            :deep(.p-progressbar) {
+                background: var(--surface-200);
+                
+                .p-progressbar-value {
+                    background: var(--primary-color);
+                }
+            }
+        }
+        
+        .dimension-score {
+            text-align: right;
+            font-weight: 600;
+            font-size: 0.9rem;
+        }
+    }
+    
+    .measurement-info {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        margin-top: 1rem;
+        padding: 0.75rem;
+        background: var(--surface-50);
+        border-radius: 6px;
+        font-size: 0.85rem;
+        color: var(--text-color-secondary);
+    }
+}
+
+// Dimension score colors
+.dimension-positive {
+    color: var(--green-600);
+}
+
+.dimension-neutral {
+    color: var(--blue-600);
+}
+
+.dimension-warning {
+    color: var(--orange-600);
+}
+
+.dimension-negative {
+    color: var(--red-600);
+}
+
+// Empty State
+.empty-state {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 4rem 2rem;
+    text-align: center;
+    background: var(--surface-50);
+    border-radius: 12px;
+    border: 2px dashed var(--surface-300);
+    
+    i {
+        font-size: 4rem;
+        color: var(--primary-200);
+        margin-bottom: 1rem;
+    }
+    
+    h3 {
+        margin: 0 0 0.5rem 0;
+        color: var(--text-color);
+    }
+    
+    p {
+        color: var(--text-color-secondary);
+        margin: 0 0 1.5rem 0;
+        max-width: 400px;
+    }
+    
+    .example-searches {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        justify-content: center;
+        gap: 0.5rem;
+        
+        .example-label {
+            color: var(--text-color-secondary);
+            font-size: 0.9rem;
+        }
+        
+        code {
+            background: var(--surface-100);
+            padding: 0.25rem 0.5rem;
+            border-radius: 4px;
+            font-size: 0.85rem;
+            color: var(--primary-700);
+        }
+    }
+}

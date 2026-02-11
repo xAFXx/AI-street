@@ -12,6 +12,7 @@ import { UserManagementService, User } from '../../core/services/user-management
 import { AuthService } from '../../core/services/auth.service';
 import { AppNexusService } from '../../features/app-store/app-nexus.service';
 import { MenuPlacement } from '../../features/app-store/app.model';
+import { AiStatusService } from '../../core/services/ai-status.service';
 
 @Component({
     selector: 'app-sidebar',
@@ -25,6 +26,7 @@ export class SidebarComponent implements OnInit, OnDestroy {
     private authService = inject(AuthService);
     private appNexusService = inject(AppNexusService);
     private router = inject(Router);
+    readonly aiStatus = inject(AiStatusService);
     private destroy$ = new Subject<void>();
 
     items: MenuItem[] = [];
@@ -44,62 +46,22 @@ export class SidebarComponent implements OnInit, OnDestroy {
     // All menu items with role requirements
     // Note: True North-specific items (Results, True North, Report Frameworks, Audit Standards)
     // are defined in the True North app and injected when the app is installed
+    // Note: AI Street items (Data Management, Model Arena, Test Evaluation Center, Dashboard)
+    // are defined in the AI Street app and shown when installed
+    // Note: Search & Action is available via App Nexus
     private allMenuItems: (MenuItem & { roles?: string[] })[] = [
         {
             label: 'Management',
-            roles: ['admin'], // Only admin sees this group
             items: [
                 {
                     label: 'App Nexus',
                     icon: 'pi pi-th-large',
-                    routerLink: '/app-nexus'
+                    routerLink: ['/app-nexus']
                 },
                 {
-                    label: 'Data Management',
-                    icon: 'pi pi-database',
-                    routerLink: '/input'
-                },
-                {
-                    label: 'Model Arena',
-                    icon: 'pi pi-microchip',
-                    routerLink: '/arena'
-                },
-                {
-                    label: 'Test Evaluation Center',
-                    icon: 'pi pi-cog',
-                    routerLink: '/processes'
-                }
-            ]
-        },
-        {
-            label: 'Analytics',
-            roles: ['admin'], // Only admin sees this group header
-            items: [
-                {
-                    label: 'Dashboard',
-                    icon: 'pi pi-chart-bar',
-                    routerLink: '/dashboard'
-                },
-                {
-                    label: 'Search & Action',
-                    icon: 'pi pi-search',
-                    routerLink: '/search'
-                },
-                {
-                    label: 'Document Management',
-                    icon: 'pi pi-file-edit',
-                    routerLink: '/document-management'
-                }
-            ]
-        },
-        {
-            label: 'Tools',
-            roles: ['enduser'], // Only enduser sees this simplified group
-            items: [
-                {
-                    label: 'Search & Action',
-                    icon: 'pi pi-search',
-                    routerLink: '/search'
+                    label: 'AI Management',
+                    icon: 'pi pi-microchip-ai',
+                    routerLink: ['/ai-management']
                 }
             ]
         }
@@ -183,7 +145,7 @@ export class SidebarComponent implements OnInit, OnDestroy {
                 items: app.menuItems!.map(item => ({
                     label: item.label,
                     icon: item.icon,
-                    routerLink: item.routerLink
+                    routerLink: [item.routerLink] // PrimeNG requires array format
                 }))
             }));
 
@@ -193,7 +155,7 @@ export class SidebarComponent implements OnInit, OnDestroy {
             items: groupedApps.map(app => ({
                 label: app.name,
                 icon: app.iconUrl.startsWith('pi ') ? app.iconUrl : 'pi pi-box',
-                routerLink: app.startScreen.startsWith('/') ? app.startScreen : `/${app.startScreen}`
+                routerLink: app.startScreen.startsWith('/') ? [app.startScreen] : [`/${app.startScreen}`]
             }))
         } : null;
 
@@ -201,7 +163,7 @@ export class SidebarComponent implements OnInit, OnDestroy {
         const topLevelAppItems: MenuItem[] = topLevelApps.map(app => ({
             label: app.name,
             icon: app.iconUrl.startsWith('pi ') ? app.iconUrl : 'pi pi-box',
-            routerLink: app.startScreen.startsWith('/') ? app.startScreen : `/${app.startScreen}`
+            routerLink: app.startScreen.startsWith('/') ? [app.startScreen] : [`/${app.startScreen}`]
         }));
 
         // Combine all menu items: base + app menu groups + installed apps group + top-level items

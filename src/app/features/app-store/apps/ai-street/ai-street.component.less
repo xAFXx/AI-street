@@ -1,0 +1,74 @@
+.ai-street-container {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    background: var(--surface-ground);
+}
+
+.ai-street-header {
+    padding: 1.5rem 2rem;
+    background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-700) 100%);
+    color: white;
+    border-bottom: 1px solid var(--surface-border);
+
+    .header-content {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+    }
+
+    .header-icon {
+        font-size: 2.5rem;
+        opacity: 0.9;
+    }
+
+    .header-text {
+        h1 {
+            margin: 0;
+            font-size: 1.75rem;
+            font-weight: 600;
+        }
+
+        .subtitle {
+            opacity: 0.85;
+            font-size: 0.9rem;
+        }
+    }
+}
+
+// Tab styling
+:host ::ng-deep {
+    .p-tabs {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+    }
+
+    .p-tablist {
+        background: var(--surface-card);
+        padding: 0 1rem;
+        border-bottom: 1px solid var(--surface-border);
+    }
+
+    .p-tab {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 1rem 1.25rem;
+
+        i {
+            font-size: 1rem;
+        }
+    }
+
+    .p-tabpanels {
+        flex: 1;
+        overflow: hidden;
+    }
+
+    .p-tabpanel {
+        height: 100%;
+        padding: 0;
+        overflow: auto;
+    }
+}

@@ -18,6 +18,8 @@ import { SelectModule } from 'primeng/select';
 import { InputNumberModule } from 'primeng/inputnumber';
 import { TextareaModule } from 'primeng/textarea';
 import { MessageModule } from 'primeng/message';
+import { IconFieldModule } from 'primeng/iconfield';
+import { InputIconModule } from 'primeng/inputicon';
 import { AppNexusService } from './app-nexus.service';
 import { App, AppParameter, AppCategory, AppInstallStatus } from './app.model';
 
@@ -43,7 +45,9 @@ import { App, AppParameter, AppCategory, AppInstallStatus } from './app.model';
         SelectModule,
         InputNumberModule,
         TextareaModule,
-        MessageModule
+        MessageModule,
+        IconFieldModule,
+        InputIconModule
     ],
     templateUrl: './app-nexus.component.html',
     styleUrls: ['./app-nexus.component.less']

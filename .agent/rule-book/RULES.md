@@ -117,5 +117,50 @@ class AppLoaderComponent {
 
 ---
 
-*Add new rules below as they are identified.*
+## Rule 3: Use LESS for All Component Styles
 
+**Priority:** High  
+**Category:** Styling
+
+### Rule Statement
+
+All component stylesheets **must use LESS** (`.less` files). **Never create `.scss`, `.sass`, or plain `.css` files** for Angular component styles. The project has been fully migrated to LESS.
+
+### ❌ Bad Practice
+
+```typescript
+// SCSS - DO NOT USE
+@Component({
+    styleUrls: ['./my-component.component.scss']
+})
+
+// Plain CSS - DO NOT USE
+@Component({
+    styleUrls: ['./my-component.component.css']
+})
+```
+
+### ✅ Good Practice
+
+```typescript
+@Component({
+    styleUrls: ['./my-component.component.less']
+})
+```
+
+### Rationale
+
+1. **Consistency** - One stylesheet language across the entire codebase
+2. **Build pipeline** - The Angular build is configured for LESS
+3. **Team alignment** - All developers use the same syntax
+
+### Applies To
+
+- All new Angular components
+- Any component being refactored or modified
+- Shared/library components
+- Global styles (use `styles.less`)
+
+---
+
+*Add new rules below as they are identified.*

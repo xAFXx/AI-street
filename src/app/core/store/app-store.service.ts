@@ -1,6 +1,7 @@
 import { Injectable, signal, computed, inject, effect } from '@angular/core';
 import { AppConfig, AppUser, SessionState } from './app-config.model';
 import { APP_CONFIG, SESSION_STORAGE_KEY, PREFERENCES_STORAGE_KEY } from './app-store.tokens';
+import { AppConsts } from '../../shared/AppConsts';
 
 /**
  * AppStoreService - Central State Management
@@ -57,16 +58,9 @@ export class AppStoreService {
     /** Theme configuration */
     readonly theme = computed(() => this._config()?.theme ?? null);
 
-    /** API base URL (with tenant placeholder resolved) */
+    /** API base URL — resolved from AppConsts (populated by environment-specific appconfig) */
     readonly apiBaseUrl = computed(() => {
-        const config = this._config();
-        if (!config) return '';
-
-        let url = config.api.baseUrl;
-        if (config.tenantId) {
-            url = url.replace('{TENANCY_NAME}', config.tenantId);
-        }
-        return url;
+        return AppConsts.remoteServiceBaseUrl || '';
     });
 
     // ==================== User State ====================

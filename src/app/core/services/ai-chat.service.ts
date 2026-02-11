@@ -1,10 +1,8 @@
 import { Injectable, inject } from '@angular/core';
 import { BehaviorSubject, Observable, Subject } from 'rxjs';
-import { AI_CONFIG, hasApiKey } from '../../features/template-editor/ai-providers/ai-config';
-import * as pdfjsLib from 'pdfjs-dist';
-
-// Configure PDF.js worker
-pdfjsLib.GlobalWorkerOptions.workerSrc = 'assets/pdf.worker.min.mjs';
+import { AI_CONFIG, hasApiKey } from '../../features/app-store/apps/true-north/template-editor/ai-providers/ai-config';
+import { getPdfJs, initializePdfWorker, pdfjsLib } from '../utils/pdf-worker';
+import { AiStatusService } from './ai-status.service';
 
 /**
  * Chat message model
@@ -34,7 +32,12 @@ export interface ChatContext {
     providedIn: 'root'
 })
 export class AiChatService {
-    private apiEndpoint = 'https://api.openai.com/v1/chat/completions';
+    private readonly aiStatus = inject(AiStatusService);
+
+    // Use direct OpenAI API - works with proper Authorization header
+    private readonly apiEndpoint = 'https://api.openai.com/v1/chat/completions';
+    private readonly filesEndpoint = 'https://api.openai.com/v1/files';
+
     private model = 'gpt-4o';
 
     // Active contexts for different chat instances
@@ -354,6 +357,9 @@ export class AiChatService {
             throw new Error(`API error: ${response.status} - ${error}`);
         }
 
+        // Update AI status with rate limit headers
+        this.aiStatus.updateFromResponse('openai', response.headers, 2048);
+
         const data = await response.json();
         return data.choices[0]?.message?.content || '';
     }
@@ -390,6 +396,9 @@ export class AiChatService {
                 stream: true
             })
         });
+
+        // Update AI status with rate limit headers
+        this.aiStatus.updateFromResponse('openai', response.headers, 2048);
 
         if (!response.ok) {
             throw new Error(`API error: ${response.status}`);
@@ -440,7 +449,7 @@ export class AiChatService {
 
         console.log('[AiChatService] Uploading file to OpenAI:', file.name, file.type, file.size);
 
-        const response = await fetch('https://api.openai.com/v1/files', {
+        const response = await fetch(this.filesEndpoint, {
             method: 'POST',
             headers: {
                 'Authorization': `Bearer ${apiKey}`
@@ -534,6 +543,9 @@ export class AiChatService {
             throw new Error(`Vision analysis failed: ${response.status}`);
         }
 
+        // Update AI status with rate limit headers
+        this.aiStatus.updateFromResponse('openai', response.headers, 4096);
+
         const data = await response.json();
         const result = data.choices[0]?.message?.content || '';
         console.log('[AiChatService] Vision analysis complete, response length:', result.length);
@@ -545,8 +557,10 @@ export class AiChatService {
      * Returns array of data URLs (data:image/png;base64,...)
      */
     private async renderPdfToImages(file: File): Promise<string[]> {
+        // Use robust PDF worker initialization with fallbacks
+        const pdfjs = await getPdfJs();
         const arrayBuffer = await file.arrayBuffer();
-        const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+        const pdf = await pdfjs.getDocument({ data: arrayBuffer }).promise;
 
         const pageImages: string[] = [];
         const scale = 2.0; // Render at 2x for better quality
@@ -602,5 +616,117 @@ Format your responses using markdown for better readability.`;
 
     private generateId(): string {
         return `msg_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+    }
+
+    /**
+     * Propose GLA mapping based on UBL invoice data
+     * Uses AI to analyze document data and suggest the best GLA category
+     */
+    async proposeGlaMapping(
+        ublData: any,
+        availableMappings: Array<{ id: string; name: string; glaCode: string; glaDescription: string; periodName: string }>
+    ): Promise<{ mappingId: string; confidence: number; reasoning: string }> {
+        const apiKey = AI_CONFIG.openai.apiKey;
+        if (!apiKey) {
+            throw new Error('OpenAI API key not configured');
+        }
+
+        // Create a summary of the invoice data
+        const invoiceDetails = ublData?.active || ublData || {};
+        const invoiceSummary = {
+            supplierName: invoiceDetails.supplierName || invoiceDetails.CreditorParty?.PartyName?.[0]?.Name || 'Unknown',
+            totalAmount: invoiceDetails.totalAmount || invoiceDetails.LegalMonetaryTotal?.PayableAmount?._value,
+            taxPercent: invoiceDetails.taxPercent || invoiceDetails.TaxTotal?.[0]?.TaxSubtotal?.[0]?.TaxCategory?.Percent,
+            lineItems: (invoiceDetails.lineItems || invoiceDetails.InvoiceLine || []).map((item: any) => ({
+                description: item.description || item.Item?.Description?.[0] || item.Item?.Name || 'Unknown',
+                amount: item.amount || item.LineExtensionAmount?._value
+            })).slice(0, 5) // Limit to first 5 items
+        };
+
+        // Create mapping options summary
+        const mappingOptions = availableMappings.slice(0, 50).map(m => ({
+            id: m.id,
+            code: m.glaCode,
+            description: m.glaDescription,
+            period: m.periodName
+        }));
+
+        const prompt = `You are an expert accountant tasked with categorizing invoices to the correct General Ledger Account (GLA) for bookkeeping.
+
+INVOICE TO CATEGORIZE:
+- Supplier: ${invoiceSummary.supplierName}
+- Total Amount: ${invoiceSummary.totalAmount}
+- Tax Percentage: ${invoiceSummary.taxPercent}%
+- Line Items: ${JSON.stringify(invoiceSummary.lineItems)}
+
+AVAILABLE GLA CATEGORIES:
+${JSON.stringify(mappingOptions, null, 2)}
+
+Based on the invoice details, determine which GLA category is most appropriate.
+
+Respond with a JSON object in this exact format:
+{
+  "mappingId": "the id of the best matching GLA",
+  "confidence": 85 (a number 0-100 representing your confidence),
+  "reasoning": "Brief explanation of why this GLA was chosen"
+}
+
+Consider:
+- Supplier type (direct costs, subcontractor, sales, etc.)
+- Nature of line items
+- Industry-standard bookkeeping practices
+- The GLA code descriptions
+
+Return ONLY the JSON object, no additional text.`;
+
+        try {
+            const response = await this.fetchWithRetry(this.apiEndpoint, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${apiKey}`
+                },
+                body: JSON.stringify({
+                    model: 'gpt-4o-mini', // Use faster model for quick proposals
+                    messages: [
+                        { role: 'user', content: prompt }
+                    ],
+                    temperature: 0.3, // Lower temperature for more consistent results
+                    max_tokens: 500
+                })
+            });
+
+            if (!response.ok) {
+                throw new Error(`API error: ${response.status}`);
+            }
+
+            // Update AI status with rate limit headers
+            this.aiStatus.updateFromResponse('openai', response.headers, 500);
+
+            const data = await response.json();
+            const content = data.choices[0]?.message?.content || '';
+
+            // Parse the JSON response
+            const jsonMatch = content.match(/\{[\s\S]*\}/);
+            if (jsonMatch) {
+                const proposal = JSON.parse(jsonMatch[0]);
+                console.log('[AiChatService] GLA proposal:', proposal);
+                return {
+                    mappingId: proposal.mappingId || '',
+                    confidence: Math.min(100, Math.max(0, proposal.confidence || 50)),
+                    reasoning: proposal.reasoning || 'No reasoning provided'
+                };
+            }
+
+            throw new Error('Invalid AI response format');
+        } catch (error) {
+            console.error('[AiChatService] GLA proposal failed:', error);
+            // Return a low-confidence fallback
+            return {
+                mappingId: availableMappings[0]?.id || '',
+                confidence: 10,
+                reasoning: 'AI analysis failed, please select manually'
+            };
+        }
     }
 }

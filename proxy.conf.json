@@ -4,5 +4,14 @@
         "secure": true,
         "changeOrigin": true,
         "logLevel": "debug"
+    },
+    "/openai-proxy": {
+        "target": "https://api.openai.com",
+        "secure": true,
+        "changeOrigin": true,
+        "logLevel": "debug",
+        "pathRewrite": {
+            "^/openai-proxy": ""
+        }
     }
 }
