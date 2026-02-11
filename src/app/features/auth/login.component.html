@@ -1,0 +1,81 @@
+<div class="login-page">
+    <!-- Animated particle canvas background -->
+    <canvas #particleCanvas class="particle-canvas"></canvas>
+
+    <!-- Gradient overlay -->
+    <div class="gradient-overlay"></div>
+
+    <!-- Login card -->
+    <div class="login-card">
+        <!-- Logo & Header -->
+        <div class="logo-section">
+            <div class="logo-area">
+                <img *ngIf="logoUrl" [src]="logoUrl" alt="Tenant logo" class="tenant-logo" (error)="onLogoError()">
+                <div *ngIf="!logoUrl" class="logo-icon-ring">
+                    <i class="pi pi-bolt"></i>
+                </div>
+            </div>
+            <h1 class="brand-title">Apprx 2.0</h1>
+            <p class="brand-tagline">The intelligent co-worker for all experts</p>
+        </div>
+
+        <!-- Tenant Display -->
+        <div class="tenant-pill" *ngIf="tenantName">
+            <i class="pi pi-building"></i>
+            <span>{{ tenantName }}</span>
+        </div>
+
+        <!-- Login Form -->
+        <div class="login-form">
+            <div class="form-field" [class.field-error]="hasError">
+                <label>
+                    <i class="pi pi-user"></i>Email or Username
+                </label>
+                <input pInputText [(ngModel)]="username" placeholder="Enter your email or username"
+                    (keyup.enter)="focusPassword()" (input)="dismissError()" #usernameInput>
+            </div>
+
+            <div class="form-field" [class.field-error]="hasError">
+                <label>
+                    <i class="pi pi-lock"></i>Password
+                </label>
+                <p-password [(ngModel)]="password" [feedback]="false" [toggleMask]="true" styleClass="w-full"
+                    inputStyleClass="w-full" placeholder="Enter your password" (keyup.enter)="login()"
+                    (onInput)="dismissError()" #passwordInput>
+                </p-password>
+            </div>
+
+            <div class="remember-row">
+                <p-checkbox [(ngModel)]="rememberMe" [binary]="true" inputId="rememberMe">
+                </p-checkbox>
+                <label for="rememberMe" class="remember-label">Remember me</label>
+            </div>
+
+            <!-- Custom error banner -->
+            <div class="error-banner" *ngIf="errorMessage" (click)="dismissError()">
+                <div class="error-icon">
+                    <i class="pi pi-exclamation-triangle"></i>
+                </div>
+                <span class="error-text">{{ errorMessage }}</span>
+                <i class="pi pi-times error-dismiss"></i>
+            </div>
+
+            <button class="sign-in-btn" [class.loading]="isLoading"
+                [disabled]="!username.trim() || !password || isLoading" (click)="login()">
+                <i class="pi" [ngClass]="isLoading ? 'pi-spinner pi-spin' : 'pi-sign-in'"></i>
+                <span>{{ isLoading ? 'Signing in...' : 'Sign In' }}</span>
+            </button>
+        </div>
+
+        <!-- Footer -->
+        <div class="card-footer">
+            <div class="footer-divider"></div>
+            <p>Secure authentication powered by Axilla</p>
+        </div>
+    </div>
+
+    <!-- Page-level footer -->
+    <div class="page-footer">
+        <span>&copy; 2026 Apprx 2.0</span>
+    </div>
+</div>

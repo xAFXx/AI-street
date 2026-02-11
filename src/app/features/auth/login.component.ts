@@ -1,17 +1,22 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, AfterViewInit, OnDestroy, ViewChild, ElementRef, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { InputTextModule } from 'primeng/inputtext';
-import { ButtonModule } from 'primeng/button';
-import { CardModule } from 'primeng/card';
-import { DividerModule } from 'primeng/divider';
-import { MessageModule } from 'primeng/message';
 import { PasswordModule } from 'primeng/password';
 import { CheckboxModule } from 'primeng/checkbox';
 import { AuthService } from '../../core/services/auth.service';
 import { AppConsts } from '../../shared/AppConsts';
 import { TenantCustomizationService } from '../../core/services/tenant-customization.service';
+
+interface Particle {
+    x: number;
+    y: number;
+    vx: number;
+    vy: number;
+    radius: number;
+    opacity: number;
+}
 
 @Component({
     selector: 'app-login',
@@ -20,196 +25,18 @@ import { TenantCustomizationService } from '../../core/services/tenant-customiza
         CommonModule,
         FormsModule,
         InputTextModule,
-        ButtonModule,
-        CardModule,
-        DividerModule,
-        MessageModule,
         PasswordModule,
         CheckboxModule
     ],
-    template: `
-        <div class="login-container">
-            <div class="login-card">
-                <!-- Logo & Header -->
-                <div class="text-center mb-5">
-                    <div class="logo-area mb-3">
-                        <img *ngIf="logoUrl"
-                             [src]="logoUrl"
-                             alt="Tenant logo"
-                             class="tenant-logo"
-                             (error)="onLogoError()">
-                        <div *ngIf="!logoUrl" class="logo-icon">
-                            <i class="pi pi-bolt text-5xl"></i>
-                        </div>
-                    </div>
-                    <h1 class="text-3xl font-bold m-0 mb-2 text-primary">Apprx 2.0</h1>
-                    <p class="text-500 m-0">The intelligent co-worker for all experts</p>
-                </div>
-
-                <!-- Tenant Display -->
-                <div class="tenant-badge mb-4" *ngIf="tenantName">
-                    <i class="pi pi-building mr-2"></i>
-                    <span class="tenant-label">{{ tenantName }}</span>
-                </div>
-
-                <!-- Login Form -->
-                <div class="login-form">
-                    <div class="field mb-4">
-                        <label class="block text-500 font-medium mb-2">
-                            <i class="pi pi-user mr-2"></i>Email or Username
-                        </label>
-                        <input
-                            pInputText
-                            [(ngModel)]="username"
-                            class="w-full p-3 text-lg"
-                            placeholder="Enter your email or username"
-                            (keyup.enter)="focusPassword()"
-                            #usernameInput>
-                    </div>
-
-                    <div class="field mb-4">
-                        <label class="block text-500 font-medium mb-2">
-                            <i class="pi pi-lock mr-2"></i>Password
-                        </label>
-                        <p-password
-                            [(ngModel)]="password"
-                            [feedback]="false"
-                            [toggleMask]="true"
-                            styleClass="w-full"
-                            inputStyleClass="w-full p-3 text-lg"
-                            placeholder="Enter your password"
-                            (keyup.enter)="login()"
-                            #passwordInput>
-                        </p-password>
-                    </div>
-
-                    <div class="flex align-items-center justify-content-between mb-4">
-                        <div class="flex align-items-center">
-                            <p-checkbox
-                                [(ngModel)]="rememberMe"
-                                [binary]="true"
-                                inputId="rememberMe">
-                            </p-checkbox>
-                            <label for="rememberMe" class="ml-2 text-500 text-sm cursor-pointer">Remember me</label>
-                        </div>
-                    </div>
-
-                    <p-message
-                        *ngIf="errorMessage"
-                        severity="error"
-                        [text]="errorMessage"
-                        styleClass="w-full mb-3">
-                    </p-message>
-
-                    <button
-                        pButton
-                        label="Sign In"
-                        icon="pi pi-sign-in"
-                        class="w-full p-3 text-lg"
-                        [loading]="isLoading"
-                        [disabled]="!username.trim() || !password"
-                        (click)="login()">
-                    </button>
-                </div>
-
-                <!-- Footer -->
-                <div class="text-center mt-4">
-                    <p class="text-500 text-sm m-0">
-                        Secure authentication powered by Axilla
-                    </p>
-                </div>
-            </div>
-
-            <!-- Footer -->
-            <div class="login-footer text-center mt-4">
-                <span class="text-500 text-sm">© 2026 Apprx 2.0</span>
-            </div>
-        </div>
-    `,
-    styles: [`
-        :host {
-            display: block;
-            min-height: 100vh;
-        }
-
-        .login-container {
-            min-height: 100vh;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            padding: 2rem;
-        }
-
-        .login-card {
-            background: var(--surface-card);
-            border-radius: 1rem;
-            padding: 2.5rem;
-            width: 100%;
-            max-width: 420px;
-            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
-            border: 1px solid var(--surface-border);
-        }
-
-        .logo-area {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-
-        .tenant-logo {
-            max-height: 60px;
-            max-width: 240px;
-            object-fit: contain;
-        }
-
-        .logo-icon {
-            width: 80px;
-            height: 80px;
-            border-radius: 50%;
-            background: var(--primary-color);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-
-        .logo-icon i {
-            color: white !important;
-        }
-
-        .tenant-badge {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            padding: 0.5rem 1rem;
-            background: var(--surface-100);
-            border-radius: 0.5rem;
-            border: 1px solid var(--surface-border);
-        }
-
-        .tenant-badge i {
-            color: var(--primary-color);
-        }
-
-        .tenant-label {
-            font-weight: 600;
-            color: var(--text-color);
-            text-transform: capitalize;
-        }
-
-        :host ::ng-deep .p-inputtext:focus {
-            box-shadow: 0 0 0 2px var(--primary-color);
-        }
-
-        :host ::ng-deep .p-password {
-            width: 100%;
-        }
-    `]
+    templateUrl: './login.component.html',
+    styleUrls: ['./login.component.less']
 })
-export class LoginComponent implements OnInit {
-    private router: Router;
-    private authService: AuthService;
-    private tenantCustomization: TenantCustomizationService;
+export class LoginComponent implements OnInit, AfterViewInit, OnDestroy {
+    @ViewChild('particleCanvas', { static: false }) canvasRef!: ElementRef<HTMLCanvasElement>;
+
+    private router = inject(Router);
+    private authService = inject(AuthService);
+    private tenantCustomization = inject(TenantCustomizationService);
 
     tenantName = '';
     username = '';
@@ -217,18 +44,29 @@ export class LoginComponent implements OnInit {
     rememberMe = false;
     errorMessage = '';
     isLoading = false;
+    hasError = false;
     logoUrl: string | null = null;
 
-    constructor(router: Router, authService: AuthService, tenantCustomization: TenantCustomizationService) {
-        this.router = router;
-        this.authService = authService;
-        this.tenantCustomization = tenantCustomization;
-    }
+    // Particle animation
+    private particles: Particle[] = [];
+    private animationId: number | null = null;
+    private ctx: CanvasRenderingContext2D | null = null;
+    private resizeHandler = () => this.resizeCanvas();
 
     ngOnInit(): void {
-        // Tenant is already resolved by AppPreBootstrap from the URL subdomain
         this.tenantName = AppConsts.tenancyName || localStorage.getItem('tenancy_name') || '';
-        this.logoUrl = this.tenantCustomization.getLogoUrl('light');
+        this.logoUrl = this.tenantCustomization.getLogoUrl('dark');
+    }
+
+    ngAfterViewInit(): void {
+        this.initParticles();
+    }
+
+    ngOnDestroy(): void {
+        if (this.animationId !== null) {
+            cancelAnimationFrame(this.animationId);
+        }
+        window.removeEventListener('resize', this.resizeHandler);
     }
 
     /** Fallback if the logo image fails to load */
@@ -243,11 +81,17 @@ export class LoginComponent implements OnInit {
         }
     }
 
+    dismissError(): void {
+        this.errorMessage = '';
+        this.hasError = false;
+    }
+
     login(): void {
         if (!this.username.trim() || !this.password) return;
 
         this.isLoading = true;
         this.errorMessage = '';
+        this.hasError = false;
 
         this.authService.login(this.username, this.password, this.rememberMe).subscribe({
             next: (result) => {
@@ -260,22 +104,124 @@ export class LoginComponent implements OnInit {
                         console.log('[LoginComponent] Navigation result:', success);
                     });
                 } else if (result.requiresTwoFactorVerification) {
-                    this.errorMessage = 'Two-factor authentication is required but not yet implemented.';
+                    this.showError('Two-factor authentication is required but not yet implemented.');
                 } else if (result.shouldResetPassword) {
-                    this.errorMessage = 'Password reset is required. Please contact your administrator.';
+                    this.showError('Password reset is required. Please contact your administrator.');
                 }
             },
             error: (error) => {
                 this.isLoading = false;
 
                 if (error.status === 401 || error.status === 400) {
-                    this.errorMessage = 'Invalid username or password';
+                    this.showError('Invalid username or password');
                 } else if (error.status === 0) {
-                    this.errorMessage = 'Unable to connect to authentication server. Please check your network.';
+                    this.showError('Unable to connect to authentication server. Please check your network.');
                 } else {
-                    this.errorMessage = error.message || 'Login failed. Please try again.';
+                    this.showError(error.message || 'Login failed. Please try again.');
                 }
             }
         });
+    }
+
+    private showError(message: string): void {
+        this.errorMessage = message;
+        this.hasError = true;
+
+        // Trigger shake animation on the card
+        const card = document.querySelector('.login-card') as HTMLElement;
+        if (card) {
+            card.classList.remove('shake');
+            // Force reflow to restart animation
+            void card.offsetWidth;
+            card.classList.add('shake');
+        }
+    }
+
+    // ── Particle Animation ──
+
+    private initParticles(): void {
+        const canvas = this.canvasRef?.nativeElement;
+        if (!canvas) return;
+
+        this.ctx = canvas.getContext('2d');
+        if (!this.ctx) return;
+
+        this.resizeCanvas();
+
+        // Create particles
+        const count = Math.min(60, Math.floor((canvas.width * canvas.height) / 15000));
+        this.particles = [];
+        for (let i = 0; i < count; i++) {
+            this.particles.push(this.createParticle(canvas));
+        }
+
+        window.addEventListener('resize', this.resizeHandler);
+
+        // Start animation loop
+        this.animate(canvas);
+    }
+
+    private createParticle(canvas: HTMLCanvasElement): Particle {
+        return {
+            x: Math.random() * canvas.width,
+            y: Math.random() * canvas.height,
+            vx: (Math.random() - 0.5) * 0.4,
+            vy: (Math.random() - 0.5) * 0.4,
+            radius: Math.random() * 1.5 + 0.5,
+            opacity: Math.random() * 0.4 + 0.1
+        };
+    }
+
+    private resizeCanvas(): void {
+        const canvas = this.canvasRef?.nativeElement;
+        if (!canvas) return;
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+    }
+
+    private animate(canvas: HTMLCanvasElement): void {
+        if (!this.ctx) return;
+        const ctx = this.ctx;
+
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+        // Update & draw particles
+        for (const p of this.particles) {
+            p.x += p.vx;
+            p.y += p.vy;
+
+            // Wrap around edges
+            if (p.x < 0) p.x = canvas.width;
+            if (p.x > canvas.width) p.x = 0;
+            if (p.y < 0) p.y = canvas.height;
+            if (p.y > canvas.height) p.y = 0;
+
+            ctx.beginPath();
+            ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2);
+            ctx.fillStyle = `rgba(124, 58, 237, ${p.opacity})`;
+            ctx.fill();
+        }
+
+        // Draw connection lines between nearby particles
+        const maxDist = 120;
+        for (let i = 0; i < this.particles.length; i++) {
+            for (let j = i + 1; j < this.particles.length; j++) {
+                const dx = this.particles[i].x - this.particles[j].x;
+                const dy = this.particles[i].y - this.particles[j].y;
+                const dist = Math.sqrt(dx * dx + dy * dy);
+
+                if (dist < maxDist) {
+                    const alpha = (1 - dist / maxDist) * 0.12;
+                    ctx.beginPath();
+                    ctx.moveTo(this.particles[i].x, this.particles[i].y);
+                    ctx.lineTo(this.particles[j].x, this.particles[j].y);
+                    ctx.strokeStyle = `rgba(124, 58, 237, ${alpha})`;
+                    ctx.lineWidth = 0.5;
+                    ctx.stroke();
+                }
+            }
+        }
+
+        this.animationId = requestAnimationFrame(() => this.animate(canvas));
     }
 }
