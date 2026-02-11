@@ -20,3 +20,6 @@ When the user says "the test context is [tenantName]", look up the tenant in `do
 
 ## Full Rule Book
 See [RULES.md](./RULES.md) for the complete rules with examples.
+
+## AI Hook Examples
+See [AI.md](../../docs/AI.md) for clear examples of every trigger phrase and what it does.
