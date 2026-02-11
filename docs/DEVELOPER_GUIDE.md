@@ -347,7 +347,7 @@ sequenceDiagram
 | Global styles | `src/styles.less` |
 | PrimeNG theme | `app.config.ts` → `providePrimeNG({ theme: ... })` |
 | Feature flags | `config/apprx.config.ts` → `features` object |
-| Agent context docs | `src/app/docs/` (12 files, indexed by `INDEX.md`) |
+| Agent context docs | `docs/` (indexed by `INDEX.md`) |
 | Project coding rules | `.agent/rule-book/RULES.md` |
 | Run browser tests | Follow `/browser-testing` workflow |
 

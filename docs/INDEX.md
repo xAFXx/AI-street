@@ -23,4 +23,4 @@ When starting work on a feature area, read the listed docs in order.
 | `auth` / `login` | `00-architecture.md`, `10-core-services.md` |
 | `ai-chat` / `signalr` | `00-architecture.md`, `10-core-services.md`, `06-search-action.md` |
 
-All docs are located at `src/app/docs/`.
+All docs are located at `docs/`.
