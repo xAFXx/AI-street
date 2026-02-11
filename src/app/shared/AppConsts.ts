@@ -3,22 +3,14 @@
  * 
  * This class holds the resolved application configuration values.
  * Values are set by AppPreBootstrap before Angular bootstraps.
+ * URLs come entirely from the active appconfig file (apprx, plattform, or production).
  */
 export class AppConsts {
     // Placeholder used in URLs that gets replaced with the actual tenant name
     static readonly tenancyNamePlaceHolderInUrl = '{TENANCY_NAME}';
 
-    // Current active domain - the source of truth
-    static readonly activeDomain = 'plattform.nl';
-
-    // Deprecated domains that should be automatically migrated to activeDomain
-    static readonly deprecatedDomains = ['ai-street.eu', 'apprx.eu'];
-
-    // Default URL format for plattform.nl (used when only tenant name is provided)
-    static readonly defaultApiUrlFormat = `https://dev_{TENANCY_NAME}_connectapi.${AppConsts.activeDomain}`;
-
     // Application name from config
-    static applicationName: string = 'APPRX True North';
+    static applicationName: string = 'Apprx 2.0';
 
     // Base URL for the frontend app (with tenant resolved)
     static appBaseUrl: string = '';
@@ -26,11 +18,11 @@ export class AppConsts {
     // Base URL for the API/remote service (with tenant resolved)
     static remoteServiceBaseUrl: string = '';
 
-    // Original URL formats from appconfig.json (with placeholder)
+    // Original URL formats from appconfig file (with placeholder)
     static appBaseUrlFormat: string = '';
     static remoteServiceBaseUrlFormat: string = '';
 
-    // Locale mappings from appconfig.json
+    // Locale mappings from appconfig
     static localeMappings: {
         angular?: { from: string; to: string }[];
         moment?: { from: string; to: string }[];
@@ -44,63 +36,28 @@ export class AppConsts {
     // Current tenancy name
     static tenancyName: string = '';
 
-    /**
-     * Check if a URL uses a deprecated domain
-     */
-    static isDeprecatedUrl(url: string): boolean {
-        if (!url) return false;
-        return AppConsts.deprecatedDomains.some(domain => url.includes(domain));
-    }
+    // Numeric tenant ID (from AbpUserConfiguration/GetAll session)
+    static tenantId: number | null = null;
 
     /**
-     * Migrate a URL from a deprecated domain to the active domain
-     */
-    static migrateUrl(url: string): string {
-        if (!url) return url;
-
-        let migratedUrl = url;
-        for (const deprecated of AppConsts.deprecatedDomains) {
-            if (migratedUrl.includes(deprecated)) {
-                migratedUrl = migratedUrl.replace(deprecated, AppConsts.activeDomain);
-                console.log(`[AppConsts] Migrated URL from ${deprecated} to ${AppConsts.activeDomain}`);
-            }
-        }
-        return migratedUrl;
-    }
-
-    /**
-     * Clean up deprecated URLs from localStorage and migrate if possible
-     * Call this at app startup to ensure no old URLs persist
-     */
-    static cleanupDeprecatedStorage(): void {
-        const customApiUrl = localStorage.getItem('custom_api_url');
-
-        if (customApiUrl && AppConsts.isDeprecatedUrl(customApiUrl)) {
-            console.log('[AppConsts] Found deprecated URL in localStorage, removing...');
-            localStorage.removeItem('custom_api_url');
-            // Keep tenancy_name so user doesn't have to re-enter it
-            console.log('[AppConsts] Deprecated custom_api_url cleared. Will use config-based URL.');
-        }
-    }
-
-    /**
-     * Set tenancy from a simple tenant name
-     * Uses the remoteServiceBaseUrlFormat from appconfig.json, falling back to defaultApiUrlFormat
+     * Set tenancy from a simple tenant name.
+     * Uses the remoteServiceBaseUrlFormat loaded from the active appconfig file.
      */
     static setTenancy(tenancyName: string): void {
         AppConsts.tenancyName = tenancyName;
 
-        if (tenancyName) {
-            // Use the format from appconfig.json if available, otherwise fallback to default
-            let urlFormat = AppConsts.remoteServiceBaseUrlFormat || AppConsts.defaultApiUrlFormat;
-
-            // Ensure we're not using a deprecated domain in the format
-            urlFormat = AppConsts.migrateUrl(urlFormat);
-
-            AppConsts.remoteServiceBaseUrl = urlFormat.replace(
+        if (tenancyName && AppConsts.remoteServiceBaseUrlFormat) {
+            AppConsts.remoteServiceBaseUrl = AppConsts.remoteServiceBaseUrlFormat.replace(
                 AppConsts.tenancyNamePlaceHolderInUrl,
                 tenancyName
             );
+
+            if (AppConsts.appBaseUrlFormat) {
+                AppConsts.appBaseUrl = AppConsts.appBaseUrlFormat.replace(
+                    AppConsts.tenancyNamePlaceHolderInUrl,
+                    tenancyName
+                );
+            }
         } else {
             AppConsts.remoteServiceBaseUrl = '';
         }
@@ -110,15 +67,12 @@ export class AppConsts {
     }
 
     /**
-     * Set a direct API URL (bypasses template substitution)
-     * Used when user provides a full URL instead of just tenant name
-     * Automatically migrates deprecated domains
+     * Set a direct API URL (bypasses template substitution).
+     * Used when user provides a full URL instead of just tenant name.
      */
     static setDirectUrl(url: string, tenancyName: string): void {
         AppConsts.tenancyName = tenancyName;
-
-        // Migrate if using deprecated domain
-        AppConsts.remoteServiceBaseUrl = AppConsts.migrateUrl(url);
+        AppConsts.remoteServiceBaseUrl = url;
 
         console.log(`[AppConsts] Direct URL set`);
         console.log(`[AppConsts] Tenancy: ${tenancyName}`);

@@ -49,9 +49,6 @@ export class AppPreBootstrap {
      * Load the application configuration from appconfig.json (or appconfig.production.json in prod)
      */
     private static getApplicationConfig(appRootUrl: string, callback: () => void, reject: (error: any) => void): void {
-        // Clean up any deprecated URLs from localStorage before loading config
-        // This ensures old ai-street.eu or apprx.eu URLs don't override the new plattform.nl config
-        AppConsts.cleanupDeprecatedStorage();
 
         const url = appRootUrl + 'assets/' + environment.appConfig;
         console.log('[AppPreBootstrap] Loading config from:', url);
@@ -68,7 +65,7 @@ export class AppPreBootstrap {
                 AppConsts.appBaseUrlFormat = result.appBaseUrl;
                 AppConsts.remoteServiceBaseUrlFormat = result.remoteServiceBaseUrl;
                 AppConsts.localeMappings = result.localeMappings || {};
-                AppConsts.applicationName = result.applicationName || 'APPRX True North';
+                AppConsts.applicationName = result.applicationName || 'Apprx 2.0';
 
                 // Extract tenancy name from subdomain
                 const tenancyFinder = new SubdomainTenancyNameFinder();
@@ -98,8 +95,8 @@ export class AppPreBootstrap {
                         console.log('[AppPreBootstrap] Using stored custom API URL:', customApiUrl);
                         AppConsts.setDirectUrl(customApiUrl, storedTenant);
                     } else if (storedTenant) {
-                        // Simple tenant name - use default apprx.eu format
                         console.log('[AppPreBootstrap] Using stored tenancy:', storedTenant);
+                        // Use format from the loaded config
                         AppConsts.setTenancy(storedTenant);
                     }
                 }
@@ -108,15 +105,8 @@ export class AppPreBootstrap {
             },
             (error) => {
                 console.error('[AppPreBootstrap] Failed to load config:', error);
-
-                // Use fallback configuration
-                console.log('[AppPreBootstrap] Using fallback configuration');
-                AppConsts.remoteServiceBaseUrl = 'https://demo-connectapi.plattform.nl';
-                AppConsts.appBaseUrl = 'https://demo.plattform.nl';
-                AppConsts.remoteServiceBaseUrlFormat = 'https://dev_{TENANCY_NAME}-connectapi.plattform.nl';
-                AppConsts.appBaseUrlFormat = 'https://dev_{TENANCY_NAME}.plattform.nl';
-
-                callback(); // Continue anyway with fallback
+                // Continue with empty config — login page will handle missing API URL
+                callback();
             }
         );
     }
@@ -176,6 +166,11 @@ export class AppPreBootstrap {
                     // This uses a simple merge - in production you might want lodash _.merge
                     AppPreBootstrap.mergeAbpConfig(result);
 
+                    // Store tenant ID for use by services (e.g., logo URL)
+                    if (result.session?.tenantId != null) {
+                        AppConsts.tenantId = result.session.tenantId;
+                    }
+
                     // Trigger event for any listeners
                     if (abp.event?.trigger) {
                         abp.event.trigger('abp.dynamicScriptsInitialized');
@@ -183,6 +178,7 @@ export class AppPreBootstrap {
 
                     console.log('[AppPreBootstrap] ABP object initialized:', {
                         session: abp.session,
+                        tenantId: AppConsts.tenantId,
                         auth: abp.auth ? 'present' : 'missing',
                         multiTenancy: abp.multiTenancy
                     });

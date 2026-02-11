@@ -11,6 +11,7 @@ import { PasswordModule } from 'primeng/password';
 import { CheckboxModule } from 'primeng/checkbox';
 import { AuthService } from '../../core/services/auth.service';
 import { AppConsts } from '../../shared/AppConsts';
+import { TenantCustomizationService } from '../../core/services/tenant-customization.service';
 
 @Component({
     selector: 'app-login',
@@ -31,45 +32,34 @@ import { AppConsts } from '../../shared/AppConsts';
             <div class="login-card">
                 <!-- Logo & Header -->
                 <div class="text-center mb-5">
-                    <div class="logo-icon mb-3">
-                        <i class="pi pi-bolt text-5xl"></i>
+                    <div class="logo-area mb-3">
+                        <img *ngIf="logoUrl"
+                             [src]="logoUrl"
+                             alt="Tenant logo"
+                             class="tenant-logo"
+                             (error)="onLogoError()">
+                        <div *ngIf="!logoUrl" class="logo-icon">
+                            <i class="pi pi-bolt text-5xl"></i>
+                        </div>
                     </div>
-                    <h1 class="text-3xl font-bold m-0 mb-2 text-primary">APPRX True North</h1>
+                    <h1 class="text-3xl font-bold m-0 mb-2 text-primary">Apprx 2.0</h1>
                     <p class="text-500 m-0">The intelligent co-worker for all experts</p>
+                </div>
+
+                <!-- Tenant Display -->
+                <div class="tenant-badge mb-4" *ngIf="tenantName">
+                    <i class="pi pi-building mr-2"></i>
+                    <span class="tenant-label">{{ tenantName }}</span>
                 </div>
 
                 <!-- Login Form -->
                 <div class="login-form">
-                    <!-- Tenant Selection -->
-                    <div class="field mb-4">
-                        <label class="block text-500 font-medium mb-2">
-                            <i class="pi pi-building mr-2"></i>Tenant
-                        </label>
-                        <div class="p-inputgroup">
-                            <span class="p-inputgroup-addon">
-                                <i class="pi pi-globe"></i>
-                            </span>
-                            <input 
-                                pInputText 
-                                [(ngModel)]="tenantInput"
-                                class="w-full"
-                                placeholder="Enter tenant name or full URL (e.g., demo or https://demo_connectapi...)"
-                                (blur)="onTenantChange()"
-                                (keyup.enter)="focusUsername()">
-                        </div>
-                        <small class="text-500 mt-1 block">
-                            Tenant: {{ tenantName || '—' }} | API: {{ resolvedApiUrl || 'Enter tenant to see API URL' }}
-                        </small>
-                    </div>
-
-                    <p-divider></p-divider>
-
                     <div class="field mb-4">
                         <label class="block text-500 font-medium mb-2">
                             <i class="pi pi-user mr-2"></i>Email or Username
                         </label>
-                        <input 
-                            pInputText 
+                        <input
+                            pInputText
                             [(ngModel)]="username"
                             class="w-full p-3 text-lg"
                             placeholder="Enter your email or username"
@@ -81,7 +71,7 @@ import { AppConsts } from '../../shared/AppConsts';
                         <label class="block text-500 font-medium mb-2">
                             <i class="pi pi-lock mr-2"></i>Password
                         </label>
-                        <p-password 
+                        <p-password
                             [(ngModel)]="password"
                             [feedback]="false"
                             [toggleMask]="true"
@@ -95,29 +85,29 @@ import { AppConsts } from '../../shared/AppConsts';
 
                     <div class="flex align-items-center justify-content-between mb-4">
                         <div class="flex align-items-center">
-                            <p-checkbox 
-                                [(ngModel)]="rememberMe" 
-                                [binary]="true" 
+                            <p-checkbox
+                                [(ngModel)]="rememberMe"
+                                [binary]="true"
                                 inputId="rememberMe">
                             </p-checkbox>
                             <label for="rememberMe" class="ml-2 text-500 text-sm cursor-pointer">Remember me</label>
                         </div>
                     </div>
 
-                    <p-message 
-                        *ngIf="errorMessage" 
-                        severity="error" 
+                    <p-message
+                        *ngIf="errorMessage"
+                        severity="error"
                         [text]="errorMessage"
                         styleClass="w-full mb-3">
                     </p-message>
 
-                    <button 
-                        pButton 
-                        label="Sign In" 
+                    <button
+                        pButton
+                        label="Sign In"
                         icon="pi pi-sign-in"
                         class="w-full p-3 text-lg"
                         [loading]="isLoading"
-                        [disabled]="!username.trim() || !password || !tenantName.trim()"
+                        [disabled]="!username.trim() || !password"
                         (click)="login()">
                     </button>
                 </div>
@@ -132,7 +122,7 @@ import { AppConsts } from '../../shared/AppConsts';
 
             <!-- Footer -->
             <div class="login-footer text-center mt-4">
-                <span class="text-500 text-sm">© 2026 APPRX True North</span>
+                <span class="text-500 text-sm">© 2026 Apprx 2.0</span>
             </div>
         </div>
     `,
@@ -161,6 +151,18 @@ import { AppConsts } from '../../shared/AppConsts';
             border: 1px solid var(--surface-border);
         }
 
+        .logo-area {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .tenant-logo {
+            max-height: 60px;
+            max-width: 240px;
+            object-fit: contain;
+        }
+
         .logo-icon {
             width: 80px;
             height: 80px;
@@ -169,11 +171,30 @@ import { AppConsts } from '../../shared/AppConsts';
             display: flex;
             align-items: center;
             justify-content: center;
-            margin: 0 auto;
         }
 
         .logo-icon i {
             color: white !important;
+        }
+
+        .tenant-badge {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 0.5rem 1rem;
+            background: var(--surface-100);
+            border-radius: 0.5rem;
+            border: 1px solid var(--surface-border);
+        }
+
+        .tenant-badge i {
+            color: var(--primary-color);
+        }
+
+        .tenant-label {
+            font-weight: 600;
+            color: var(--text-color);
+            text-transform: capitalize;
         }
 
         :host ::ng-deep .p-inputtext:focus {
@@ -183,154 +204,39 @@ import { AppConsts } from '../../shared/AppConsts';
         :host ::ng-deep .p-password {
             width: 100%;
         }
-
-        :host ::ng-deep .p-inputgroup-addon {
-            background: var(--surface-100);
-            border-color: var(--surface-border);
-        }
     `]
 })
 export class LoginComponent implements OnInit {
     private router: Router;
     private authService: AuthService;
+    private tenantCustomization: TenantCustomizationService;
 
-    tenantInput = '';
     tenantName = '';
     username = '';
     password = '';
     rememberMe = false;
     errorMessage = '';
     isLoading = false;
-    resolvedApiUrl = '';
+    logoUrl: string | null = null;
 
-    constructor(router: Router, authService: AuthService) {
+    constructor(router: Router, authService: AuthService, tenantCustomization: TenantCustomizationService) {
         this.router = router;
         this.authService = authService;
+        this.tenantCustomization = tenantCustomization;
     }
 
     ngOnInit(): void {
-        // Load saved tenant from localStorage
-        this.tenantName = localStorage.getItem('tenancy_name') || '';
-        const customUrl = localStorage.getItem('custom_api_url');
-
-        if (customUrl) {
-            // Restore full custom URL
-            this.tenantInput = customUrl;
-            AppConsts.setDirectUrl(customUrl, this.tenantName);
-        } else if (this.tenantName) {
-            // Simple tenant name - use default plattform.nl format
-            this.tenantInput = this.tenantName;
-            AppConsts.setTenancy(this.tenantName);
-        }
-
-        this.updateResolvedUrl();
+        // Tenant is already resolved by AppPreBootstrap from the URL subdomain
+        this.tenantName = AppConsts.tenancyName || localStorage.getItem('tenancy_name') || '';
+        this.logoUrl = this.tenantCustomization.getLogoUrl('light');
     }
 
-    onTenantChange(): void {
-        const input = this.tenantInput.trim();
-        if (!input) return;
-
-        console.log('[Login] onTenantChange input:', input);
-
-        // Check if input is a URL:
-        // - Contains :// (explicit protocol)
-        // - Contains _connectapi (well-known pattern)
-        // - Contains a dot and common TLD patterns (looks like a domain)
-        const isFullUrl = input.includes('://') ||
-            input.includes('_connectapi') ||
-            /\.(nl|eu|com|org|net|io)/i.test(input);
-
-        console.log('[Login] isFullUrl:', isFullUrl);
-
-        if (isFullUrl) {
-            // Full URL provided - extract tenant name for display, but use full URL
-            const extracted = this.extractTenantFromUrl(input);
-            this.tenantName = extracted || 'custom';
-
-            // Normalize the URL (ensure https://)
-            let fullUrl = input;
-            if (!fullUrl.includes('://')) {
-                fullUrl = 'https://' + fullUrl;
-            }
-
-            // Migrate any deprecated domains to plattform.nl
-            fullUrl = AppConsts.migrateUrl(fullUrl);
-
-            console.log('[Login] Setting direct URL:', fullUrl);
-            console.log('[Login] Extracted tenant:', this.tenantName);
-
-            // Use the full URL directly
-            AppConsts.setDirectUrl(fullUrl, this.tenantName);
-            localStorage.setItem('tenancy_name', this.tenantName);
-            localStorage.setItem('custom_api_url', fullUrl);
-        } else {
-            // Simple tenant name - use plattform.nl default format
-            this.tenantName = input;
-            console.log('[Login] Using simple tenant, plattform.nl format:', this.tenantName);
-            AppConsts.setTenancy(this.tenantName);
-            localStorage.setItem('tenancy_name', this.tenantName);
-            localStorage.removeItem('custom_api_url');
-        }
-
-        console.log('[Login] AppConsts.remoteServiceBaseUrl:', AppConsts.remoteServiceBaseUrl);
-        this.updateResolvedUrl();
-    }
-
-    /**
-     * Extract tenant name from a full URL.
-     * Looks for the pattern: {tenant}_connectapi in the hostname.
-     * Handles environment prefixes: dev_, acc_, acc-
-     * E.g., https://dev_demo_connectapi.example.com -> 'demo'
-     * E.g., https://demo_connectapi.example.com -> 'demo'
-     */
-    private extractTenantFromUrl(url: string): string | null {
-        try {
-            // Ensure it's a valid URL
-            let urlToParse = url;
-            if (!urlToParse.includes('://')) {
-                urlToParse = 'https://' + urlToParse;
-            }
-
-            const parsed = new URL(urlToParse);
-            const hostname = parsed.hostname; // e.g., dev_demo_connectapi.example.com
-
-            // Find the part before _connectapi
-            const connectApiIndex = hostname.indexOf('_connectapi');
-            if (connectApiIndex > 0) {
-                // Extract everything before _connectapi
-                let subdomain = hostname.substring(0, connectApiIndex);
-
-                // Strip environment prefixes: dev_, acc_, acc-
-                const envPrefixes = ['dev_', 'acc_', 'acc-', 'tst_', 'prd_'];
-                for (const prefix of envPrefixes) {
-                    if (subdomain.startsWith(prefix)) {
-                        subdomain = subdomain.substring(prefix.length);
-                        break;
-                    }
-                }
-
-                return subdomain;
-            }
-
-            return null;
-        } catch {
-            return null;
-        }
-    }
-
-    private updateResolvedUrl(): void {
-        this.resolvedApiUrl = AppConsts.remoteServiceBaseUrl;
-    }
-
-    focusUsername(): void {
-        const usernameInput = document.querySelector('input[placeholder*="email"]') as HTMLInputElement;
-        if (usernameInput) {
-            usernameInput.focus();
-        }
+    /** Fallback if the logo image fails to load */
+    onLogoError(): void {
+        this.logoUrl = null;
     }
 
     focusPassword(): void {
-        // Focus password field on Enter from username
         const passwordInput = document.querySelector('p-password input') as HTMLInputElement;
         if (passwordInput) {
             passwordInput.focus();
@@ -338,10 +244,7 @@ export class LoginComponent implements OnInit {
     }
 
     login(): void {
-        if (!this.username.trim() || !this.password || !this.tenantName.trim()) return;
-
-        // Note: Don't call setTenancy here - it was already set in onTenantChange()
-        // and could overwrite a custom URL with the default apprx.eu format
+        if (!this.username.trim() || !this.password) return;
 
         this.isLoading = true;
         this.errorMessage = '';
@@ -352,9 +255,8 @@ export class LoginComponent implements OnInit {
                 this.isLoading = false;
 
                 if (result.accessToken) {
-                    console.log('[LoginComponent] Login successful, navigating to dashboard...');
-                    // Successful login - navigate to dashboard
-                    this.router.navigate(['/dashboard']).then(success => {
+                    console.log('[LoginComponent] Login successful, navigating to app-nexus...');
+                    this.router.navigate(['/app-nexus']).then(success => {
                         console.log('[LoginComponent] Navigation result:', success);
                     });
                 } else if (result.requiresTwoFactorVerification) {
