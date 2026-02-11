@@ -56,7 +56,10 @@
                 <div class="error-icon">
                     <i class="pi pi-exclamation-triangle"></i>
                 </div>
-                <span class="error-text">{{ errorMessage }}</span>
+                <div class="error-content">
+                    <span class="error-text">{{ errorMessage }}</span>
+                    <span class="error-detail" *ngIf="errorDetails">{{ errorDetails }}</span>
+                </div>
                 <i class="pi pi-times error-dismiss"></i>
             </div>
 

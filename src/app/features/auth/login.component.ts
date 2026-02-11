@@ -43,6 +43,7 @@ export class LoginComponent implements OnInit, AfterViewInit, OnDestroy {
     password = '';
     rememberMe = false;
     errorMessage = '';
+    errorDetails = '';
     isLoading = false;
     hasError = false;
     logoUrl: string | null = null;
@@ -83,6 +84,7 @@ export class LoginComponent implements OnInit, AfterViewInit, OnDestroy {
 
     dismissError(): void {
         this.errorMessage = '';
+        this.errorDetails = '';
         this.hasError = false;
     }
 
@@ -112,19 +114,24 @@ export class LoginComponent implements OnInit, AfterViewInit, OnDestroy {
             error: (error) => {
                 this.isLoading = false;
 
-                if (error.status === 401 || error.status === 400) {
-                    this.showError('Invalid username or password');
+                // Extract ABP-style error from the response body
+                const abpError = error?.error?.error;
+
+                if (abpError?.message) {
+                    // Backend sent a structured ABP error — show it directly
+                    this.showError(abpError.message, abpError.details);
                 } else if (error.status === 0) {
-                    this.showError('Unable to connect to authentication server. Please check your network.');
+                    this.showError('Connection lost', 'Unable to reach the server. Please check your network.');
                 } else {
-                    this.showError(error.message || 'Login failed. Please try again.');
+                    this.showError('Login failed', 'An unexpected error occurred. Please try again.');
                 }
             }
         });
     }
 
-    private showError(message: string): void {
+    private showError(message: string, details?: string): void {
         this.errorMessage = message;
+        this.errorDetails = details || '';
         this.hasError = true;
 
         // Trigger shake animation on the card
